@@ -326,6 +326,8 @@ releases:
         ZFS pools and datasets without modifying the host."
       - "Added ``ssh``, ``smb``, and ``ups`` modules for configuring
         service-specific settings via the middleware API."
+      - "Added ``system_general`` and ``system_advanced`` modules for
+        configuring system settings (UI, timezone, MOTD, syslog, etc.)."
       minor_changes:
       - "``group``: Added ``sudo_commands`` and ``sudo_commands_nopasswd`` parameters."
       - "``user``: Added ``home_create`` parameter to create home directories
@@ -353,5 +355,11 @@ releases:
       namespace: ''
     - description: Configure UPS service.
       name: ups
+      namespace: ''
+    - description: Configure general system settings.
+      name: system_general
+      namespace: ''
+    - description: Configure advanced system settings.
+      name: system_advanced
       namespace: ''
     release_date: '2026-04-02'
