@@ -101,9 +101,9 @@ options:
       - |
         Specifies a family of configuration parameters for different use
         cases. Legal values include:
-      - C(NO_PRESET), C(DEFAULT_SHARE), C(ENHANCED_TIMEMACHINE),
-        C(MULTI_PROTOCOL_AFP), C(MULTI_PROTOCOL_NFS), C(PRIVATE_DATASETS),
-        C(WORM_DROPBOX), C(LEGACY_SHARE).
+      - C(DEFAULT_SHARE), C(LEGACY_SHARE), C(TIMEMACHINE_SHARE),
+        C(MULTIPROTOCOL_SHARE), C(TIME_LOCKED_SHARE), C(PRIVATE_DATASETS_SHARE),
+        C(EXTERNAL_SHARE), C(VEEAM_REPOSITORY_SHARE), C(FCP_SHARE).
       - Note that the C(purpose) parameter may override other parameters.
         In particular, C(DEFAULT_SHARE) specifies an empty C(hostsallow)
         and C(hostsdeny).
@@ -149,7 +149,7 @@ EXAMPLES = '''
     name: export2
     path: /mnt/path2
     comment: "Shared to just a few hosts."
-    purpose: NO_PRESET
+    purpose: DEFAULT_SHARE
     hostsallow:
       - host1.dom.ain
       - host2.dom.ain
@@ -237,10 +237,11 @@ def main():
             state=dict(type='str', default='present',
                        choices=['absent', 'present']),
             purpose=dict(type='str',
-                         choices=['NO_PRESET', 'DEFAULT_SHARE',
-                                  'ENHANCED_TIMEMACHINE', 'MULTI_PROTOCOL_AFP',
-                                  'MULTI_PROTOCOL_NFS', 'PRIVATE_DATASETS',
-                                  'WORM_DROPBOX', 'LEGACY_SHARE']),
+                         choices=['DEFAULT_SHARE', 'LEGACY_SHARE',
+                                  'TIMEMACHINE_SHARE', 'MULTIPROTOCOL_SHARE',
+                                  'TIME_LOCKED_SHARE', 'PRIVATE_DATASETS_SHARE',
+                                  'EXTERNAL_SHARE', 'VEEAM_REPOSITORY_SHARE',
+                                  'FCP_SHARE']),
             hostsallow=dict(type='list', elements='str'),
             hostsdeny=dict(type='list', elements='str'),
             enabled=dict(type='bool'),
@@ -311,7 +312,7 @@ def main():
                 arg['options'] = options
                 # 25.10+ API requires 'purpose' when 'options' is set
                 if 'purpose' not in arg:
-                    arg['purpose'] = 'NO_PRESET'
+                    arg['purpose'] = 'DEFAULT_SHARE'
 
             if module.check_mode:
                 result['msg'] = f"Would have created share {name} with {arg}"
@@ -355,7 +356,7 @@ def main():
                 # 25.10+ API requires 'purpose' when 'options' is set.
                 # Carry forward the existing purpose if not explicitly changed.
                 if 'purpose' not in arg:
-                    arg['purpose'] = share_info.get('purpose', 'NO_PRESET')
+                    arg['purpose'] = share_info.get('purpose', 'DEFAULT_SHARE')
 
             if len(arg) == 0:
                 result['changed'] = False
