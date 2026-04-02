@@ -30,6 +30,18 @@ options:
     type: str
     choices: [ absent, present ]
     default: present
+  sudo_commands:
+    description:
+      - List of commands this group can run with sudo.
+      - Use C(ALL) to allow all commands.
+    type: list
+    elements: str
+  sudo_commands_nopasswd:
+    description:
+      - List of commands this group can run with sudo without a password.
+      - Use C(ALL) to allow all commands without a password.
+    type: list
+    elements: str
   non_unique:
     description:
       - Allow a non-unique I(GID) for the group.
@@ -55,6 +67,14 @@ EXAMPLES = '''
   arensb.truenas.group:
     name: badgroup
     state: absent
+
+- name: Group with sudo access
+  arensb.truenas.group:
+    name: admins
+    sudo_commands:
+      - ALL
+    sudo_commands_nopasswd:
+      - /usr/bin/apt
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -69,25 +89,8 @@ def main():
             gid=dict(type='int'),
             name=dict(type='str', required=True),
 
-            # sudo(bool)
-            # sudo_nopasswd(bool)
-
-            # XXX - The sudo stuff here looks a lot like the sudo
-            # stuff in the 'user' module. So most likely it's been
-            # changed in TrueNAS SCALE as well. if so, go with a
-            # new-style interface: use 'sudo_commands' and
-            # 'sudo_commands_nopasswd' instead of 'sudo (bool)' and
-            # 'sudo_nopasswd (bool)'
-
-            # smb(bool) - whether the group should be mapped onto an NT group.
-
-            # users (list of uids) I think it's more intuitive to
-            # specify which groups a user shouldbe in, but if someone
-            # has a use case for this, it can be added.
-
-            # local(bool) - what's this?
-            # id_type_both(bool) - what's this?
-            # - system(bool)
+            sudo_commands=dict(type='list', elements='str'),
+            sudo_commands_nopasswd=dict(type='list', elements='str'),
 
             non_unique=dict(type='bool', default=False),
             state=dict(type='str', default='present',
@@ -116,6 +119,8 @@ def main():
     group = module.params['name']
     state = module.params['state']
     non_unique = module.params['non_unique']
+    sudo_commands = module.params['sudo_commands']
+    sudo_commands_nopasswd = module.params['sudo_commands_nopasswd']
     # TrueNAS scale versions starting with 25.04 throws an error if allow_duplicate_gid
     # is passed in
     TC_25_04 = version.parse("25.04")
@@ -167,16 +172,13 @@ def main():
             arg = {"name": group}
 
             if gid is not None:
-                # GID is defined. Add to specification.
                 arg['gid'] = gid
 
-            # XXX - smb
+            if sudo_commands is not None:
+                arg['sudo_commands'] = sudo_commands
 
-            # XXX - sudo
-
-            # XXX - sudo_nopasswd
-
-            # XXX - sudo_commands
+            if sudo_commands_nopasswd is not None:
+                arg['sudo_commands_nopasswd'] = sudo_commands_nopasswd
 
             if non_unique is not None:
                 arg['allow_duplicate_gid'] = non_unique
@@ -216,14 +218,13 @@ def main():
             if gid is not None and group_info['gid'] != gid:
                 arg['gid'] = gid
 
-            # XXX - name - I don't think it makes sense to change
-            # the group name, since that's the way Ansible
-            # identifies it.
+            if sudo_commands is not None and \
+               set(group_info.get('sudo_commands', [])) != set(sudo_commands):
+                arg['sudo_commands'] = sudo_commands
 
-            # XXX - smb
-            # XXX - sudo
-            # XXX - sudo_nopasswd
-            # XXX - sudo_commands [...]
+            if sudo_commands_nopasswd is not None and \
+               set(group_info.get('sudo_commands_nopasswd', [])) != set(sudo_commands_nopasswd):
+                arg['sudo_commands_nopasswd'] = sudo_commands_nopasswd
 
             if len(arg) == 0:
                 # Nothing to do
