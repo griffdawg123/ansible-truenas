@@ -3,6 +3,7 @@
 __metaclass__ = type
 
 # Create and manage SMB shares.
+# Updated for TrueNAS SCALE 25.10+ API where many fields moved under 'options'.
 
 DOCUMENTATION = '''
 ---
@@ -10,6 +11,7 @@ module: sharing_smb
 short_description: Manage SMB sharing
 description:
   - Create, manage, and delete SMB shares.
+  - Supports TrueNAS SCALE 25.10+ API format.
 options:
   abe:
     description:
@@ -29,6 +31,7 @@ options:
   auxsmbconf:
     description:
       - Additional smb4.conf options.
+      - Only available when C(purpose) is C(LEGACY_SHARE).
     type: str
   browsable:
     description:
@@ -56,7 +59,7 @@ options:
   guestok:
     description:
       - Enables guest access (no login).
-    type: str
+    type: bool
   hostsallow:
     description:
       - List of hostnames/IP addresses of hosts that are allowed access
@@ -69,6 +72,7 @@ options:
     description:
       - If true, this share may be used for home directories.
       - Only one such share is allowed.
+    type: bool
   hostsdeny:
     description:
       - List of hostnames/IP addresses of hosts that are denied access
@@ -98,8 +102,8 @@ options:
         Specifies a family of configuration parameters for different use
         cases. Legal values include:
       - C(NO_PRESET), C(DEFAULT_SHARE), C(ENHANCED_TIMEMACHINE),
-        C(MULTI_PROTOCOL_APP), C(MULTI_PROTOCOL_NFS), C(PRIVATE_DATASETS),
-        C(WORM_DROPBOX).
+        C(MULTI_PROTOCOL_AFP), C(MULTI_PROTOCOL_NFS), C(PRIVATE_DATASETS),
+        C(WORM_DROPBOX), C(LEGACY_SHARE).
       - Note that the C(purpose) parameter may override other parameters.
         In particular, C(DEFAULT_SHARE) specifies an empty C(hostsallow)
         and C(hostsdeny).
@@ -126,6 +130,7 @@ options:
   streams:
     description:
       - Allow multiple NTFS data streams.
+    type: bool
   timemachine:
     description:
       - Enables support for Apple Time Machine backups.
@@ -153,7 +158,6 @@ EXAMPLES = '''
       - ALL
 '''
 
-# XXX - Add 'sample:' for when a share is created.
 RETURN = '''
 share:
   description:
@@ -168,17 +172,66 @@ status:
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.middleware import MiddleWare as MW
 
+# Fields that are top-level in the 25.10+ API response.
+# Maps Ansible param name -> API field name (when different).
+TOP_LEVEL_FIELDS = {
+    'name': 'name',
+    'purpose': 'purpose',
+    'enabled': 'enabled',
+    'comment': 'comment',
+    'ro': 'readonly',
+    'browsable': 'browsable',
+    'abe': 'access_based_share_enumeration',
+}
+
+# Fields that live under 'options' in the 25.10+ API response.
+# Maps Ansible param name -> API field name (when different).
+OPTIONS_FIELDS = {
+    'hostsallow': 'hostsallow',
+    'hostsdeny': 'hostsdeny',
+    'path_suffix': 'path_suffix',
+    'auxsmbconf': 'auxsmbconf',
+    'home': 'home',
+    'guestok': 'guestok',
+    'timemachine': 'timemachine',
+    'recyclebin': 'recyclebin',
+    'apple_encoding': 'aapl_name_mangling',
+    'acl': 'acl',
+    'durablehandle': 'durablehandle',
+    'shadowcopy': 'shadowcopy',
+    'streams': 'streams',
+    'fsrvp': 'fsrvp',
+}
+
+# Fields where order doesn't matter (compare as sets)
+SET_FIELDS = {'hostsallow', 'hostsdeny'}
+
+
+def get_share_value(share_info, api_field, is_option):
+    """Get a field value from the share_info response.
+
+    In 25.10+, some fields are top-level while others are under 'options'.
+    Fields under 'options' may be absent depending on the share's purpose.
+    """
+    if is_option:
+        options = share_info.get('options', {})
+        return options.get(api_field)
+    return share_info.get(api_field)
+
+
+def values_differ(param_value, current_value, param_name):
+    """Check if a parameter value differs from the current share value."""
+    if current_value is None:
+        # Field not present in the response (e.g., purpose doesn't include it)
+        return False
+    if param_name in SET_FIELDS:
+        return set(param_value) != set(current_value)
+    return param_value != current_value
+
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            # XXX - 'path' and 'name' are required to create a share, but
-            # not for operating on existing shares. For altering or
-            # deleting, we can take one of 'path' and 'name', and just
-            # query on whichever one was supplied.
-            #
-            # Maybe it's simplest to use 'path' as the invariant, and
-            # try to require 'name' only when it's really necessary.
             path=dict(type='str', required=True),
             name=dict(type='str', required=True),
             state=dict(type='str', default='present',
@@ -187,7 +240,7 @@ def main():
                          choices=['NO_PRESET', 'DEFAULT_SHARE',
                                   'ENHANCED_TIMEMACHINE', 'MULTI_PROTOCOL_AFP',
                                   'MULTI_PROTOCOL_NFS', 'PRIVATE_DATASETS',
-                                  'WORM_DROPBOX']),
+                                  'WORM_DROPBOX', 'LEGACY_SHARE']),
             hostsallow=dict(type='list', elements='str'),
             hostsdeny=dict(type='list', elements='str'),
             enabled=dict(type='bool'),
@@ -218,243 +271,88 @@ def main():
 
     mw = MW.client()
 
-    # Assign variables from properties, for convenience
     name = module.params['name']
     path = module.params['path']
     state = module.params['state']
-    purpose = module.params['purpose']
-    hostsallow = module.params['hostsallow']
-    hostsdeny = module.params['hostsdeny']
-    enabled = module.params['enabled']
-    path_suffix = module.params['path_suffix']
-    comment = module.params['comment']
-    auxsmbconf = module.params['auxsmbconf']
-    is_home = module.params['home']
-    is_ro = module.params['ro']
-    browsable = module.params['browsable']
-    timemachine = module.params['timemachine']
-    recyclebin = module.params['recyclebin']
-    guestok = module.params['guestok']
-    is_abe = module.params['abe']
-    apple_encoding = module.params['apple_encoding']
-    has_acl = module.params['acl']
-    durablehandle = module.params['durablehandle']
-    shadowcopy = module.params['shadowcopy']
-    streams = module.params['streams']
-    fsrvp = module.params['fsrvp']
 
     # Look up the share
     try:
         share_info = mw.call("sharing.smb.query",
                              [["path", "=", path]])
         if len(share_info) == 0:
-            # No such share
             share_info = None
         else:
-            # share exists
             share_info = share_info[0]
     except Exception as e:
         module.fail_json(msg=f"Error looking up share {name}: {e}")
 
-    # First, check whether the share even exists.
     if share_info is None:
         # Share doesn't exist
 
         if state == 'present':
-            # Share is supposed to exist, so create it.
-
-            # Collect arguments to pass to sharing.smb.create()
+            # Build arguments for sharing.smb.create()
             arg = {
                 "path": path,
                 "name": name,
             }
+            options = {}
 
-            if purpose is not None:
-                arg['purpose'] = purpose
+            for param_name, api_field in TOP_LEVEL_FIELDS.items():
+                value = module.params[param_name]
+                if value is not None:
+                    arg[api_field] = value
 
-            if hostsallow is not None:
-                arg['hostsallow'] = hostsallow
+            for param_name, api_field in OPTIONS_FIELDS.items():
+                value = module.params[param_name]
+                if value is not None:
+                    options[api_field] = value
 
-            if hostsdeny is not None:
-                arg['hostsdeny'] = hostsdeny
-
-            if enabled is not None:
-                arg['enabled'] = enabled
-
-            if path_suffix is not None:
-                arg['path_suffix'] = path_suffix
-
-            if comment is not None:
-                arg['comment'] = comment
-
-            if auxsmbconf is not None:
-                arg['auxsmbconf'] = auxsmbconf
-
-            if is_home is not None:
-                arg['home'] = is_home
-
-            if is_ro is not None:
-                arg['ro'] = is_ro
-
-            if browsable is not None:
-                arg['browsable'] = browsable
-
-            if timemachine is not None:
-                arg['timemachine'] = timemachine
-
-            if recyclebin is not None:
-                arg['recyclebin'] = recyclebin
-
-            if guestok is not None:
-                arg['guestok'] = guestok
-
-            if is_abe is not None:
-                arg['abe'] = is_abe
-
-            if apple_encoding is not None:
-                arg['aapl_name_mangling'] = apple_encoding
-
-            if has_acl is not None:
-                arg['acl'] = has_acl
-
-            if durablehandle is not None:
-                arg['durablehandle'] = durablehandle
-
-            if shadowcopy is not None:
-                arg['shadowcopy'] = shadowcopy
-
-            if streams is not None:
-                arg['streams'] = streams
-
-            if fsrvp is not None:
-                arg['fsrvp'] = fsrvp
+            if options:
+                arg['options'] = options
 
             if module.check_mode:
                 result['msg'] = f"Would have created share {name} with {arg}"
             else:
-                #
-                # Create new share
-                #
                 try:
                     err = mw.call("sharing.smb.create", arg)
-                    result['msg'] = err
+                    result['share'] = err
                 except Exception as e:
                     result['failed_invocation'] = arg
                     module.fail_json(msg=f"Error creating share {name}: {e}")
 
-                # Return whichever interesting bits sharing.smb.create()
-                # returned.
-                result['share'] = err
-
             result['changed'] = True
         else:
-            # Share is not supposed to exist.
-            # All is well
             result['changed'] = False
 
     else:
         # Share exists
         if state == 'present':
-            # Share is supposed to exist
-
-            # Make list of differences between what is and what should
-            # be.
+            # Build list of differences
             arg = {}
+            options = {}
 
-            if name is not None and \
-               share_info['name'] != name:
-                arg['name'] = name
+            # Check top-level fields
+            for param_name, api_field in TOP_LEVEL_FIELDS.items():
+                value = module.params[param_name]
+                if value is not None:
+                    current = get_share_value(share_info, api_field, False)
+                    if values_differ(value, current, param_name):
+                        arg[api_field] = value
 
-            if purpose is not None:
-                if share_info['purpose'] != purpose:
-                    arg['purpose'] = purpose
+            # Check options fields
+            for param_name, api_field in OPTIONS_FIELDS.items():
+                value = module.params[param_name]
+                if value is not None:
+                    current = get_share_value(share_info, api_field, True)
+                    if values_differ(value, current, param_name):
+                        options[api_field] = value
 
-            # For hostsallow and hostsdeny, order doesn't matter, so
-            # compare them as sets.
-            if hostsallow is not None:
-                if set(hostsallow) != set(share_info['hostsallow']):
-                    arg['hostsallow'] = hostsallow
+            if options:
+                arg['options'] = options
 
-            if hostsdeny is not None:
-                if set(hostsdeny) != set(share_info['hostsdeny']):
-                    arg['hostsdeny'] = hostsdeny
-
-            if enabled is not None and \
-               share_info['enabled'] != enabled:
-                arg['enabled'] = enabled
-
-            if path_suffix is not None and \
-               share_info['path_suffix'] != path_suffix:
-                arg['path_suffix'] = path_suffix
-
-            if comment is not None and \
-               share_info['comment'] != comment:
-                arg['comment'] = comment
-
-            if auxsmbconf is not None and \
-               share_info['auxsmbconf'] != auxsmbconf:
-                arg['auxsmbconf'] = auxsmbconf
-
-            if is_home is not None and \
-               share_info['home'] != is_home:
-                arg['home'] = is_home
-
-            if is_ro is not None and \
-               share_info['ro'] != is_ro:
-                arg['ro'] = is_ro
-
-            if browsable is not None and \
-               share_info['browsable'] != browsable:
-                arg['browsable'] = browsable
-
-            if timemachine is not None and \
-               share_info['timemachine'] != timemachine:
-                arg['timemachine'] = timemachine
-
-            if recyclebin is not None and \
-               share_info['recyclebin'] != recyclebin:
-                arg['recyclebin'] = recyclebin
-
-            if guestok is not None and \
-               share_info['guestok'] != guestok:
-                arg['guestok'] = guestok
-
-            if is_abe is not None and \
-               share_info['abe'] != is_abe:
-                arg['abe'] = is_abe
-
-            if apple_encoding is not None and \
-               share_info['aapl_name_mangling'] != apple_encoding:
-                arg['aapl_name_mangling'] = apple_encoding
-
-            if has_acl is not None and \
-               share_info['acl'] != has_acl:
-                arg['acl'] = has_acl
-
-            if durablehandle is not None and \
-               share_info['durablehandle'] != durablehandle:
-                arg['durablehandle'] = durablehandle
-
-            if shadowcopy is not None and \
-               share_info['shadowcopy'] != shadowcopy:
-                arg['shadowcopy'] = shadowcopy
-
-            if streams is not None and \
-               share_info['streams'] != streams:
-                arg['streams'] = streams
-
-            if fsrvp is not None and \
-               share_info['fsrvp'] != fsrvp:
-                arg['fsrvp'] = fsrvp
-
-            # If there are any changes, sharing.smb.update()
             if len(arg) == 0:
-                # No changes
                 result['changed'] = False
             else:
-                #
-                # Update share.
-                #
                 if module.check_mode:
                     result['msg'] = f"Would have updated share {name}: {arg}"
                 else:
@@ -464,19 +362,13 @@ def main():
                                       arg)
                     except Exception as e:
                         module.fail_json(msg=f"Error updating share {name} with {arg}: {e}")
-                        # Return any interesting bits from err
-                        result['status'] = err['status']
                 result['changed'] = True
         else:
             # Share is not supposed to exist
-
             if module.check_mode:
                 result['msg'] = f"Would have deleted share {name}"
             else:
                 try:
-                    #
-                    # Delete share.
-                    #
                     err = mw.call("sharing.smb.delete",
                                   share_info['id'])
                 except Exception as e:
