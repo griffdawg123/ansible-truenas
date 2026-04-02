@@ -324,6 +324,8 @@ releases:
         Supports lookup by stable ``builtin_name`` or display ``name``."
       - "Added ``pool_info`` and ``dataset_info`` info modules for querying
         ZFS pools and datasets without modifying the host."
+      - "Added ``ssh``, ``smb``, and ``ups`` modules for configuring
+        service-specific settings via the middleware API."
       minor_changes:
       - "``group``: Added ``sudo_commands`` and ``sudo_commands_nopasswd`` parameters."
       - "``user``: Added ``home_create`` parameter to create home directories
@@ -342,5 +344,14 @@ releases:
       namespace: ''
     - description: Gather information about ZFS datasets.
       name: dataset_info
+      namespace: ''
+    - description: Configure SSH service.
+      name: ssh
+      namespace: ''
+    - description: Configure SMB service.
+      name: smb
+      namespace: ''
+    - description: Configure UPS service.
+      name: ups
       namespace: ''
     release_date: '2026-04-02'
