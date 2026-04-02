@@ -10,12 +10,6 @@ description:
   - Configure the NFS service.
   - For individual NFS exports, see C(sharing_nfs)
 options:
-  udp:
-    description:
-      - If true, serve UDP clients. Use this if you have NFS clients
-        that have to use UDP.
-      - This sets the C(-u) option to C(nfsd).
-    type: bool
   allow_nonroot:
     description:
       - When true, allow non-root requests to be served.
@@ -44,10 +38,12 @@ options:
       - The number of NFS servers to create. This value is passed
         to the C(-n) parameter of C(nfsd).
     type: int
-  v3owner:
+  rdma:
     description:
-      - Enable the NFSv3 ownership model for NFSv4.
-      - Ignored unless NFSv4 is turned on through `protocols` or `nfsv4`.
+      - Enable NFS over RDMA support.
+      - Requires a supported platform and an RDMA-capable NIC.
+      - NFS over RDMA uses port 20040.
+    type: bool
   krb:
     description:
       - Turn on Kerberos for NFSv4. Forces shares to fail without a
@@ -103,13 +99,6 @@ version_added: 0.4.0
 '''
 
 EXAMPLES = '''
-- name: Enable UDP
-  hosts: nfs_server
-  become: yes
-  tasks:
-    - arensb.truenas.nfs:
-        udp: yes
-
 - name: Forbid mount requests from non-root accounts
   hosts: nfs_server
   become: yes
@@ -148,13 +137,6 @@ EXAMPLES = '''
     - arensb.truenas.nfs:
         nfsv4: yes
 
-- name: Enable NFS v3 ownership model under v4
-  hosts: nfs_server
-  become: yes
-  tasks:
-    - arensb.truenas.nfs:
-        v3owner: true
-
 - name: Turn on Kerberos
   hosts: nfs_server
   become: yes
@@ -183,13 +165,12 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             servers=dict(type='int'),
-            udp=dict(type='bool'),
             allow_nonroot=dict(type='bool'),
             nfsv4=dict(type='bool'),
             protocols=dict(type='list', elements='str',
                            choices=['nfsv3', 'NFSv3', 'NFSV3', 'v3', 'V3',
                                     'nfsv4', 'NFSv4', 'NFSV4', 'v4', 'V4']),
-            v3owner=dict(type='bool'),
+            rdma=dict(type='bool'),
             krb=dict(type='bool'),
             domain=dict(type='str'),
             bindip=dict(type='list', elements='str'),
@@ -215,11 +196,10 @@ def main():
 
     # Assign variables from properties, for convenience
     servers = module.params['servers']
-    udp = module.params['udp']
     allow_nonroot = module.params['allow_nonroot']
     nfsv4 = module.params['nfsv4']
     protocols = module.params['protocols']
-    v3owner = module.params['v3owner']
+    rdma = module.params['rdma']
     krb = module.params['krb']
     domain = module.params['domain']
     bindip = module.params['bindip']
@@ -279,12 +259,12 @@ def main():
     if servers is not None and nfs_info['servers'] != servers:
         arg['servers'] = servers
 
-    if udp is not None and nfs_info['udp'] is not udp:
-        arg['udp'] = udp
-
     if allow_nonroot is not None and nfs_info['allow_nonroot'] \
        is not allow_nonroot:
         arg['allow_nonroot'] = allow_nonroot
+
+    if rdma is not None and nfs_info.get('rdma') is not rdma:
+        arg['rdma'] = rdma
 
     if want_protocols is not None:
         # The user cares which protocols are enabled.
@@ -374,7 +354,5 @@ def main():
 
 
 # Main
-if __name__ == "__main__":
-    main()
 if __name__ == "__main__":
     main()

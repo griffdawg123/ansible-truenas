@@ -330,6 +330,8 @@ releases:
         automatically."
       - "``user``: Renamed ``comment`` parameter to ``full_name`` to match the
         TrueNAS UI and API. ``comment`` is kept as a backwards-compatible alias."
+      - "``nfs``: Remove ``udp`` and ``v3owner`` parameters (removed from
+        25.10 API). Add ``rdma`` parameter. Fix duplicate main() call."
       release_summary: "TrueNAS SCALE 25.10+ compatibility fixes and new features."
     modules:
     - description: Manage privilege group assignments.
