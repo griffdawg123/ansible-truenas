@@ -299,3 +299,25 @@ releases:
       minor_changes:
       - "Can now change the password of an existing user."
     release_date: '2026-01-01'
+  1.15.0:
+    changes:
+      bugfixes:
+      - "``sharing_smb``: Fix updates failing on TrueNAS SCALE 25.10+ due to API
+        restructuring. Fields moved under ``options`` dict and some were renamed
+        (``ro`` to ``readonly``, ``abe`` to ``access_based_share_enumeration``).
+        (https://github.com/arensb/ansible-truenas/issues/58)"
+      major_changes:
+      - "Added the ``privilege`` module for managing group-to-privilege assignments
+        (LOCAL_ADMINISTRATOR, READONLY_ADMINISTRATOR, SHARING_ADMINISTRATOR)."
+      minor_changes:
+      - "``group``: Added ``sudo_commands`` and ``sudo_commands_nopasswd`` parameters."
+      - "``user``: Added ``home_create`` parameter to create home directories
+        automatically."
+      - "``user``: Renamed ``comment`` parameter to ``full_name`` to match the
+        TrueNAS UI and API. ``comment`` is kept as a backwards-compatible alias."
+      release_summary: "TrueNAS SCALE 25.10+ compatibility fixes and new features."
+    modules:
+    - description: Manage privilege group assignments.
+      name: privilege
+      namespace: ''
+    release_date: '2026-04-02'
