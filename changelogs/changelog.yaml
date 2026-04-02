@@ -306,9 +306,14 @@ releases:
         restructuring. Fields moved under ``options`` dict and some were renamed
         (``ro`` to ``readonly``, ``abe`` to ``access_based_share_enumeration``).
         (https://github.com/arensb/ansible-truenas/issues/58)"
+      - "``privilege``: Fix ``unhashable type: dict`` error. The API returns
+        ``local_groups`` as group objects, not plain GIDs."
       major_changes:
       - "Added the ``privilege`` module for managing group-to-privilege assignments
-        (LOCAL_ADMINISTRATOR, READONLY_ADMINISTRATOR, SHARING_ADMINISTRATOR)."
+        (LOCAL_ADMINISTRATOR, READONLY_ADMINISTRATOR, SHARING_ADMINISTRATOR).
+        Supports lookup by stable ``builtin_name`` or display ``name``."
+      - "Added ``pool_info`` and ``dataset_info`` info modules for querying
+        ZFS pools and datasets without modifying the host."
       minor_changes:
       - "``group``: Added ``sudo_commands`` and ``sudo_commands_nopasswd`` parameters."
       - "``user``: Added ``home_create`` parameter to create home directories
@@ -319,5 +324,11 @@ releases:
     modules:
     - description: Manage privilege group assignments.
       name: privilege
+      namespace: ''
+    - description: Gather information about ZFS pools.
+      name: pool_info
+      namespace: ''
+    - description: Gather information about ZFS datasets.
+      name: dataset_info
       namespace: ''
     release_date: '2026-04-02'
