@@ -72,6 +72,9 @@ options:
     description:
       - If true, this share may be used for home directories.
       - Only one such share is allowed.
+      - In TrueNAS 25.10+, this translates to setting the share purpose
+        to C(PRIVATE_DATASETS_SHARE). When I(home) is set, any explicit
+        I(purpose) value is overridden.
     type: bool
   hostsdeny:
     description:
@@ -184,6 +187,10 @@ TOP_LEVEL_FIELDS = {
     'abe': 'access_based_share_enumeration',
 }
 
+# In 25.10+, 'home' is no longer a field — home shares are created by
+# setting purpose to PRIVATE_DATASETS_SHARE.
+HOME_PURPOSE = 'PRIVATE_DATASETS_SHARE'
+
 # Fields that live under 'options' in the 25.10+ API response.
 # Maps Ansible param name -> API field name (when different).
 OPTIONS_FIELDS = {
@@ -191,7 +198,6 @@ OPTIONS_FIELDS = {
     'hostsdeny': 'hostsdeny',
     'path_suffix': 'path_suffix',
     'auxsmbconf': 'auxsmbconf',
-    'home': 'home',
     'guestok': 'guestok',
     'timemachine': 'timemachine',
     'recyclebin': 'recyclebin',
@@ -308,6 +314,10 @@ def main():
                 if value is not None:
                     options[api_field] = value
 
+            # home: true translates to purpose: PRIVATE_DATASETS_SHARE
+            if module.params['home']:
+                arg['purpose'] = HOME_PURPOSE
+
             if options:
                 arg['options'] = options
                 # 25.10+ API requires 'purpose' when 'options' is set
@@ -350,6 +360,15 @@ def main():
                     current = get_share_value(share_info, api_field, True)
                     if values_differ(value, current, param_name):
                         options[api_field] = value
+
+            # home: true translates to purpose: PRIVATE_DATASETS_SHARE
+            home = module.params['home']
+            if home is not None:
+                current_is_home = share_info.get('purpose') == HOME_PURPOSE
+                if home and not current_is_home:
+                    arg['purpose'] = HOME_PURPOSE
+                elif not home and current_is_home:
+                    arg['purpose'] = 'DEFAULT_SHARE'
 
             if options:
                 arg['options'] = options

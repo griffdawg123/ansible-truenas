@@ -314,6 +314,10 @@ releases:
         auto-sets ``purpose`` to ``DEFAULT_SHARE`` on create, or carries
         forward the existing purpose on update. Also updated purpose choices
         to match the 25.10 API."
+      - "``sharing_smb``: Fix ``home`` parameter for 25.10. The ``home``
+        field no longer exists in the API; home shares are now created by
+        setting ``purpose`` to ``PRIVATE_DATASETS_SHARE``. The module
+        translates ``home: true`` to the correct purpose automatically."
       major_changes:
       - "Added the ``privilege`` module for managing group-to-privilege assignments
         (LOCAL_ADMINISTRATOR, READONLY_ADMINISTRATOR, SHARING_ADMINISTRATOR).
