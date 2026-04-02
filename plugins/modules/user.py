@@ -37,11 +37,12 @@ options:
         will be removed from the user's C(~/.ssh/authorized_keys).
     type: bool
     default: false
-  comment:
+  full_name:
     description:
-      - The full name (I(GECOS) field) of the user.
+      - The user's full name.
+      - This corresponds to the full name field in the TrueNAS UI.
     type: str
-    default: ""
+    aliases: [ comment ]
   create_group:
     description:
       - If true, create a new group with the same name as the user.
@@ -199,21 +200,21 @@ EXAMPLES = '''
 - name: Create an ordinary user and their group
   arensb.truenas.user:
     name: bob
-    comment: "Bob the User"
+    full_name: "Bob the User"
     create_group: yes
     password: "<encrypted password string>"
 
 - name: Create an ordinary user and put them into an existing group
   arensb.truenas.user:
     name: bob
-    comment: "Bob the User"
+    full_name: "Bob the User"
     group: users
     password: "<encrypted string>"
 
 - name: Create a user without a working password
   arensb.truenas.user:
     name: bob
-    comment: "Bob the User"
+    full_name: "Bob the User"
     group: bobsgroup
     password_disabled: yes
 
@@ -371,8 +372,7 @@ def main():
             # From builtin.user module
             # x name(str)
             # x uid(int)
-            # x comment(str) - GECOS
-            comment=dict(type='str'),
+            full_name=dict(type='str', aliases=['comment']),
             email=dict(type='str'),
             # - hidden(bool)
             # - non_unique(bool)
@@ -449,7 +449,7 @@ def main():
     append = module.params['append']
     home = module.params['home']
     home_create = module.params['home_create']
-    comment = module.params['comment']
+    full_name = module.params['full_name']
     email = module.params['email']
     state = module.params['state']
     delete_group = module.params['delete_group']
@@ -532,10 +532,10 @@ def main():
                 # password_disabled is not set.
                 arg['password'] = password
 
-            if comment is None:
+            if full_name is None:
                 arg['full_name'] = ""
             else:
-                arg['full_name'] = comment
+                arg['full_name'] = full_name
 
             if email is not None:
                 arg['email'] = email
@@ -739,7 +739,7 @@ def main():
             # - name (username)
             # - password (crypt)
             # - password_disabled
-            # - comment
+            # - full_name
             # - group (primary group)
 
             if uid is not None and user_info['uid'] != uid:
@@ -753,8 +753,8 @@ def main():
                user_info['password_disabled'] != password_disabled:
                 arg['password_disabled'] = password_disabled
 
-            if comment is not None and user_info['full_name'] != comment:
-                arg['full_name'] = comment
+            if full_name is not None and user_info['full_name'] != full_name:
+                arg['full_name'] = full_name
 
             if email is not None and user_info['email'] != email:
                 arg['email'] = email
