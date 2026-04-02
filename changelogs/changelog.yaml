@@ -308,6 +308,11 @@ releases:
         (https://github.com/arensb/ansible-truenas/issues/58)"
       - "``privilege``: Fix ``unhashable type: dict`` error. The API returns
         ``local_groups`` as group objects, not plain GIDs."
+      - "``sharing_smb``: Fix setting options like ``home`` failing with
+        'You must set purpose if you set options'. The 25.10+ API requires
+        a ``purpose`` field whenever ``options`` is set. The module now
+        auto-sets ``purpose`` to ``NO_PRESET`` on create, or carries forward
+        the existing purpose on update."
       major_changes:
       - "Added the ``privilege`` module for managing group-to-privilege assignments
         (LOCAL_ADMINISTRATOR, READONLY_ADMINISTRATOR, SHARING_ADMINISTRATOR).

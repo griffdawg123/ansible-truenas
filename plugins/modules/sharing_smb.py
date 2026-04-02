@@ -309,6 +309,9 @@ def main():
 
             if options:
                 arg['options'] = options
+                # 25.10+ API requires 'purpose' when 'options' is set
+                if 'purpose' not in arg:
+                    arg['purpose'] = 'NO_PRESET'
 
             if module.check_mode:
                 result['msg'] = f"Would have created share {name} with {arg}"
@@ -349,6 +352,10 @@ def main():
 
             if options:
                 arg['options'] = options
+                # 25.10+ API requires 'purpose' when 'options' is set.
+                # Carry forward the existing purpose if not explicitly changed.
+                if 'purpose' not in arg:
+                    arg['purpose'] = share_info.get('purpose', 'NO_PRESET')
 
             if len(arg) == 0:
                 result['changed'] = False
