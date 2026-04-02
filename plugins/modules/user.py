@@ -89,6 +89,13 @@ options:
         form the real home directory (C(/mnt/pool0/homes/bob), in this
         example). This is not recommended. It is better to use the full
         home directory, ending with the username."
+  home_create:
+    description:
+      - If true, create the home directory if it does not already exist.
+      - Without this, TrueNAS requires the home directory to already exist
+        on disk.
+    type: bool
+    default: false
   name:
     description:
       - Name of the user to manage.
@@ -333,6 +340,7 @@ def main():
 
             groups=dict(type='list'),
             home=dict(type='path'),
+            home_create=dict(type='bool', default=False),
             # XXX - remove: delete home directory. builtin.user allows
             # doing this.
 
@@ -440,6 +448,7 @@ def main():
     groups = module.params['groups']
     append = module.params['append']
     home = module.params['home']
+    home_create = module.params['home_create']
     comment = module.params['comment']
     email = module.params['email']
     state = module.params['state']
@@ -610,6 +619,8 @@ def main():
                     arg['uid'] = next_uid
 
                 arg['home'] = home
+                if home_create:
+                    arg['home_create'] = True
 
             if ssh_authorized_keys is not None:
                 arg['sshpubkey'] = "\n".join(ssh_authorized_keys)+"\n"
@@ -778,6 +789,8 @@ def main():
                 else:
                     # Something has changed
                     arg['home'] = home
+                    if home_create:
+                        arg['home_create'] = True
 
             if old_sudo_call:
                 # By the time we get to this section, we know that the
