@@ -71,6 +71,12 @@ options:
     description:
       - If true, allow anonymous usage statistics collection.
     type: bool
+  ui_certificate:
+    description:
+      - Name of the SSL certificate to use for the web UI.
+      - The certificate must already exist on the system (see the
+        C(certificate) module).
+    type: str
   ds_auth:
     description:
       - If true, enable directory service authentication for the UI.
@@ -98,6 +104,10 @@ EXAMPLES = '''
   arensb.truenas.system_general:
     ui_allowlist:
       - 10.0.0.0/24
+
+- name: Set the web UI SSL certificate
+  arensb.truenas.system_general:
+    ui_certificate: my_custom_cert
 '''
 
 RETURN = '''
@@ -147,6 +157,7 @@ def main():
             kbdmap=dict(type='str'),
             timezone=dict(type='str'),
             usage_collection=dict(type='bool'),
+            ui_certificate=dict(type='str'),
             ds_auth=dict(type='bool'),
         ),
         supports_check_mode=True,
@@ -177,6 +188,22 @@ def main():
                 arg[api_field] = value
         elif value != current:
             arg[api_field] = value
+
+    # Handle ui_certificate by name -> ID resolution
+    cert_name = module.params['ui_certificate']
+    if cert_name is not None:
+        current_cert = config.get('ui_certificate') or {}
+        if current_cert.get('name') != cert_name:
+            try:
+                certs = mw.call("certificate.query",
+                                [["name", "=", cert_name]])
+                if len(certs) == 0:
+                    module.fail_json(
+                        msg=f"Certificate '{cert_name}' not found")
+                arg['ui_certificate'] = certs[0]['id']
+            except Exception as e:
+                module.fail_json(
+                    msg=f"Error looking up certificate '{cert_name}': {e}")
 
     if len(arg) == 0:
         result['changed'] = False
