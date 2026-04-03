@@ -328,6 +328,8 @@ releases:
         service-specific settings via the middleware API."
       - "Added ``system_general`` and ``system_advanced`` modules for
         configuring system settings (UI, timezone, MOTD, syslog, etc.)."
+      - "Added ``user_preferences`` module for managing UI preferences
+        (session timeout, theme, language, date/time format, etc.)."
       minor_changes:
       - "``group``: Added ``sudo_commands`` and ``sudo_commands_nopasswd`` parameters."
       - "``user``: Added ``home_create`` parameter to create home directories
@@ -361,5 +363,8 @@ releases:
       namespace: ''
     - description: Configure advanced system settings.
       name: system_advanced
+      namespace: ''
+    - description: Manage UI preferences for the connection user.
+      name: user_preferences
       namespace: ''
     release_date: '2026-04-02'
