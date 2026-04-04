@@ -106,7 +106,9 @@ options:
   password:
     description:
       - User's password, as a crypted string.
-      - Required unless C(password_disabled) is true.
+      - Required when creating a user unless C(password_disabled) is true.
+      - When updating an existing user, only sent if explicitly provided.
+        This avoids falsely reporting changes on every run.
     type: str
   password_disabled:
     description:
@@ -133,8 +135,9 @@ options:
       - Specifies whether user should have access to SMB shares.
       - Under TrueNAS SCALE, a user with C(smb) enabled may not have
         their password disabled.
+      - Defaults to false when creating a new user if not specified.
+      - When updating an existing user, only sent if explicitly set.
     type: bool
-    default: true
   ssh_authorized_keys:
     description:
       - List of ssh public keys to put in the user's C(.ssh/authorized_keys)
@@ -324,7 +327,7 @@ def main():
             # and something sensible will happen.
             create_group=dict(type='bool', default=True),
 
-            password=dict(type='str', default='', no_log=True),
+            password=dict(type='str', no_log=True),
 
             # We set no_log explicitly to False, because otherwise
             # module_utils.basic sees "password" in the name and gets
@@ -345,7 +348,7 @@ def main():
             # XXX - remove: delete home directory. builtin.user allows
             # doing this.
 
-            smb=dict(type='bool', default=True),
+            smb=dict(type='bool'),
 
             sudo_commands=dict(type='list',
                                elements='str'),
@@ -526,11 +529,12 @@ def main():
                 # password, even if password_disabled has been
                 # specified. So let's make sure that a password is
                 # wanted, first.
-                if not password_disabled:
+                if not password_disabled and password is not None:
                     arg['password'] = password
             else:
                 # password_disabled is not set.
-                arg['password'] = password
+                if password is not None:
+                    arg['password'] = password
 
             if full_name is None:
                 arg['full_name'] = ""
@@ -543,8 +547,8 @@ def main():
             if uid is not None:
                 arg['uid'] = uid
 
-            if smb is not None:
-                arg['smb'] = smb
+            # Default smb to False on create if not specified
+            arg['smb'] = smb if smb is not None else False
 
             if old_sudo_call:
                 # 'old_sudo_call' isn't set to True until we know that
