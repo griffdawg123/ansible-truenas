@@ -330,6 +330,9 @@ releases:
         configuring system settings (UI, timezone, MOTD, syslog, etc.)."
       - "Added ``user_preferences`` module for managing UI preferences
         (session timeout, theme, language, date/time format, etc.)."
+      - "Added ``app``, ``app_service``, and ``app_info`` modules for
+        full app lifecycle management (install, configure, start/stop,
+        upgrade, remove, and query)."
       minor_changes:
       - "``group``: Added ``sudo_commands`` and ``sudo_commands_nopasswd`` parameters."
       - "``user``: Added ``home_create`` parameter to create home directories
@@ -371,5 +374,14 @@ releases:
       namespace: ''
     - description: Manage UI preferences for the connection user.
       name: user_preferences
+      namespace: ''
+    - description: Manage TrueNAS apps.
+      name: app
+      namespace: ''
+    - description: Manage app runtime state.
+      name: app_service
+      namespace: ''
+    - description: Gather information about apps.
+      name: app_info
       namespace: ''
     release_date: '2026-04-02'
