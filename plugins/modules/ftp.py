@@ -96,7 +96,7 @@ FIELDS = {
 }
 
 # Fields where order doesn't matter (compare as sets).
-SET_FIELDS = set()
+SET_FIELDS: set[str] = set()
 
 
 def main():

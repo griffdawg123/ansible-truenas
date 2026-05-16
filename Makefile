@@ -103,3 +103,11 @@ lint::
 sanity:	compatibility-link
 	ANSIBLE_COLLECTIONS_PATH=. \
 	    ansible-test sanity --venv --color
+
+# Type-check with mypy. Has to be invoked through the
+# ansible_collections/$(subst .,/,${COLLECTION}) path so that the
+# 'from ..module_utils import setup' relative imports inside plugins/
+# resolve to the same namespace package that Ansible uses at runtime.
+typecheck:	compatibility-link
+	mypy --config-file .mypy.ini \
+	    ansible_collections/$(subst .,/,${COLLECTION})/plugins/
