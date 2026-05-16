@@ -77,3 +77,5 @@ build_ignore:
 - changelogs/.plugin-cache.yaml
 - changelogs/fragments*
 - .pytest_cache
+- uv.lock
+- pyproject.toml
