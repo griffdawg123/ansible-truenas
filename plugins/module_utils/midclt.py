@@ -11,7 +11,6 @@
 #
 # Example:
 # midclt call user.query '[["username", "=", "root" ]]'
-# midclt call plugin.defaults '{"plugin":"syncthing"}'
 
 __metaclass__ = type
 """
@@ -71,7 +70,6 @@ class Midclt:
 
         # Special case: some jobs print "True" or "False", which
         # is not valid JSON.
-        # jail.stop() can print "null", but that's valid JSON.
         if msg in ("True", "False"):
             # Convert to lower case, which is legal JSON.
             msg = msg.lower()
