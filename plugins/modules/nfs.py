@@ -28,11 +28,6 @@ options:
       - NFSv4
       - v3
       - v4
-  nfsv4:
-    description:
-      - If true, enable NFSv4. Otherwise, use NFSv3.
-      - Deprecated. Use `protocols` instead.
-    type: bool
   servers:
     description:
       - The number of NFS servers to create. This value is passed
@@ -49,12 +44,12 @@ options:
       - Turn on Kerberos for NFSv4. Forces shares to fail without a
         Kerberos ticket.
       - This enables the C(gssd) daemon.
-      - Ignored unless C(nfsv4) is true.
+      - Ignored unless NFSv4 is enabled via C(protocols).
   domain:
     description:
       - Overrides the default DNS domain name for NFSv4.
       - Passes the C(-domain) option to C(nfsuserd).
-      - Ignored unless C(nfsv4) is true.
+      - Ignored unless NFSv4 is enabled via C(protocols).
     type: str
   bindip:
     description:
@@ -129,14 +124,6 @@ EXAMPLES = '''
     - arensb.truenas.nfs:
         protocols: NFSv4
 
-# `nfsv4` is deprecated.
-- name: Enable NFSv4
-  hosts: nfs_server
-  become: yes
-  tasks:
-    - arensb.truenas.nfs:
-        nfsv4: yes
-
 - name: Turn on Kerberos
   hosts: nfs_server
   become: yes
@@ -157,16 +144,37 @@ status:
   type: dict
 '''
 
+import sys
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.middleware import MiddleWare as MW
+from ..module_utils import setup
+from packaging import version
 
 
 def main():
+    # This module targets TrueNAS SCALE 25.10 and newer. Fail fast on
+    # anything older so the user gets a clear message instead of cryptic
+    # middleware errors.
+    try:
+        tn_version = setup.get_tn_version()
+    except Exception as e:
+        print(f'{{"failed":true, "msg": "Error getting TrueNAS version: {e}"}}')
+        sys.exit(1)
+
+    TC_25_10 = version.parse("25.10")
+    if not (tn_version['name'] == "TrueNAS" and
+            tn_version['type'] in {"SCALE", "COMMUNITY_EDITION"} and
+            tn_version['version'] >= TC_25_10):
+        print(
+            '{"failed":true, "msg": "The arensb.truenas.nfs module '
+            'requires TrueNAS SCALE 25.10 or newer."}'
+        )
+        sys.exit(1)
+
     module = AnsibleModule(
         argument_spec=dict(
             servers=dict(type='int'),
             allow_nonroot=dict(type='bool'),
-            nfsv4=dict(type='bool'),
             protocols=dict(type='list', elements='str',
                            choices=['nfsv3', 'NFSv3', 'NFSV3', 'v3', 'V3',
                                     'nfsv4', 'NFSv4', 'NFSV4', 'v4', 'V4']),
@@ -181,9 +189,6 @@ def main():
             mountd_log=dict(type='bool'),
             statd_lockd_log=dict(type='bool'),
             ),
-        mutually_exclusive=[
-            ['nfsv4', 'protocols']
-        ],
         supports_check_mode=True,
     )
 
@@ -197,7 +202,6 @@ def main():
     # Assign variables from properties, for convenience
     servers = module.params['servers']
     allow_nonroot = module.params['allow_nonroot']
-    nfsv4 = module.params['nfsv4']
     protocols = module.params['protocols']
     rdma = module.params['rdma']
     krb = module.params['krb']
@@ -211,7 +215,6 @@ def main():
     statd_lockd_log = module.params['statd_lockd_log']
 
     # XXX - Debugging
-    result['nfsv4'] = nfsv4
     result['protocols'] = protocols
 
     # Add a table of acceptable synonyms for the protocol names.
@@ -234,11 +237,6 @@ def main():
     want_protocols = None
     if protocols is not None:
         want_protocols = set([protocol_names[i] for i in protocols])
-    elif nfsv4 is not None:
-        if nfsv4:
-            want_protocols = set(["NFSV3", "NFSV4"])
-        else:
-            want_protocols = set(["NFSV3"])
     # XXX - Debugging
     result['want_protocols'] = want_protocols
     try:
@@ -247,10 +245,6 @@ def main():
         module.fail_json(msg=f"Error looking up nfs configuration: {e}")
 
     result['status'] = nfs_info
-
-    # Check whether nfs_info has key 'protocols'. If yes, use
-    # protocol syntax. Otherwise, use nfsv4 = bool.
-    use_protocols = 'protocols' in nfs_info
 
     # Make list of differences between what is and what should
 
@@ -267,36 +261,11 @@ def main():
         arg['rdma'] = rdma
 
     if want_protocols is not None:
-        # The user cares which protocols are enabled.
-
-        if not use_protocols:
-            # If you only have a v4 toggle, you're getting v3 whether you
-            # want it or not.
-            want_protocols.add("NFSV3")
-
-        if 'v4' in nfs_info:
-            # This version of TrueNAS uses 'v4'.
-            have_protocols = set(['NFSV3', 'NFSV4']) \
-                if nfs_info['v4'] else set(['NFSV3'])
-        else:
-            # This version of TrueNAS uses 'protocols'
-            have_protocols = set(nfs_info['protocols'])
-
+        have_protocols = set(nfs_info['protocols'])
         # XXX - Debugging
         result['have_protocols'] = have_protocols
-
         if have_protocols != want_protocols:
-            if use_protocols:
-                arg['protocols'] = list(want_protocols)
-            else:
-                # This isn't perfect: if you specify
-                #       protocols: ["NFSV4"]
-                #
-                # then on TrueNAS SCALE, it turns off v3 and turns on
-                # v4. On TrueNAS CORE, it turns on v4 and there's no
-                # way to turn off v3.
-                arg['v4'] = 'NFSV4' in want_protocols
-
+            arg['protocols'] = list(want_protocols)
 
     if krb is not None and nfs_info['v4_krb'] is not krb:
         arg['v4_krb'] = krb
