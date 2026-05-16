@@ -2,13 +2,13 @@
 # The namespace of the collection. This can be a company/brand/organization or product namespace under which all
 # content lives. May only contain alphanumeric lowercase characters and underscores. Namespaces cannot start with
 # underscores or numbers and cannot contain consecutive underscores
-namespace: arensb
+namespace: jdevera
 
 # The name of the collection. Has the same character restrictions as 'namespace'
 name: truenas
 
 # The version of the collection. Must be compatible with semantic versioning
-version: 1.14.4
+version: 2.0.0
 
 # The path to the Markdown (.md) readme file. This path is relative to the root of the collection
 readme: README.md
@@ -16,6 +16,7 @@ readme: README.md
 # A list of the collection's content authors. Can be just the name or in the format 'Full Name <email> (url)
 # @nicks:irc/im.site#channel'
 authors:
+- "Jacobo de Vera (https://github.com/jdevera)"
 - "Andrew Arensburger (https://ooblick.com/)"
 - "Ed Hull (https://github.com/edhull)"
 - "Steven Ellis (https://github.com/steven-ellis)"
@@ -26,7 +27,7 @@ authors:
 
 ### OPTIONAL but strongly recommended
 # A short summary description of the collection
-description: Manage a TrueNAS host
+description: Manage a TrueNAS SCALE host (25.10+). Fork of arensb.truenas.
 
 # Either a single license or a list of licenses for content inside of a collection. Ansible Galaxy currently only
 # accepts L(SPDX,https://spdx.org/licenses/) licenses. This key is mutually exclusive with 'license_file'
@@ -49,16 +50,16 @@ tags:
 dependencies: {}
 
 # The URL of the originating SCM repository
-repository: https://github.com/arensb/ansible-truenas
+repository: https://github.com/jdevera/ansible-truenas
 
 # The URL to any online docs
-documentation: https://arensb.github.io/truenas/index.html
+# documentation:
 
 # The URL to the homepage of the collection/project
 # homepage: http://example.com
 
 # The URL to the collection issue tracker
-issues: https://github.com/arensb/ansible-truenas/issues
+issues: https://github.com/jdevera/ansible-truenas/issues
 
 # A list of file glob-like patterns used to filter any files or directories that should not be included in the build
 # artifact. A pattern is matched from the relative path of the file or directory of the collection directory. This

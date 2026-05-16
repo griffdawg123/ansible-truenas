@@ -53,16 +53,16 @@ version_added: 0.1.0
 
 EXAMPLES = '''
 - name: Make sure group "mygroup" exists
-  arensb.truenas.group:
+  jdevera.truenas.group:
     name: mygroup
 
 - name: Make sure group "badgroup" is gone
-  arensb.truenas.group:
+  jdevera.truenas.group:
     name: badgroup
     state: absent
 
 - name: Group with sudo access
-  arensb.truenas.group:
+  jdevera.truenas.group:
     name: admins
     sudo_commands:
       - ALL

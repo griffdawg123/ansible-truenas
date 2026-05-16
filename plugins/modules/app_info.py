@@ -32,14 +32,14 @@ options:
 notes:
   - Supports C(check_mode).
 seealso:
-  - module: arensb.truenas.app
-  - module: arensb.truenas.app_service
+  - module: jdevera.truenas.app
+  - module: jdevera.truenas.app_service
 version_added: 1.15.0
 '''
 
 EXAMPLES = '''
 - name: List all installed apps
-  arensb.truenas.app_info:
+  jdevera.truenas.app_info:
   register: installed
 
 - name: Show installed app names and states
@@ -48,12 +48,12 @@ EXAMPLES = '''
   loop: "{{ installed.apps }}"
 
 - name: Get details for a specific app
-  arensb.truenas.app_info:
+  jdevera.truenas.app_info:
     name: plex
   register: plex_info
 
 - name: List available catalog apps
-  arensb.truenas.app_info:
+  jdevera.truenas.app_info:
     available: true
   register: catalog
 '''

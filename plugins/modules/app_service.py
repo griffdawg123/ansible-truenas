@@ -51,35 +51,35 @@ notes:
   - Supports C(check_mode).
   - All operations are jobs and may take some time.
 seealso:
-  - module: arensb.truenas.app
-  - module: arensb.truenas.app_info
+  - module: jdevera.truenas.app
+  - module: jdevera.truenas.app_info
 version_added: 1.15.0
 '''
 
 EXAMPLES = '''
 - name: Start an app
-  arensb.truenas.app_service:
+  jdevera.truenas.app_service:
     name: plex
     state: started
 
 - name: Stop an app
-  arensb.truenas.app_service:
+  jdevera.truenas.app_service:
     name: plex
     state: stopped
 
 - name: Upgrade to latest version
-  arensb.truenas.app_service:
+  jdevera.truenas.app_service:
     name: plex
     state: upgraded
 
 - name: Upgrade to a specific version
-  arensb.truenas.app_service:
+  jdevera.truenas.app_service:
     name: plex
     state: upgraded
     app_version: "1.32.0"
 
 - name: Redeploy an app
-  arensb.truenas.app_service:
+  jdevera.truenas.app_service:
     name: plex
     state: redeployed
 '''

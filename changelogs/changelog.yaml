@@ -84,7 +84,7 @@ releases:
       bugfixes:
       - In the ``group`` module, the ``non_unique`` option is ignored in versions
         of TrueNAS where it is not supported (SCALE 24.10 and above). ``non_unique``
-        is still used in CORE. (https://github.com/arensb/ansible-truenas/pull/38/)
+        is still used in CORE. (https://github.com/jdevera/ansible-truenas/pull/38/)
       release_summary: 'Bug fix: deal with unsupported option.'
     fragments:
     - dup-gid.yaml
@@ -305,7 +305,7 @@ releases:
       - "``sharing_smb``: Fix updates failing on TrueNAS SCALE 25.10+ due to API
         restructuring. Fields moved under ``options`` dict and some were renamed
         (``ro`` to ``readonly``, ``abe`` to ``access_based_share_enumeration``).
-        (https://github.com/arensb/ansible-truenas/issues/58)"
+        (https://github.com/jdevera/ansible-truenas/issues/58)"
       - "``privilege``: Fix ``unhashable type: dict`` error. The API returns
         ``local_groups`` as group objects, not plain GIDs."
       - "``sharing_smb``: Fix setting options like ``home`` failing with
@@ -385,3 +385,45 @@ releases:
       name: app_info
       namespace: ''
     release_date: '2026-04-02'
+  2.0.0:
+    changes:
+      release_summary: "First release of jdevera.truenas, a personal fork of
+        arensb.truenas. Targets TrueNAS SCALE 25.10+ only."
+      breaking_changes:
+      - "Renamed collection from ``arensb.truenas`` to ``jdevera.truenas``.
+        Update playbooks accordingly."
+      - "Floor raised to TrueNAS SCALE 25.10. Every module now calls
+        ``setup.require_scale_min_version()`` and fails fast on older or
+        non-SCALE hosts."
+      - "Removed the ``jail``, ``jails``, ``jail_fstab``, and ``plugin``
+        modules. TrueNAS SCALE no longer ships jails or the jail-based
+        plugin system."
+      - "``sharing_nfs``: Removed the entire pre-22.12.2 NFS1 path and
+        dropped the ``alldirs``, ``quiet``, and ``paths`` options
+        (no longer accepted by the 25.10 API)."
+      - "``nfs``: Removed the deprecated ``nfsv4`` option. Use
+        ``protocols`` instead."
+      - "``group``: Removed the ``non_unique`` option (no longer accepted
+        by the 25.04+ API)."
+      - "``user``: Removed the deprecated ``sudo`` and ``sudo_nopasswd``
+        options. Use ``sudo_commands`` and ``sudo_commands_nopasswd``.
+        ``home`` now documents ``/var/empty`` (not ``/nonexistent``) as
+        the no-home value, matching 25.10 middleware."
+      - "``filesystem``: Removed the CORE-only branch in
+        ``build_create_args``. Also fixed a latent missing ``sys``
+        import that would have raised ``NameError`` on the error path."
+      minor_changes:
+      - "Added ``ftp`` module for configuring the FTP service
+        (onlyanonymous, onlylocal, defaultroot, filemask, dirmask,
+        options)."
+      - "``sharing_nfs``, ``user``, ``group``, ``nfs``, ``filesystem``:
+        added explicit ``return`` statements after ``fail_json`` calls
+        so static analyzers don't flag the post-fail use sites as
+        possibly-unbound."
+      - "``certificate_authority``: trimmed a stale CORE-13 reference
+        from an in-code comment."
+    modules:
+    - description: Configure the FTP service.
+      name: ftp
+      namespace: ''
+    release_date: '2026-05-16'

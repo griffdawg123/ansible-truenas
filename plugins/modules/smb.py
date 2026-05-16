@@ -105,24 +105,24 @@ options:
 notes:
   - Supports C(check_mode).
 seealso:
-  - module: arensb.truenas.sharing_smb
-  - module: arensb.truenas.service
+  - module: jdevera.truenas.sharing_smb
+  - module: jdevera.truenas.service
 version_added: 1.15.0
 '''
 
 EXAMPLES = '''
 - name: Set workgroup and description
-  arensb.truenas.smb:
+  jdevera.truenas.smb:
     workgroup: MYWORKGROUP
     description: "File Server"
 
 - name: Enable Apple extensions and multichannel
-  arensb.truenas.smb:
+  jdevera.truenas.smb:
     aapl_extensions: true
     multichannel: true
 
 - name: Require encryption
-  arensb.truenas.smb:
+  jdevera.truenas.smb:
     encryption: REQUIRED
 '''
 

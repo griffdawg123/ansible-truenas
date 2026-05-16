@@ -51,7 +51,7 @@ options:
     type: bool
     default: false
 seealso:
-- module: arensb.truenas.group
+- module: jdevera.truenas.group
 author:
 - Jacobo de Vera
 notes:
@@ -61,20 +61,20 @@ version_added: 1.14.5
 
 EXAMPLES = '''
 - name: Give the admins group full local admin privileges
-  arensb.truenas.privilege:
+  jdevera.truenas.privilege:
     builtin_name: LOCAL_ADMINISTRATOR
     groups:
       - admins
 
 - name: Add operators group to sharing admin without removing existing groups
-  arensb.truenas.privilege:
+  jdevera.truenas.privilege:
     builtin_name: SHARING_ADMINISTRATOR
     groups:
       - operators
     append: true
 
 - name: Look up by display name (less stable, but works)
-  arensb.truenas.privilege:
+  jdevera.truenas.privilege:
     name: Local Administrator
     groups:
       - admins

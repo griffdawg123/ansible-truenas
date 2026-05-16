@@ -27,11 +27,11 @@ version_added: 0.5.0
 
 EXAMPLES = '''
 - name: Migrate system dataset to ZFS pool mypool2
-  arensb.truenas.systemdataset:
+  jdevera.truenas.systemdataset:
     pool: mypool2
 
 - name: Don't store system logs on the system dataset.
-  arensb.truenas.systemdataset:
+  jdevera.truenas.systemdataset:
     syslog: no
 '''
 

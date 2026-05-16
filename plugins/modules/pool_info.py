@@ -30,7 +30,7 @@ version_added: 1.15.0
 
 EXAMPLES = '''
 - name: Get all pools
-  arensb.truenas.pool_info:
+  jdevera.truenas.pool_info:
   register: pools
 
 - name: Show pool names
@@ -39,7 +39,7 @@ EXAMPLES = '''
   loop: "{{ pools.pools }}"
 
 - name: Get a specific pool
-  arensb.truenas.pool_info:
+  jdevera.truenas.pool_info:
     name: tank
   register: tank_pool
 '''

@@ -1,14 +1,14 @@
 ---
 - name: SMB service
   become: yes
-  arensb.truenas.service:
+  jdevera.truenas.service:
     name: cifs
     enabled: yes
     state: started
 
 - name: User for Mac backups
   become: yes
-  arensb.truenas.user:
+  jdevera.truenas.user:
     name: "{{ backup_user }}"
     password: "{{ backup_user_passwd }}"
     create_group: yes
@@ -18,7 +18,7 @@
 
 - name: Filesystem for backups
   become: yes
-  arensb.truenas.filesystem:
+  jdevera.truenas.filesystem:
     comments: "Mac Time Machine backups"
     name: "{{ vol_pool }}/{{ vol_name }}"
     type: filesystem
@@ -29,7 +29,7 @@
 
 - name: SMB export
   become: yes
-  arensb.truenas.sharing_smb:
+  jdevera.truenas.sharing_smb:
     name: "{{ vol_name }}"
     comment: "Time Machine backups"
     path: "/mnt/{{ vol_pool }}/{{ vol_name }}"

@@ -108,13 +108,13 @@ options:
 notes:
   - Supports C(check_mode).
 seealso:
-  - module: arensb.truenas.service
+  - module: jdevera.truenas.service
 version_added: 1.15.0
 '''
 
 EXAMPLES = '''
 - name: Configure a USB UPS in master mode
-  arensb.truenas.ups:
+  jdevera.truenas.ups:
     identifier: myups
     mode: MASTER
     driver: usbhid-ups
@@ -122,7 +122,7 @@ EXAMPLES = '''
     shutdown: LOWBATT
 
 - name: Configure as slave monitoring a remote UPS
-  arensb.truenas.ups:
+  jdevera.truenas.ups:
     mode: SLAVE
     remotehost: 192.168.1.10
     remoteport: 3493

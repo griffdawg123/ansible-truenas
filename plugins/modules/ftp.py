@@ -57,20 +57,20 @@ notes:
   - "TLS: C(tls), C(tls_policy), C(ssltls_certificate), and the
     C(tls_opt_*) booleans."
 seealso:
-  - module: arensb.truenas.service
+  - module: jdevera.truenas.service
 version_added: 1.15.0
 '''
 
 EXAMPLES = '''
 - name: Allow only local users and set umasks
-  arensb.truenas.ftp:
+  jdevera.truenas.ftp:
     onlyanonymous: false
     onlylocal: true
     filemask: "002"
     dirmask: "002"
 
 - name: Jail one group to a specific directory via ProFTPD options
-  arensb.truenas.ftp:
+  jdevera.truenas.ftp:
     defaultroot: false
     options: "DefaultRoot /mnt/tank/documents scanner"
 '''

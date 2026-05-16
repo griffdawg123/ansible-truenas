@@ -114,7 +114,7 @@ EXAMPLES = '''
 - name: Run a SHORT test every month
   hosts: my-truenas-server
   tasks:
-    - arensb.truenas.smart_test_task:
+    - jdevera.truenas.smart_test_task:
         name: "Monthly job"
         disks: ALL
         test: short
@@ -125,7 +125,7 @@ EXAMPLES = '''
 - name: Run a SHORT test twice a month on some disks
   hosts: my-truenas-server
   tasks:
-    - arensb.truenas.smart_test_task:
+    - jdevera.truenas.smart_test_task:
         name: "Bimonthly job on ada0, ada1"
         disks:
           - ada0

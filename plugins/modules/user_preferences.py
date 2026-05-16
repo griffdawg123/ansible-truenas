@@ -81,23 +81,23 @@ version_added: 1.15.0
 
 EXAMPLES = '''
 - name: Set session timeout to 5 minutes
-  arensb.truenas.user_preferences:
+  jdevera.truenas.user_preferences:
     lifetime: 300
 
 - name: Set theme and language
-  arensb.truenas.user_preferences:
+  jdevera.truenas.user_preferences:
     userTheme: ix-dark
     language: en
 
 - name: Configure date/time format and hide builtins
-  arensb.truenas.user_preferences:
+  jdevera.truenas.user_preferences:
     dateFormat: yyyy-MM-dd
     timeFormat: HH:mm:ss
     hideBuiltinUsers: true
     hideBuiltinGroups: true
 
 - name: Set preferences for multiple users using different credentials
-  arensb.truenas.user_preferences:
+  jdevera.truenas.user_preferences:
     lifetime: 300
     userTheme: ix-dark
   vars:

@@ -43,7 +43,7 @@ version_added: 1.15.0
 
 EXAMPLES = '''
 - name: Get all datasets
-  arensb.truenas.dataset_info:
+  jdevera.truenas.dataset_info:
   register: datasets
 
 - name: Show dataset names and types
@@ -52,17 +52,17 @@ EXAMPLES = '''
   loop: "{{ datasets.datasets }}"
 
 - name: Get a specific dataset
-  arensb.truenas.dataset_info:
+  jdevera.truenas.dataset_info:
     name: tank/data
   register: my_dataset
 
 - name: Get all datasets in a pool
-  arensb.truenas.dataset_info:
+  jdevera.truenas.dataset_info:
     pool: tank
   register: tank_datasets
 
 - name: Get only filesystems (no volumes)
-  arensb.truenas.dataset_info:
+  jdevera.truenas.dataset_info:
     type: FILESYSTEM
   register: filesystems
 '''

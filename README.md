@@ -1,51 +1,59 @@
-# Ansible Collection - arensb.truenas
+# Ansible Collection - jdevera.truenas
 
-Manage a [TrueNAS](https://www.truenas.com/) machine.
+Manage a [TrueNAS SCALE](https://www.truenas.com/) machine.
 
-## Included content
+This collection is a personal fork of
+[arensb.truenas](https://github.com/arensb/ansible-truenas), maintained
+against my own homelab. It targets TrueNAS SCALE 25.10 and newer only.
+All pre-25.10 compatibility (and the jail/plugin modules that no longer
+have a TrueNAS API to talk to) has been removed.
 
-This collection consists primarily of a set of Ansible modules to
-configure a TrueNAS machine, using the
-[TrueNAS API](https://www.truenas.com/docs/api/websocket.html)
-to control the Middleware Daemon.
+## Differences from `arensb.truenas`
 
-It aims to be intuitive to use, and to avoid unpleasant surprises.
+- **Floor raised to TrueNAS SCALE 25.10.** Every module calls
+  `setup.require_scale_min_version()` and refuses to run on anything
+  older. No CORE/TrueNAS-13 branches remain.
+- **Modules removed:** `jail`, `jails`, `jail_fstab`, `plugin` — jails
+  are gone from SCALE, so the modules can't function.
+- **Options removed** that the modern SCALE middleware no longer
+  accepts: `sharing_nfs`'s `alldirs`, `quiet`, `paths`; `nfs`'s
+  `nfsv4`; `group`'s `non_unique`; `user`'s deprecated `sudo`,
+  `sudo_nopasswd`.
+- **`home: /nonexistent`** is no longer documented; the `user` module
+  expects `/var/empty` to match what 25.10 middleware stores and
+  returns.
+- **Added module:** `ftp` for configuring the FTP service.
 
-See [the online documentation](https://arensb.github.io/truenas/index.html)
-for the list of included modules, and how to use them.
+## Installing
 
-## Installing this collection
+Install directly from git via `ansible-galaxy`:
 
-The easiest way to install this collection is
-[through Ansible Galaxy](https://galaxy.ansible.com/arensb/truenas):
+    ansible-galaxy collection install \
+        git+https://github.com/jdevera/ansible-truenas.git
 
-    ansible-galaxy collection install arensb.truenas
+Or with a `requirements.yml`:
 
-## Examples
+    collections:
+      - name: https://github.com/jdevera/ansible-truenas.git
+        type: git
+        version: main
 
-    - name: Example tasks
-      collections:
-        - arensb.truenas
-      hosts: truenas-box
-      become: yes
-      tasks:
-        - name: Set the hostname
-          hostname:
-            name: new-hostname
-        - name: Turn on sshd
-          service:
-            name: sshd
-
-Note that since several of the module names are the same as builtin
-ones, you may want to use the full name to avoid confusion:
+## Usage
 
     - hosts: truenas-box
       become: yes
       tasks:
-        - arensb.truenas.hostname:
+        - jdevera.truenas.hostname:
             name: new-hostname
+        - jdevera.truenas.service:
+            name: sshd
+            state: started
 
-## Environment Variables
+Several module names overlap with builtins (`user`, `group`,
+`hostname`, `service`, ...), so prefer the fully-qualified
+`jdevera.truenas.NAME` form rather than the unqualified one.
+
+## Environment variables
 
 ### `middleware_method`
 
@@ -58,47 +66,19 @@ Set the `middleware_method` environment variable to either `client` or
 `midclt` at either the play or task level in your playbook to manually
 select how this module communicates with the middleware daemon.
 
-Example:
-
-    - collections: arensb.truenas
-      hosts: my-nas
-      become: yes
-      environment:
-        middleware_method: client
-      tasks:
-        - name: Create a jail
-          jail:
-            name: my-jail
-            release: 13.1-RELEASE
-            state: running
-
-## Contributing to this collection
-The best way to contribute a patch or feature is to create a pull request.
-
-If you'd like to write your own module, the `extras/template` file
-provides a good starting point.
-
-The [HACKING](HACKING.md) file has some tips on how to get around.
-
-## Documentation
-
-See [the online documentation](https://arensb.github.io/truenas/index.html).
-
-## Supported versions of Ansible
-- Tested with 2.10.8
-
 ## Changelog
 
-See [the user-friendly docs](https://arensb.github.io/truenas/CHANGELOG.html),
-or the latest [changelog.yaml](changelogs/changelog.yaml).
+See [changelogs/changelog.yaml](changelogs/changelog.yaml).
 
-## Authors and Contributors
+## License
 
-- Andrew Arensburger ([@arensb](https://mastodon.social/@arensb))
-- Ed Hull (https://github.com/edhull)
-- Mozzie (https://github.com/MozzieBytes)
-- bmarinov (https://github.com/bmarinov)
-- Paul Heidenreich (https://github.com/Paulomart)
-- Gustavo Campos (https://github.com/guhcampos)
-- kamransaeed (https://github.com/kamransaeed)
-- pofo14 (https://github.com/pofo14)
+Apache-2.0. See [LICENSE](LICENSE).
+
+## Authors
+
+This fork is maintained by Jacobo de Vera ([@jdevera](https://github.com/jdevera)).
+
+Upstream `arensb.truenas` was written and is maintained by Andrew
+Arensburger and contributors. Most of the modules in this collection
+are their work; thank you. The full upstream author list is preserved
+in [galaxy.yml](galaxy.yml).

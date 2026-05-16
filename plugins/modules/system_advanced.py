@@ -104,17 +104,17 @@ version_added: 1.15.0
 
 EXAMPLES = '''
 - name: Set MOTD and login banner
-  arensb.truenas.system_advanced:
+  jdevera.truenas.system_advanced:
     motd: "Welcome to TrueNAS"
     login_banner: "Authorized users only"
 
 - name: Configure syslog level
-  arensb.truenas.system_advanced:
+  jdevera.truenas.system_advanced:
     sysloglevel: F_WARNING
     fqdn_syslog: true
 
 - name: Enable serial console
-  arensb.truenas.system_advanced:
+  jdevera.truenas.system_advanced:
     serialconsole: true
     serialport: ttyS0
     serialspeed: '115200'

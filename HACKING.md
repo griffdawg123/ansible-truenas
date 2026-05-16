@@ -67,7 +67,7 @@ web site.
 
 `antsibull-docs` is used to create and populate the `docs` directory:
 
-    antsibull-docs sphinx-init --use-current --dest-dir new-docs arensb.truenas
+    antsibull-docs sphinx-init --use-current --dest-dir new-docs jdevera.truenas
 
 This creates the `docs/build.sh` script, which is used to generate
 documentation: it uses `antsibull-docs collection` to convert Python
@@ -79,10 +79,8 @@ directory can safely be deleted. In fact, if you make major changes
 (including deleting modules), it's probably a good idea to delete
 `docs/build/` and rebuild the documentation.
 
-The generated HTML files can then be copied to `docs-site/`, which is
-just a git repository of the
-[documentation website](https://arensb.github.io/truenas/index.html).
-So to update the online documentation:
+The generated HTML files can be copied to `docs-site/` if you keep a
+separate docs-site git repo. To update an online documentation site:
 
 1. `make update-doc-site`
 2. `cd docs-site`

@@ -98,21 +98,21 @@ EXAMPLES = '''
   hosts: nfs_server
   become: yes
   tasks:
-    - arensb.truenas.nfs:
+    - jdevera.truenas.nfs:
         allow_nonroot: false
 
 - name: Run 32 servers
   hosts: nfs_server
   become: yes
   tasks:
-    - arensb.truenas.nfs:
+    - jdevera.truenas.nfs:
         servers: 32
 
 - name: Enable NFS v3 and v4
   hosts: nfs_server
   become: yes
   tasks:
-    - arensb.truenas.nfs:
+    - jdevera.truenas.nfs:
         protocols:
           - NFSv3
           - NFSv4
@@ -121,14 +121,14 @@ EXAMPLES = '''
   hosts: nfs_server
   become: yes
   tasks:
-    - arensb.truenas.nfs:
+    - jdevera.truenas.nfs:
         protocols: NFSv4
 
 - name: Turn on Kerberos
   hosts: nfs_server
   become: yes
   tasks:
-    - arensb.truenas.nfs:
+    - jdevera.truenas.nfs:
         krb: true
 
 - name: Listen on a specific interface

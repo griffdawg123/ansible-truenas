@@ -73,23 +73,23 @@ options:
 notes:
   - Supports C(check_mode).
 seealso:
-  - module: arensb.truenas.service
+  - module: jdevera.truenas.service
 version_added: 1.15.0
 '''
 
 EXAMPLES = '''
 - name: Set SSH port and disable password auth
-  arensb.truenas.ssh:
+  jdevera.truenas.ssh:
     tcpport: 2222
     passwordauth: false
 
 - name: Bind SSH to a specific interface
-  arensb.truenas.ssh:
+  jdevera.truenas.ssh:
     bindiface:
       - br0
 
 - name: Enable compression and TCP forwarding
-  arensb.truenas.ssh:
+  jdevera.truenas.ssh:
     compression: true
     tcpfwd: true
 '''

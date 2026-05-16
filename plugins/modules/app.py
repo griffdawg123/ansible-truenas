@@ -90,14 +90,14 @@ notes:
   - Supports C(check_mode).
   - App creation and deletion are jobs and may take some time.
 seealso:
-  - module: arensb.truenas.app_service
-  - module: arensb.truenas.app_info
+  - module: jdevera.truenas.app_service
+  - module: jdevera.truenas.app_info
 version_added: 1.15.0
 '''
 
 EXAMPLES = '''
 - name: Install Plex from catalog
-  arensb.truenas.app:
+  jdevera.truenas.app:
     name: plex
     catalog_app: plex
     values:
@@ -105,14 +105,14 @@ EXAMPLES = '''
         host_network: true
 
 - name: Update Plex configuration
-  arensb.truenas.app:
+  jdevera.truenas.app:
     name: plex
     values:
       network:
         host_network: false
 
 - name: Deploy a custom Docker Compose app
-  arensb.truenas.app:
+  jdevera.truenas.app:
     name: my-nginx
     custom_app: true
     custom_compose_config_string: |
@@ -123,7 +123,7 @@ EXAMPLES = '''
             - "8080:80"
 
 - name: Remove an app and its data
-  arensb.truenas.app:
+  jdevera.truenas.app:
     name: plex
     state: absent
     remove_images: true

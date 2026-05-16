@@ -88,12 +88,12 @@ version_added: 1.15.0
 
 EXAMPLES = '''
 - name: Set timezone and keyboard layout
-  arensb.truenas.system_general:
+  jdevera.truenas.system_general:
     timezone: America/New_York
     kbdmap: us
 
 - name: Configure HTTPS only on port 443
-  arensb.truenas.system_general:
+  jdevera.truenas.system_general:
     ui_httpsport: 443
     ui_httpsredirect: true
     ui_httpsprotocols:
@@ -101,12 +101,12 @@ EXAMPLES = '''
       - TLSv1.3
 
 - name: Restrict UI access to a subnet
-  arensb.truenas.system_general:
+  jdevera.truenas.system_general:
     ui_allowlist:
       - 10.0.0.0/24
 
 - name: Set the web UI SSL certificate
-  arensb.truenas.system_general:
+  jdevera.truenas.system_general:
     ui_certificate: my_custom_cert
 '''
 
