@@ -1,4 +1,4 @@
-COLLECTION = arensb.truenas
+COLLECTION = jdevera.truenas
 # Directory where generated HTML docs will go
 DOCS_DIR = docs
 
@@ -93,5 +93,13 @@ update-doc-site:	documentation
 
 # Check for errors.
 lint::
-	$(PYTHON) -m py_compile \
-		plugins/*/*.py
+	$(PYTHON) -m py_compile plugins/*/*.py
+	ruff check plugins/
+
+# Run the official Ansible sanity checks against this collection.
+# Requires the collection to be installed at
+# ansible_collections/$(subst .,/,${COLLECTION}); the
+# compatibility-link target sets that up locally.
+sanity:	compatibility-link
+	ANSIBLE_COLLECTIONS_PATH=. \
+	    ansible-test sanity --venv --color

@@ -1,5 +1,6 @@
 __pycache__
 # Ansible collection tarball:
+jdevera-truenas-*.tar.gz
 arensb-truenas-*.tar.gz
 # Hack for checking doc syntax.
 /ansible_collections/
@@ -7,3 +8,5 @@ arensb-truenas-*.tar.gz
 /venv-docs/
 /docs/rst/
 /changelogs/.plugin-cache.yaml
+# uv stray lockfile from tool-only pyproject.toml runs
+uv.lock
