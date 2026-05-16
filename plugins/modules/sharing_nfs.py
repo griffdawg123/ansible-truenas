@@ -552,10 +552,11 @@ def nfs2():
     networks = module.params['networks']
     hosts = module.params['hosts']
 
-    # TrueNAS SCALE 25.04 dropped 'alldirs' from sharing.nfs.create /
-    # sharing.nfs.update, and the query response no longer includes it.
-    # Drop it from the request on those versions; the existing
-    # 'if alldirs is not None' guards below will then skip it.
+    # TrueNAS SCALE 25.04 dropped 'alldirs' and 'quiet' from
+    # sharing.nfs.create / sharing.nfs.update, and the query response
+    # no longer includes them. Drop them from the request on those
+    # versions; the existing 'if x is not None' guards below will skip
+    # them.
     try:
         tn_version = setup.get_tn_version()
     except Exception as e:
@@ -566,6 +567,7 @@ def nfs2():
        tn_version['type'] in {"SCALE", "COMMUNITY_EDITION"} and \
        tn_version['version'] >= TC_25_04:
         alldirs = None
+        quiet = None
 
     # Look up the share.
     # Use the path as an identifier.
