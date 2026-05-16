@@ -296,6 +296,7 @@ class NFS1:
                 export_info = export_info[0]
         except Exception as e:
             self.module.fail_json(msg=f"Error looking up NFS export {name}: {e}")
+            return  # fail_json exits; helps static analysis
 
         # First, check whether the export even exists.
         if export_info is None:
@@ -352,6 +353,7 @@ class NFS1:
                     except Exception as e:
                         # self.result['failed_invocation'] = arg
                         self.module.fail_json(msg=f"Error creating NFS export \"{name}\": {e}")
+                        return  # fail_json exits; helps static analysis
 
                     # Return whichever interesting bits sharing.nfs.create()
                     # returned.
@@ -468,9 +470,7 @@ class NFS1:
                             self.result['status'] = err
                         except Exception as e:
                             self.module.fail_json(msg=f"Error updating NFS export \"{name}\" with {arg}: {e}")
-                            # Returns a structure similar to sharing.nfs.query(),
-                            # with all the information about the export.
-                            self.result['status'] = err['status']
+                            return  # fail_json exits; helps static analysis
                     self.result['changed'] = True
             else:
                 # NFS export is not supposed to exist
@@ -487,6 +487,7 @@ class NFS1:
                         self.result['status'] = err
                     except Exception as e:
                         self.module.fail_json(msg=f"Error deleting NFS export \"{name}\": {e}")
+                        return  # fail_json exits; helps static analysis
                 self.result['changed'] = True
 
         self.module.exit_json(**self.result)
@@ -561,6 +562,7 @@ def nfs2():
         tn_version = setup.get_tn_version()
     except Exception as e:
         module.fail_json(msg=f"Error getting TrueNAS version: {e}")
+        return  # fail_json exits; helps static analysis
 
     TC_25_04 = version.parse("25.04")
     if tn_version['name'] == "TrueNAS" and \
@@ -582,6 +584,7 @@ def nfs2():
             export_info = export_info[0]
     except Exception as e:
         module.fail_json(msg=f"Error looking up NFS export {name}: {e}")
+        return  # fail_json exits; helps static analysis
 
     # First, check whether the export even exists.
     if export_info is None:
@@ -638,6 +641,7 @@ def nfs2():
                 except Exception as e:
                     # result['failed_invocation'] = arg
                     module.fail_json(msg=f"Error creating NFS export \"{name}\": {e}")
+                    return  # fail_json exits; helps static analysis
 
                 # Return whichever interesting bits sharing.nfs.create()
                 # returned.
@@ -740,9 +744,7 @@ def nfs2():
                         result['status'] = err
                     except Exception as e:
                         module.fail_json(msg=f"Error updating NFS export \"{name}\" with {arg}: {e}")
-                        # Returns a structure similar to sharing.nfs.query(),
-                        # with all the information about the export.
-                        result['status'] = err['status']
+                        return  # fail_json exits; helps static analysis
                 result['changed'] = True
         else:
             # NFS export is not supposed to exist
@@ -759,6 +761,7 @@ def nfs2():
                     result['status'] = err
                 except Exception as e:
                     module.fail_json(msg=f"Error deleting NFS export \"{name}\": {e}")
+                    return  # fail_json exits; helps static analysis
             result['changed'] = True
 
     module.exit_json(**result)
