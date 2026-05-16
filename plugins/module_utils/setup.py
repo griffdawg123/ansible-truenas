@@ -4,13 +4,22 @@
 import re
 import sys
 
-# For parsing version numbers
-from packaging import version
-
 from ..module_utils.middleware import MiddleWare as MW
 
+
+def _parse_version(s):
+    """Parse a dotted version string into a tuple of ints for comparison.
+
+    Non-numeric trailing pieces (e.g. '-U5', 'a1') are stripped so that
+    'TrueNAS-13.0-U5' compares cleanly against '25.10'. Stdlib only,
+    so this works inside ansible-test sanity venvs (which don't
+    install the 'packaging' library).
+    """
+    return tuple(int(m) for m in re.findall(r'\d+', s))
+
+
 # Lowest TrueNAS SCALE version supported by this collection.
-MIN_SCALE_VERSION = version.parse("25.10")
+MIN_SCALE_VERSION = _parse_version("25.10")
 
 # Version of TrueNAS we're running, so that we know how to invoke
 # middlewared.
@@ -70,9 +79,10 @@ def get_tn_version():
         # given.
         sys_version = full_version
 
-    # Parsing it as a version gives us a version object that's easy to
-    # compare against another version of interest.
-    sys_version = version.parse(sys_version)
+    # Parse to a tuple of ints so version-gated callers can compare
+    # against MIN_SCALE_VERSION (and each other) without depending on
+    # 'packaging'.
+    sys_version = _parse_version(sys_version)
 
     tn_version = {
         "name": product_name,
