@@ -135,6 +135,7 @@ status:
 
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.middleware import MiddleWare as MW
+from ..module_utils import setup
 
 
 FIELDS = {
@@ -163,6 +164,8 @@ SET_FIELDS = {'netbiosalias', 'bindip'}
 
 
 def main():
+    setup.require_scale_min_version()
+
     module = AnsibleModule(
         argument_spec=dict(
             netbiosname=dict(type='str'),

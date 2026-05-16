@@ -140,6 +140,7 @@ ca_cert:
 
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.middleware import MiddleWare as MW
+from ..module_utils import setup
 
 # Put this at file scope so that the action module can slurp this in
 # and validate arguments.
@@ -165,6 +166,8 @@ mutually_exclusive = [
 
 
 def main():
+    setup.require_scale_min_version()
+
     global argument_spec, required_if, mutually_exclusive
 
     module = AnsibleModule(

@@ -84,6 +84,7 @@ status:
 
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.middleware import MiddleWare as MW
+from ..module_utils import setup
 
 
 # Maps Ansible param name -> API field name.
@@ -101,6 +102,8 @@ SET_FIELDS = set()
 
 
 def main():
+    setup.require_scale_min_version()
+
     module = AnsibleModule(
         argument_spec=dict(
             onlyanonymous=dict(type='bool'),

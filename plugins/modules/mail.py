@@ -80,9 +80,12 @@ RETURN = '''#'''
 
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.middleware import MiddleWare as MW
+from ..module_utils import setup
 
 
 def main():
+    setup.require_scale_min_version()
+
     module = AnsibleModule(
         argument_spec=dict(
             from_name=dict(type='str'),

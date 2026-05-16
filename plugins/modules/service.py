@@ -53,9 +53,12 @@ RETURN = '''#'''
 
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.middleware import MiddleWare as MW
+from ..module_utils import setup
 
 
 def main():
+    setup.require_scale_min_version()
+
     def start_service(service):
         """Start the given service."""
 

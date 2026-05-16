@@ -116,6 +116,7 @@ preferences:
 
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.middleware import MiddleWare as MW
+from ..module_utils import setup
 
 
 PREF_FIELDS = {
@@ -134,6 +135,8 @@ PREF_FIELDS = {
 
 
 def main():
+    setup.require_scale_min_version()
+
     module = AnsibleModule(
         argument_spec=dict(
             lifetime=dict(type='int'),

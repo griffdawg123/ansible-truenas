@@ -174,6 +174,7 @@ status:
 
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.middleware import MiddleWare as MW
+from ..module_utils import setup
 
 # Fields that are top-level in the 25.10+ API response.
 # Maps Ansible param name -> API field name (when different).
@@ -236,6 +237,8 @@ def values_differ(param_value, current_value, param_name):
 
 
 def main():
+    setup.require_scale_min_version()
+
     module = AnsibleModule(
         argument_spec=dict(
             path=dict(type='str', required=True),

@@ -165,12 +165,15 @@ ansible_facts.truenas_build_time:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ..module_utils import setup
 from ..module_utils.exceptions \
     import MethodNotFoundError as AnsibleMethodNotFoundError
 from datetime import datetime
 
 
 def main():
+    setup.require_scale_min_version()
+
     module = AnsibleModule(
         argument_spec=dict(),
         supports_check_mode=True,

@@ -89,6 +89,7 @@ privilege:
 
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.middleware import MiddleWare as MW
+from ..module_utils import setup
 
 
 def resolve_group_gids(mw, module, group_names):
@@ -107,6 +108,8 @@ def resolve_group_gids(mw, module, group_names):
 
 
 def main():
+    setup.require_scale_min_version()
+
     module = AnsibleModule(
         argument_spec=dict(
             builtin_name=dict(type='str'),

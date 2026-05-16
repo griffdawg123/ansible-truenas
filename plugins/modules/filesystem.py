@@ -106,32 +106,13 @@ filesystem:
 """
 
 import re
-import sys
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.middleware import MiddleWare as MW
 from ..module_utils import setup
-from packaging import version
 
 
 def main():
-    # This module targets TrueNAS SCALE 25.10 and newer. Fail fast on
-    # anything older so the user gets a clear message instead of cryptic
-    # middleware errors.
-    try:
-        tn_version = setup.get_tn_version()
-    except Exception as e:
-        print(f'{{"failed":true, "msg": "Error getting TrueNAS version: {e}"}}')
-        sys.exit(1)
-
-    TC_25_10 = version.parse("25.10")
-    if not (tn_version['name'] == "TrueNAS" and
-            tn_version['type'] in {"SCALE", "COMMUNITY_EDITION"} and
-            tn_version['version'] >= TC_25_10):
-        print(
-            '{"failed":true, "msg": "The arensb.truenas.filesystem '
-            'module requires TrueNAS SCALE 25.10 or newer."}'
-        )
-        sys.exit(1)
+    setup.require_scale_min_version()
 
     argument_spec = dict(
         name=dict(type="str", required=True),

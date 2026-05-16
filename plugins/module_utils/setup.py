@@ -2,9 +2,13 @@
 # Code that it'd be nice to have in Ansible's 'setup' module.
 
 import re
+import sys
 from ..module_utils.middleware import MiddleWare as MW
 # For parsing version numbers
 from packaging import version
+
+# Lowest TrueNAS SCALE version supported by this collection.
+MIN_SCALE_VERSION = version.parse("25.10")
 
 # Version of TrueNAS we're running, so that we know how to invoke
 # middlewared.
@@ -75,3 +79,26 @@ def get_tn_version():
     }
 
     return tn_version
+
+
+def require_scale_min_version():
+    """Fail fast if the host isn't running TrueNAS SCALE >= MIN_SCALE_VERSION.
+
+    Modules in this collection target current SCALE; calling this at
+    the top of main() short-circuits unsupported hosts with a clear
+    message instead of letting middleware emit a cryptic error.
+    """
+    try:
+        tn = get_tn_version()
+    except Exception as e:
+        print(f'{{"failed":true, "msg": "Error getting TrueNAS version: {e}"}}')
+        sys.exit(1)
+
+    if not (tn['name'] == "TrueNAS" and
+            tn['type'] in {"SCALE", "COMMUNITY_EDITION"} and
+            tn['version'] >= MIN_SCALE_VERSION):
+        print(
+            '{"failed":true, "msg": "This collection requires '
+            f'TrueNAS SCALE {MIN_SCALE_VERSION} or newer."}}'
+        )
+        sys.exit(1)

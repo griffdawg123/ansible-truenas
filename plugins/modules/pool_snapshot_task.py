@@ -201,10 +201,13 @@ deleted_tasks:
 
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.middleware import MiddleWare as MW
+from ..module_utils import setup
 import re
 
 
 def main():
+    setup.require_scale_min_version()
+
     # Required arguments:
     # - recursive (bool)
     #   I don't know what a good default might be
