@@ -78,10 +78,9 @@ options:
   home:
     description:
       - User's home directory.
-      - Note that TrueNAS has restrictions on what this can be. As of this
-        writing, the home directory has to begin with "/mnt", or be
-        "/nonexistent".
-      - Note that if you create a user with home directory C("/nonexistent"),
+      - On TrueNAS SCALE 25.10, the home directory must begin with "/mnt",
+        or be C("/var/empty") for users with no home directory.
+      - Note that if you create a user with home directory C("/var/empty"),
         then later change it to a real directory, that directory will not
         be populated with dot files.
       - "Note: If you create an account with a home directory that does not
@@ -151,30 +150,12 @@ options:
     type: str
     choices: [ absent, present ]
     default: present
-  sudo:
-    description:
-      - Deprecated. Use I(sudo_commands) and/or I(sudo_commands_nopasswd)
-        instead.
-      - Whether the user is allowed to sudo (see also I(sudo_nopasswd) and
-        I(sudo_commands)).
-      - "Note: this defaults to false. So if you create a user with
-        I(sudo: yes), then comment out that line, the user will be removed
-        from sudo."
-    type: bool
-  sudo_nopasswd:
-    description:
-      - Deprecated. Use I(sudo_commands_nopasswd) instead.
-      - Allows user to sudo without a password.
-    type: bool
-    default: false
   sudo_commands:
     description:
       - List of commands the user is allowed to execute using C(sudo).
       - Each command must use an absolute path, except for the special
         value "ALL", which allows executing any command.
       - Commands may include options, e.g., C("/bin/ls -l").
-      - In TrueNAS CORE, and in older versions of SCALE, only one of
-        I(sudo_commands) and I(sudo_commands_nopasswd) may be specified.
     type: list
     elements: str
     default: []
@@ -185,8 +166,6 @@ options:
       - Each command must use an absolute path, except for the special
         value "ALL", which allows executing any command.
       - Commands may include options, e.g., C("/bin/ls -l").
-      - In TrueNAS CORE, and in older versions of SCALE, only one of
-        I(sudo_commands) and I(sudo_commands_nopasswd) may be specified.
     type: list
     elements: str
     default: []
@@ -250,8 +229,9 @@ from ..module_utils import setup
 from packaging import version
 
 def main():
-    # Figure out which version of TrueNAS we're running, and thus how
-    # to call middlewared.
+    # This module targets TrueNAS SCALE 25.10 and newer. Fail fast on
+    # anything older so the user gets a clear message instead of cryptic
+    # middleware errors.
     try:
         tn_version = setup.get_tn_version()
     except Exception as e:
@@ -259,36 +239,15 @@ def main():
         print(f'{{"failed":true, "msg": "Error getting TrueNAS version: {e}"}}')
         sys.exit(1)
 
-    # The sudo api changed in several branches, so in the test below,
-    # we need an overly complex three-way test to figure out which API
-    # to use.
-    #
-    # Commit                                     Version
-    # 2934f3844cc844202dafa1cc0145eb65f456c4bc - 12.12.3
-    # 01cd04590008262799753b316e6a56e4b32c84ca - 22.12.1
-    # ef76438b9f58911966a63a9df802a6d347a48bba - 23.10
-    #
-    # And when CORE is updates, we'll need to add another branch.
-
-    # Having an 'old_sudo' variable will make it easier to get rid of
-    # this code when the world has upgraded.
-    old_sudo_api = True
-    if tn_version['name'] == "TrueNAS" and \
-       tn_version['type'] in {"SCALE", "COMMUNITY_EDITION"} and \
-       \
-       (tn_version['version'] >= version.parse("12.12") and
-        tn_version['version'] < version.parse("13")) \
-       or \
-       (tn_version['version'] >= version.parse("22.12.1") and
-        tn_version['version'] < version.parse("23")) \
-       or \
-       tn_version['version'] >= version.parse("23.10"):
-        old_sudo_api = False
-
-    # In order to deal with the two 'user' APIs we'll define two
-    # Ansible APIs. Both prefer to use 'sudo_commands' and
-    # 'sudo_commands_nopasswd' to specify sudo access, but with
-    # compatibility tweaks.
+    TC_25_10 = version.parse("25.10")
+    if not (tn_version['name'] == "TrueNAS" and
+            tn_version['type'] in {"SCALE", "COMMUNITY_EDITION"} and
+            tn_version['version'] >= TC_25_10):
+        print(
+            '{"failed":true, "msg": "The arensb.truenas.user module '
+            'requires TrueNAS SCALE 25.10 or newer."}'
+        )
+        sys.exit(1)
 
     # user.create() arguments:
     # x uid (int)
@@ -305,9 +264,8 @@ def main():
     # - locked(bool)
     # - microsoft_account(bool)
     # x smb(bool) - Does user have access to SMB shares?
-    # x sudo(bool)
-    # x sudo_nopasswd(bool)
-    # x sudo_commands(bool)
+    # x sudo_commands(list)
+    # x sudo_commands_nopasswd(list)
     # x sshpubkey(str|null?)
     # x groups(list)
     # - attributes(obj) - Arbitrary user information
@@ -415,22 +373,13 @@ def main():
             # - authorization(str) - Solaris
             # - role(str) - Solaris
         )
-    mod_mutually_exclusive = []
     mod_required_if = [
         ['password_disabled', False, ['password']],
         ]
 
-    # Make adjustments for systems using the old API.
-    if old_sudo_api:
-        mod_argument_spec['sudo'] = dict(type='bool')
-        mod_argument_spec['sudo_nopasswd'] = dict(type='bool')
-        mod_mutually_exclusive.append(['sudo_commands',
-                                       'sudo_commands_nopasswd'])
-
     module = AnsibleModule(
         argument_spec=mod_argument_spec,
         supports_check_mode=True,
-        mutually_exclusive=mod_mutually_exclusive,
         required_if=mod_required_if
     )
 
@@ -457,35 +406,11 @@ def main():
     state = module.params['state']
     delete_group = module.params['delete_group']
     smb = module.params['smb']
-    sudo = module.params['sudo'] \
-        if 'sudo' in module.params else None
-    sudo_nopasswd = module.params['sudo_nopasswd'] \
-        if 'sudo_nopasswd' in module.params else None
     sudo_commands = module.params['sudo_commands']
     sudo_commands_nopasswd = module.params['sudo_commands_nopasswd']
     ssh_authorized_keys = module.params['ssh_authorized_keys']
     append_pubkeys = module.params['append_pubkeys']
     shell = module.params['shell']
-
-    # Warn user against using deprecated options.
-    if sudo is not None:
-        # Only with old sudo
-        module.warn("The 'sudo' option is deprecated. Please use "
-                    "'sudo_commands' and 'sudo_commands_nopasswd' instead.")
-
-    if sudo_nopasswd is not None:
-        # Only with old sudo
-        module.warn("The 'sudo_nopasswd' option is deprecated. Please use "
-                    "'sudo_commands' and 'sudo_commands_nopasswd' instead.")
-
-    # If either 'sudo' or 'sudo_nopasswd' was specified, let's assume
-    # that the caller is using old-style syntax. Otherwise, we'll let
-    # the contents of 'sudo_commands' and 'sudo_commands_nopasswd'
-    # determine the other middleware options.
-    old_sudo_call = False
-    if old_sudo_api and \
-       (sudo is not None or sudo_nopasswd is not None):
-        old_sudo_call = True
 
     # Look up the user.
     # Note that
@@ -550,54 +475,11 @@ def main():
             # Default smb to False on create if not specified
             arg['smb'] = smb if smb is not None else False
 
-            if old_sudo_call:
-                # 'old_sudo_call' isn't set to True until we know that
-                # middleware uses the old sudo API. So by the time we
-                # get to this section, we know that the host is using
-                # the old middleware API.
+            if sudo_commands is not None:
+                arg['sudo_commands'] = sudo_commands
 
-                if sudo is not None:
-                    arg['sudo'] = sudo
-                if sudo_nopasswd is not None:
-                    arg['sudo_nopasswd'] = sudo_nopasswd
-                if sudo_commands is not None:
-                    arg['sudo_commands'] = sudo_commands
-            elif old_sudo_api:
-                # New-style call, but old middleware API.
-
-                if sudo_commands is None:
-                    if sudo_commands_nopasswd is None:
-                        # Caller has no opinion about sudoing.
-                        pass
-                    else:
-                        # sudo_commands == None
-                        # sudo_commands_nopasswd == [...]
-                        arg['sudo'] = True
-                        arg['sudo_nopasswd'] = True
-                        arg['sudo_commands'] = \
-                            [] if 'ALL' in sudo_commands_nopasswd \
-                            else sudo_commands_nopasswd
-                else:
-                    if sudo_commands_nopasswd is None:
-                        # sudo_commands == [...]
-                        # sudo_commands_nopasswd == None
-                        arg['sudo'] = True
-                        arg['sudo_nopasswd'] = False
-                        arg['sudo_commands'] = \
-                            [] if 'ALL' in sudo_commands \
-                            else sudo_commands
-                    else:
-                        # sudo_commands == [...]
-                        # sudo_commands_nopasswd == [...]
-                        # Can't happen: error.
-                        pass
-            else:
-                # New-style call, and new-style middleware API.
-                if sudo_commands is not None:
-                    arg['sudo_commands'] = sudo_commands
-
-                if sudo_commands_nopasswd is not None:
-                    arg['sudo_commands'] = sudo_commands
+            if sudo_commands_nopasswd is not None:
+                arg['sudo_commands_nopasswd'] = sudo_commands_nopasswd
 
             if shell is not None:
                 arg['shell'] = shell
@@ -608,7 +490,7 @@ def main():
             # evidently hasn't been assigned yet.
             #
             # It works in the GUI because it fills the UID in for you.
-            # And it works when home=/nonexistent because there's
+            # And it works when home=/var/empty because there's
             # nothing to chown.
             if home is not None:
                 # XXX - Ought to have a variable or fact saying that
@@ -705,7 +587,7 @@ def main():
             #     "username": "arnie",
             #     "unixhash": "*",
             #     "smbhash": "*",
-            #     "home": "/nonexistent",
+            #     "home": "/var/empty",
             #     "shell": "/bin/csh",
             #     "full_name": "",
             #     "builtin": false,
@@ -796,82 +678,15 @@ def main():
                     if home_create:
                         arg['home_create'] = True
 
-            if old_sudo_call:
-                # By the time we get to this section, we know that the
-                # host uses the old middleware sudo API.
+            # Set comparison: order of sudo commands doesn't matter.
+            if sudo_commands is not None and \
+               set(user_info['sudo_commands']) != set(sudo_commands):
+                arg['sudo_commands'] = sudo_commands
 
-                if sudo is not None and \
-                   user_info['sudo'] != sudo:
-                    arg['sudo'] = sudo
-
-                if sudo_nopasswd is not None and \
-                   user_info['sudo_nopasswd'] != sudo_nopasswd:
-                    arg['sudo_nopasswd'] = sudo_nopasswd
-
-                if sudo_commands is not None and \
-                   user_info['sudo_commands'] != sudo_commands:
-                    arg['sudo_commands'] = sudo_commands
-
-            elif old_sudo_api:
-                # New-style call, but old middleware API.
-
-                want_sudo = None
-                want_sudo_nopasswd = None
-                want_sudo_commands = None
-
-                if sudo_commands is None:
-                    if sudo_commands_nopasswd is None:
-                        # sudo_commands == None
-                        # sudo_commands_nopasswd == None
-                        # Caller has no opinion on sudoing.
-                        pass
-                    else:
-                        # sudo_commands == None
-                        # sudo_commands_nopasswd == [...]
-                        want_sudo = True
-                        want_sudo_nopasswd = True
-                        want_sudo_commands = \
-                            [] if 'ALL' in sudo_commands_nopasswd \
-                            else sudo_commands_nopasswd
-                else:
-                    if sudo_commands_nopasswd is None:
-                        # sudo_commands == [...]
-                        # sudo_commands_nopasswd == None
-                        want_sudo = True
-                        want_sudo_nopasswd = False
-                        want_sudo_commands = \
-                            [] if 'ALL' in sudo_commands \
-                            else sudo_commands
-                    else:
-                        # sudo_commands == [...]
-                        # sudo_commands_nopasswd == [...]
-                        # Can't happen, since the two are mutually
-                        # exclusive.
-                        pass
-
-                if want_sudo is not None and \
-                   user_info['sudo'] != want_sudo:
-                    arg['sudo'] = want_sudo
-                if want_sudo_nopasswd is not None and \
-                   user_info['sudo_nopasswd'] != want_sudo_nopasswd:
-                    arg['sudo_nopasswd'] = want_sudo_nopasswd
-                if want_sudo_commands is not None and \
-                   set(user_info['sudo_commands']) != set(want_sudo_commands):
-                    arg['sudo_commands'] = want_sudo_commands
-
-            else:
-                # New-style call, and new middleware API.
-
-                # Let's perform set comparison, because it doesn't matter
-                # in which order the sudo commands are listed.
-                if sudo_commands is not None and \
-                   set(user_info['sudo_commands']) != set(sudo_commands):
-                    arg['sudo_commands'] = sudo_commands
-
-                if sudo_commands_nopasswd is not None and \
-                   set(user_info['sudo_commands_nopasswd']) != \
-                       set(sudo_commands_nopasswd):
-                    arg['sudo_commands_nopasswd'] = sudo_commands_nopasswd
+            if sudo_commands_nopasswd is not None and \
+               set(user_info['sudo_commands_nopasswd']) != \
+                   set(sudo_commands_nopasswd):
+                arg['sudo_commands_nopasswd'] = sudo_commands_nopasswd
 
             # XXX - Figure out whether home directory permissions need to be
             # set. This turns out to be more difficult than expected.
