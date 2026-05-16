@@ -299,11 +299,8 @@ def main():
             arg = {}
 
             if revoked is not None and ca_cert_info['revoked'] != revoked:
-                # You can revoke a cert, but you can't un-revoke it.
-                #
-                # As of this writing, SCALE 25.04 will fail if you try
-                # to un-revoke a cert, while CORE 13.0 will silently
-                # do nothing.
+                # You can revoke a cert, but you can't un-revoke it:
+                # SCALE will fail if you try.
                 arg['revoked'] = revoked
 
             # If there are any changes, certificateauthority.update()
