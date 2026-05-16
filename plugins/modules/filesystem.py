@@ -70,7 +70,6 @@ options:
   create_ancestors:
     description:
       - If True, create any missing parent datasets automatically when creating.
-      - Under TrueNAS CORE, this option is ignored. However, missing ancestors are not created.
     type: bool
     default: false
   comments:
@@ -107,20 +106,31 @@ filesystem:
 """
 
 import re
+import sys
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.middleware import MiddleWare as MW
 from ..module_utils import setup
+from packaging import version
 
 
 def main():
-    # Figure out which version of TrueNAS we're running, since not all
-    # versions support all arguments.
-    global __tn_version
+    # This module targets TrueNAS SCALE 25.10 and newer. Fail fast on
+    # anything older so the user gets a clear message instead of cryptic
+    # middleware errors.
     try:
-        __tn_version = setup.get_tn_version()
+        tn_version = setup.get_tn_version()
     except Exception as e:
-        # Normally we'd module.exit_json(), but we don't have a module yet.
         print(f'{{"failed":true, "msg": "Error getting TrueNAS version: {e}"}}')
+        sys.exit(1)
+
+    TC_25_10 = version.parse("25.10")
+    if not (tn_version['name'] == "TrueNAS" and
+            tn_version['type'] in {"SCALE", "COMMUNITY_EDITION"} and
+            tn_version['version'] >= TC_25_10):
+        print(
+            '{"failed":true, "msg": "The arensb.truenas.filesystem '
+            'module requires TrueNAS SCALE 25.10 or newer."}'
+        )
         sys.exit(1)
 
     argument_spec = dict(
@@ -286,21 +296,11 @@ def main():
 
 
 def build_create_args(params, module):
-    global __tn_version
-
     create_args = dict(name=params["name"], type=params["type"])
 
     create_ancestors = params.get("create_ancestors")
     if create_ancestors is not None:
-        if __tn_version['type'] == "CORE":
-            # TrueNAS CORE doesn't support create_ancestors.
-            if type(create_ancestors) == bool and create_ancestors == False:
-                # Don't send a warning message. Everything is fine.
-                pass
-            else:
-                module.warn("TrueNAS CORE doesn't support create_ancestors option.")
-        else:
-            create_args["create_ancestors"] = params["create_ancestors"]
+        create_args["create_ancestors"] = params["create_ancestors"]
 
     if create_args["type"] == "VOLUME":
         volsize = params.get("volsize")
