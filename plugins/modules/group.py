@@ -42,13 +42,6 @@ options:
       - Use C(ALL) to allow all commands without a password.
     type: list
     elements: str
-  non_unique:
-    description:
-      - Allow a non-unique I(GID) for the group.
-      - If I(non_unique) is true, a I(GID) must be specified.
-      - This is ignored starting with I(SCALE 25.04)
-    type: bool
-    default: no
 seealso:
 - module: ansible.builtin.group
 author:
@@ -77,6 +70,7 @@ EXAMPLES = '''
       - /usr/bin/apt
 '''
 
+import sys
 from ansible.module_utils.basic import AnsibleModule
 from ..module_utils.middleware import MiddleWare as MW
 from ..module_utils.setup import get_tn_version
@@ -84,6 +78,25 @@ from packaging import version
 
 
 def main():
+    # This module targets TrueNAS SCALE 25.10 and newer. Fail fast on
+    # anything older so the user gets a clear message instead of cryptic
+    # middleware errors.
+    try:
+        tn_version = get_tn_version()
+    except Exception as e:
+        print(f'{{"failed":true, "msg": "Error getting TrueNAS version: {e}"}}')
+        sys.exit(1)
+
+    TC_25_10 = version.parse("25.10")
+    if not (tn_version['name'] == "TrueNAS" and
+            tn_version['type'] in {"SCALE", "COMMUNITY_EDITION"} and
+            tn_version['version'] >= TC_25_10):
+        print(
+            '{"failed":true, "msg": "The arensb.truenas.group module '
+            'requires TrueNAS SCALE 25.10 or newer."}'
+        )
+        sys.exit(1)
+
     module = AnsibleModule(
         argument_spec=dict(
             gid=dict(type='int'),
@@ -92,14 +105,10 @@ def main():
             sudo_commands=dict(type='list', elements='str'),
             sudo_commands_nopasswd=dict(type='list', elements='str'),
 
-            non_unique=dict(type='bool', default=False),
             state=dict(type='str', default='present',
                        choices=['absent', 'present'])
         ),
         supports_check_mode=True,
-        required_if=[
-            ['non_unique', True, ['gid']]
-        ]
     )
 
     result = dict(
@@ -109,25 +118,12 @@ def main():
 
     mw = MW.client()
 
-    try:
-        tn_version = get_tn_version()
-    except Exception as e:
-        module.fail_json(msg=f"Error getting TrueNAS version: {e}")
-
     # Assign variables from properties, for convenience
     gid = module.params['gid']
     group = module.params['name']
     state = module.params['state']
-    non_unique = module.params['non_unique']
     sudo_commands = module.params['sudo_commands']
     sudo_commands_nopasswd = module.params['sudo_commands_nopasswd']
-    # TrueNAS scale versions starting with 25.04 throws an error if allow_duplicate_gid
-    # is passed in
-    TC_25_04 = version.parse("25.04")
-    if tn_version['name'] == "TrueNAS" and \
-        tn_version['type'] in {"SCALE", "COMMUNITY_EDITION"} and \
-        tn_version['version'] >= TC_25_04:
-        non_unique = None
 
     # Look up the group.
     # group.query returns an array of objects like:
@@ -180,9 +176,6 @@ def main():
             if sudo_commands_nopasswd is not None:
                 arg['sudo_commands_nopasswd'] = sudo_commands_nopasswd
 
-            if non_unique is not None:
-                arg['allow_duplicate_gid'] = non_unique
-
             if module.check_mode:
                 result['msg'] = f"Would have created group {group} with {arg}"
             else:
@@ -231,11 +224,6 @@ def main():
                 result['changed'] = False
             else:
                 # Something has changed.
-
-                # allow_duplicate_gid is not a parameter like others.
-                # It pertains not to the group, but to this operation.
-                if non_unique is not None:
-                    arg['allow_duplicate_gid'] = non_unique
 
                 if module.check_mode:
                     result['msg'] = f"Would have updated group {group}: {arg}"
