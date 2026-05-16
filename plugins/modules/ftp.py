@@ -43,6 +43,19 @@ options:
     type: str
 notes:
   - Supports C(check_mode).
+  - "On TrueNAS SCALE 25.10 the C(ftp.update) API exposes additional
+    fields not yet supported by this module. They can be added on
+    demand:"
+  - "Connection limits: C(port), C(clients), C(ipconnections),
+    C(loginattempt), C(timeout), C(timeout_notransfer)."
+  - "Anonymous / banner: C(anonpath), C(banner)."
+  - "Transfer features: C(fxp), C(resume), C(ident), C(reversedns)."
+  - "Passive / NAT: C(masqaddress), C(passiveportsmin),
+    C(passiveportsmax)."
+  - "Bandwidth: C(localuserbw), C(localuserdlbw), C(anonuserbw),
+    C(anonuserdlbw)."
+  - "TLS: C(tls), C(tls_policy), C(ssltls_certificate), and the
+    C(tls_opt_*) booleans."
 seealso:
   - module: arensb.truenas.service
 version_added: 1.15.0
