@@ -3,9 +3,11 @@
 
 import re
 import sys
-from ..module_utils.middleware import MiddleWare as MW
+
 # For parsing version numbers
 from packaging import version
+
+from ..module_utils.middleware import MiddleWare as MW
 
 # Lowest TrueNAS SCALE version supported by this collection.
 MIN_SCALE_VERSION = version.parse("25.10")

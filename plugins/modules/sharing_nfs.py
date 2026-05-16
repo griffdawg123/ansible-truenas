@@ -1,6 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-__metaclass__ = type
 
 # Create and manage NFS shares.
 
@@ -115,8 +113,9 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ..module_utils.middleware import MiddleWare as MW
+
 from ..module_utils import setup
+from ..module_utils.middleware import MiddleWare as MW
 
 
 def main():

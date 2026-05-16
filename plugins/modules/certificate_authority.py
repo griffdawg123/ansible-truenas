@@ -1,6 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-__metaclass__ = type
 
 # Manage certificate authorities.
 
@@ -139,8 +137,9 @@ ca_cert:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ..module_utils.middleware import MiddleWare as MW
+
 from ..module_utils import setup
+from ..module_utils.middleware import MiddleWare as MW
 
 # Put this at file scope so that the action module can slurp this in
 # and validate arguments.
@@ -277,7 +276,7 @@ def main():
                     }
 
                     try:
-                        err2 = mw.call("certificateauthority.update", err['id'], arg2)
+                        mw.call("certificateauthority.update", err['id'], arg2)
                     except Exception as e:
                         module.fail_json(msg=f"Error revoking CA certificate {name}: {e}")
                         # XXX - Do we need to roll back the CA creation? Can we?

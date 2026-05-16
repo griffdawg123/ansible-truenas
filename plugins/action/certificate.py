@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 # certificate action plugin.
 #
@@ -9,12 +8,13 @@
 
 from ansible.errors import AnsibleActionFail
 from ansible.plugins.action import ActionBase
-from ..modules.certificate import \
-    argument_spec, required_if, mutually_exclusive
+
+from ..modules.certificate import argument_spec, mutually_exclusive, required_if
+
 
 class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super().run(tmp, task_vars)
 
         # This will raise an exception if the arguments are invalid.
         validation_result, new_module_args = self.validate_argument_spec(
@@ -29,10 +29,10 @@ class ActionModule(ActionBase):
             # We were given a 'src' argument. Replace it with a
             # 'certificate' argument.
             try:
-                with open(subtask.args['src'], 'rt') as f:
+                with open(subtask.args['src']) as f:
                     certificate = f.read()
             except Exception as e:
-                raise AnsibleActionFail(f"Error opening 'src: {subtask.args['src']}': {e}")
+                raise AnsibleActionFail(f"Error opening 'src: {subtask.args['src']}': {e}") from e
 
             # Replace 'src' with 'certificate'.
             del subtask.args['src']
@@ -42,10 +42,10 @@ class ActionModule(ActionBase):
             # We were given a 'private_keyfile' argument. Replace it
             # with a 'private_key' argument.
             try:
-                with open(subtask.args['private_keyfile'], 'rt') as f:
+                with open(subtask.args['private_keyfile']) as f:
                     private_key = f.read()
             except Exception as e:
-                raise AnsibleActionFail(f"Error opening 'src: {subtask.args['private_keyfile']}': {e}")
+                raise AnsibleActionFail(f"Error opening 'src: {subtask.args['private_keyfile']}': {e}") from e
 
             # Replace 'private_keyfile' with 'private_key'.
             del subtask.args['private_keyfile']

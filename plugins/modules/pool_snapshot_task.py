@@ -1,6 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-__metaclass__ = type
 
 # Create and maintain periodic disk pool snapshot tasks.
 
@@ -199,10 +197,12 @@ deleted_tasks:
   type: list
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ..module_utils.middleware import MiddleWare as MW
-from ..module_utils import setup
 import re
+
+from ansible.module_utils.basic import AnsibleModule
+
+from ..module_utils import setup
+from ..module_utils.middleware import MiddleWare as MW
 
 
 def main():

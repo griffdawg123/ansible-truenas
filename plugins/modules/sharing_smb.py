@@ -1,6 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-__metaclass__ = type
 
 # Create and manage SMB shares.
 # Updated for TrueNAS SCALE 25.10+ API where many fields moved under 'options'.
@@ -173,8 +171,9 @@ status:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ..module_utils.middleware import MiddleWare as MW
+
 from ..module_utils import setup
+from ..module_utils.middleware import MiddleWare as MW
 
 # Fields that are top-level in the 25.10+ API response.
 # Maps Ansible param name -> API field name (when different).

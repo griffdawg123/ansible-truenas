@@ -1,10 +1,8 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # XXX - Would be nice to specify 'volsize' in units other than bytes:
 # accept suffixes: K, KB, KiB, M, MB, MiB, G, GB, GiB, T, TB, TiB.
 
-__metaclass__ = type
 
 DOCUMENTATION = """
 ---
@@ -106,9 +104,11 @@ filesystem:
 """
 
 import re
+
 from ansible.module_utils.basic import AnsibleModule
-from ..module_utils.middleware import MiddleWare as MW
+
 from ..module_utils import setup
+from ..module_utils.middleware import MiddleWare as MW
 
 
 def main():
@@ -375,7 +375,7 @@ def build_update_args(params, existing_ds, module):
             )
 
         # force_size can be used if resizing
-        if params.get("force_size") is not None and params.get("force_size") == True:
+        if params.get("force_size"):
             update_args["force_size"] = True
 
     # For normal props (both filesystem + volume)

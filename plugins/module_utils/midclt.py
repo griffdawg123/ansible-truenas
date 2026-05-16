@@ -12,17 +12,15 @@
 # Example:
 # midclt call user.query '[["username", "=", "root" ]]'
 
-__metaclass__ = type
 """
 This module adds support for midclt on TrueNAS.
 """
 
-import subprocess
 import json
+import subprocess
 from json.decoder import JSONDecodeError
-from ..module_utils import exceptions
-from ..module_utils.exceptions \
-    import MethodNotFoundError as AnsibleMethodNotFoundError
+
+from ..module_utils.exceptions import MethodNotFoundError as AnsibleMethodNotFoundError
 
 MIDCLT_CMD = "midclt"
 
@@ -77,7 +75,7 @@ class Midclt:
         return json.loads(msg)
 
     @staticmethod
-    def call(func, *args, opts=[], output='json'):
+    def call(func, *args, opts=None, output='json'):
         """Call the API function 'func', with arguments 'args'.
 
         'opts' are additional options passed to 'midclt call', not to
@@ -91,7 +89,7 @@ class Midclt:
         """
 
         # Build the command line
-        mid_args = [MIDCLT_CMD, "call", *opts, func]
+        mid_args = [MIDCLT_CMD, "call", *(opts or []), func]
 
         # If we were passed arguments, convert them to JSON strings,
         # and add to the command line.
@@ -122,12 +120,12 @@ class Midclt:
             if stdout.startswith("[ENOMETHOD]") or \
                stdout == "Method does not exist\n":
                 # No such method.
-                raise AnsibleMethodNotFoundError(func, stdout)
+                raise AnsibleMethodNotFoundError(func, stdout) from e
 
             # XXX - Check for other bracketed error codes, maybe.
 
             # Some other error.
-            raise Exception(f"{MIDCLT_CMD} exited with status {e.returncode}: \"{stdout}\"")
+            raise Exception(f"{MIDCLT_CMD} exited with status {e.returncode}: \"{stdout}\"") from e
 
         if output == "str":
             # I assume everyone's using UTF-8 by now.
@@ -137,7 +135,7 @@ class Midclt:
             try:
                 retval = Midclt._to_json(mid_out)
             except JSONDecodeError as e:
-                raise Exception(f"Can't parse {MIDCLT_CMD} output: {mid_out}: {e}")
+                raise Exception(f"Can't parse {MIDCLT_CMD} output: {mid_out}: {e}") from e
         else:
             raise Exception(f"Invalid output format {output}")
 
@@ -158,10 +156,10 @@ class Midclt:
             # XXX - In CORE, this is a job; in SCALE, it's a regular
             # call. Though that doesn't seem to make a difference.
             # Specifying "--job" works on both.
-            err = Midclt.call(func,
+            err = Midclt.call(func, *args,
                               opts=["--job", "-jp", "description"],
                               output='str',
-                              *args, **kwargs)
+                              **kwargs)
 
             # We've asked for 'str' output, so 'err' should be a bunch of
             # lines: first a bunch of progress messages, and then a

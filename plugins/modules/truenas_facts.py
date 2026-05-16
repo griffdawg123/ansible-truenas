@@ -1,6 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-__metaclass__ = type
 
 # XXX - This module adds to the execution time: at a first pass, about
 # 1 second using client api, and 7 seconds(!) using midclt. It might
@@ -164,11 +162,12 @@ ansible_facts.truenas_build_time:
   sample: 2023-05-29T06:50:20
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ..module_utils import setup
-from ..module_utils.exceptions \
-    import MethodNotFoundError as AnsibleMethodNotFoundError
 from datetime import datetime
+
+from ansible.module_utils.basic import AnsibleModule
+
+from ..module_utils import setup
+from ..module_utils.exceptions import MethodNotFoundError as AnsibleMethodNotFoundError
 
 
 def main():

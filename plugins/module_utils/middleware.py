@@ -49,12 +49,10 @@ class MiddleWare:
         # at least in theory, the desired module might not exist on
         # the remote host.
         if method == 'midclt':
-            from ..module_utils.midclt \
-                import Midclt
+            from ..module_utils.midclt import Midclt
             return Midclt
         elif method == 'client':
-            from ..module_utils.client \
-                import MiddlewareClient
+            from ..module_utils.client import MiddlewareClient
             return MiddlewareClient
         else:
             # Shouldn't use illegal methods. Bad caller!
