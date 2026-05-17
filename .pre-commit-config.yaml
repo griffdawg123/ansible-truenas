@@ -56,3 +56,11 @@ repos:
         files: ^(plugins|tests/sanity)/.*$
         entry: scripts/validate.sh
         pass_filenames: false
+
+      - id: antsibull-changelog-lint
+        name: antsibull-changelog lint
+        language: python
+        additional_dependencies: [antsibull-changelog]
+        files: ^changelogs/(changelog\.yaml|config\.yaml|fragments/.*)$
+        entry: antsibull-changelog lint
+        pass_filenames: false
