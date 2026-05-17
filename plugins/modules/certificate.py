@@ -112,6 +112,7 @@ EXAMPLES = '''
 
 RETURN = '''
 certificate:
+  returned: always
   description:
     - A data structure describing a newly-created or -installed certificate.
     - Only returned when a certificate is created.

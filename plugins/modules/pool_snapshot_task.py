@@ -193,6 +193,7 @@ task:
        state: "PENDING"
     vmware_sync: false
 deleted_tasks:
+  returned: always
   description: List of tasks that were deleted when C(state) is 'absent'.
   type: list
 '''

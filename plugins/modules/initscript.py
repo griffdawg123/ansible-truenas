@@ -85,6 +85,7 @@ EXAMPLES = '''
 # XXX
 RETURN = '''
 script:
+  returned: always
   description:
     - A data structure describing a newly-created init script.
     - Only returned when a script is created.

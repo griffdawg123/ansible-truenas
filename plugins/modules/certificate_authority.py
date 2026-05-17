@@ -121,6 +121,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ca_cert:
+  returned: always
   description:
     - A data structure describing a newly-created or -installed CA certificate.
     - Only returned when a certificate is created.

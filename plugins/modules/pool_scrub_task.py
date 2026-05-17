@@ -99,6 +99,8 @@ EXAMPLES = '''
 
 RETURN = '''
 task:
+  returned: always
+  type: dict
   description:
     - A structure describing a newly-created task.
 '''

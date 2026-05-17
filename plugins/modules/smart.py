@@ -72,6 +72,8 @@ EXAMPLES = '''
 
 RETURN = '''
 status:
+  returned: always
+  type: dict
   description:
     - A data structure giving the current state of the S.M.A.R.T.
       service, after this module has made changes.

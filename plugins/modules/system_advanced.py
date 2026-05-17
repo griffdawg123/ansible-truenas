@@ -120,6 +120,7 @@ EXAMPLES = '''
 
 RETURN = '''
 status:
+  returned: always
   description:
     - The system advanced configuration after any changes.
   type: dict

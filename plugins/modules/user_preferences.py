@@ -107,6 +107,7 @@ EXAMPLES = '''
 
 RETURN = '''
 preferences:
+  returned: always
   description:
     - The full preferences dict after the update.
   type: dict

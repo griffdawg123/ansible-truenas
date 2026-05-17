@@ -126,6 +126,7 @@ EXAMPLES = '''
 
 RETURN = '''
 status:
+  returned: always
   description:
     - The SMB service configuration after any changes.
   type: dict

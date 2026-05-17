@@ -75,6 +75,7 @@ EXAMPLES = '''
 
 RETURN = '''
 status:
+  returned: always
   description:
     - The FTP service configuration after any changes.
   type: dict

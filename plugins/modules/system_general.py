@@ -110,6 +110,7 @@ EXAMPLES = '''
 
 RETURN = '''
 status:
+  returned: always
   description:
     - The system general configuration after any changes.
   type: dict

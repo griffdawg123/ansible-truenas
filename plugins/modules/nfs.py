@@ -134,6 +134,7 @@ EXAMPLES = '''
 
 RETURN = '''
 status:
+  returned: always
   description:
     - A data structure describing the state of the NFS service.
     - In check_mode and when no changes are needed, this is the current

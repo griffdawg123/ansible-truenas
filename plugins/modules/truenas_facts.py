@@ -101,6 +101,7 @@ ansible_facts.truenas_features:
     - A map that says, for each system feature, whether it is enabled
       or not.
   type: dict
+  returned: always
   sample: {
       "DEDUP": true,
       "FIBRECHANNEL": false,
@@ -118,7 +119,7 @@ ansible_facts.truenas_system_info:
   description:
     - A dictionary with a number of facts about the system. See the
       sample value below.
-  type: complex
+  type: dict
   returned: always
   sample: {
     "version": "TrueNAS-13.0-U5",
@@ -159,7 +160,8 @@ ansible_facts.truenas_build_time:
     - Internally, this is a Python C(datetime.datetime) object, and is
       converted to a string by the time it gets to the Ansible client.
   type: str
-  sample: 2023-05-29T06:50:20
+  returned: always
+  sample: "2023-05-29T06:50:20"
 '''
 
 from datetime import datetime

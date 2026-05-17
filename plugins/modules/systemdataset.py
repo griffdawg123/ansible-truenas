@@ -35,6 +35,7 @@ EXAMPLES = '''
 
 RETURN = '''
 status:
+  returned: always
   description:
     - An object describing the new state of the system dataset.
     - This is in the same format as the value returned by systemdataset.config

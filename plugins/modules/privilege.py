@@ -80,6 +80,7 @@ EXAMPLES = '''
 
 RETURN = '''
 privilege:
+  returned: always
   description:
     - The privilege data after the update.
   type: dict

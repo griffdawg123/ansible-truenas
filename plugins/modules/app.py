@@ -130,6 +130,7 @@ EXAMPLES = '''
 
 RETURN = '''
 app:
+  returned: always
   description:
     - The app data after creation or update.
   type: dict

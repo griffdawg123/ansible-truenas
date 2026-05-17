@@ -212,6 +212,7 @@ EXAMPLES = '''
 
 RETURN = '''
 user_id:
+  returned: always
   description:
     - The ID of a newly-created user.
     - This is not the I(uid) as found in C(/etc/passwd), but the database

@@ -84,6 +84,7 @@ EXAMPLES = '''
 
 RETURN = '''
 app:
+  returned: always
   description:
     - The app data after the operation.
   type: dict

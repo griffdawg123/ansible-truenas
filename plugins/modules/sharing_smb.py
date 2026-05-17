@@ -161,10 +161,12 @@ EXAMPLES = '''
 
 RETURN = '''
 share:
+  returned: always
   description:
     - A data structure describing a newly-created share.
   type: dict
 status:
+  returned: always
   description:
     - When this module exits abnormally, C(status) contains an error message.
   type: str

@@ -94,6 +94,7 @@ EXAMPLES = '''
 
 RETURN = '''
 status:
+  returned: always
   description:
     - The SSH service configuration after any changes.
   type: dict

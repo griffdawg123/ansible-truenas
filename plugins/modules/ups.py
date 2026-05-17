@@ -128,6 +128,7 @@ EXAMPLES = '''
 
 RETURN = '''
 status:
+  returned: always
   description:
     - The UPS service configuration after any changes.
   type: dict
