@@ -643,7 +643,10 @@ def parse_volsize(value):
 
     if match:
         n = int(match[1])
-        unit = match[2]
+        # re returns None (not "") for an unmatched optional group, so a
+        # bare-integer 'volsize: 655360' would crash on the multiplier
+        # lookup without this fallback.
+        unit = "" if match[2] is None else match[2]
         return n * unit_multiplier[unit]
     else:
         raise ValueError(f"Can't parse volsize={value}")

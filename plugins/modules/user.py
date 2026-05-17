@@ -224,6 +224,23 @@ from ansible.module_utils.basic import AnsibleModule
 from ..module_utils import setup
 from ..module_utils.middleware import MiddleWare as MW
 
+# user.query returns the user's password as a hashed string in 'unixhash',
+# not the plaintext we'd compare it against. Re-hash the supplied
+# plaintext with the existing hash's salt and compare. cryptit is the
+# SCALE 25.10 successor to the deprecated stdlib `crypt` module.
+try:
+    import cryptit
+
+    def _password_matches(plaintext: str, stored_hash: str) -> bool:
+        return stored_hash == cryptit.cryptit(plaintext, stored_hash)
+except ImportError:  # pragma: no cover - cryptit absent off-host
+
+    def _password_matches(plaintext: str, stored_hash: str) -> bool:
+        # No crypt library available; can't tell, so treat as changed.
+        # The module will re-send the password to middleware, which
+        # is idempotent on its end.
+        return False
+
 
 def main():
     # user.create() arguments:
@@ -586,7 +603,7 @@ def main():
                 arg["uid"] = uid
 
             # Compare the given password to the existing hash.
-            if password is not None and user_info["unixhash"] != password:
+            if password is not None and not _password_matches(password, user_info["unixhash"]):
                 arg["password"] = password
 
             if (

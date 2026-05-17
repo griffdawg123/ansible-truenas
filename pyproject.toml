@@ -69,8 +69,9 @@ follow_untyped_imports = true
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-# Optional runtime libs that don't ship stubs.
-module = ["middlewared.*", "truenas_api_client"]
+# Optional runtime libs that don't ship stubs or aren't on the controller
+# at all (e.g. cryptit lives on the TrueNAS host).
+module = ["middlewared.*", "truenas_api_client", "cryptit"]
 ignore_missing_imports = true
 
 
