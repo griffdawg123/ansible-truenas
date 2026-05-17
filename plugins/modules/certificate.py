@@ -44,11 +44,15 @@ options:
     type: str
   private_keyfile:
     description:
-      - Pathname of the file containing the CA's private key.
+      - Pathname of the file containing the certificate's private key.
     type: path
   private_key:
     description:
-      - Used instead of O(private_keyfile) to specify a CA private key inline.
+      - Used instead of O(private_keyfile) to specify a private key inline.
+    type: str
+  passphrase:
+    description:
+      - Passphrase for the certificate's private key, if it has one.
     type: str
   state:
     description:
@@ -58,19 +62,21 @@ options:
     default: present
   revoked:
     description:
-      - Set to true to revoke a certificate. It is possible to upload
-        a certificate and immediately revoke it, though it is not
-        clear why this might be useful.
+      - Set to true to revoke a certificate at upload time. It is possible
+        to upload a certificate and immediately revoke it, though it is
+        not clear why this might be useful.
       - "Perhaps counterintuitively, only specifying O(name) and
         O(revoked=yes) will cause an error when the cert does not exist.
         This is because the cert needs to be uploaded before it can be
         revoked."
+      - Note that under TrueNAS SCALE 25.10 the C(certificate.update)
+        endpoint cannot toggle the revoked flag on an existing
+        certificate. The middleware accepts only a name change there.
+        For new certificates this option still triggers a revoke
+        immediately after creation.
     type: bool
     default: false
 notes:
-  - There appears to be a bug in TrueNAS 25.04.0 that prevents installing
-    certificates with keys greater than 2048 bits long. In fact, 2048 seems
-    to be the only usable key size for certificates.
   - Although TrueNAS supports creating certificates in the console,
     this module does not. It is not immediately clear how this should work
     in an idempotent Ansible module. At least for now, it is recommended
@@ -96,9 +102,10 @@ EXAMPLES = """
       ...
     passphrase: "squeamish ossifrage"
 
-- name: Revoke a cert
+- name: Revoke a cert at upload time
   jdevera.truenas.certificate:
     name: my_cert
+    src: /etc/pki/truenas-host.cert
     revoked: true
 
 - name: Remove a cert
@@ -115,14 +122,11 @@ certificate:
     - Only returned when a certificate is created.
   type: dict
   sample:
-    id: "6841f242-840a-11e6-a437-00e04d680384"
-    msg: "method"
-    method: "certificate.create"
-    params:
-      - name: "imported_cert"
-        certificate: "Certificate string"
-        privatekey: "Private key string"
-        create_type: "CERTIFICATE_CREATE_IMPORTED"
+    id: 42
+    name: imported_cert
+    type: CERTIFICATE
+    certificate: "-----BEGIN CERTIFICATE-----\\n..."
+    privatekey: "-----BEGIN PRIVATE KEY-----\\n..."
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -130,6 +134,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ..module_utils import setup
 from ..module_utils.middleware import MiddleWare as MW
 
+# Defined at module scope so the matching action plugin can import them
+# to validate arguments before file slurping.
 argument_spec = dict(
     name=dict(type="str", required=True),
     state=dict(type="str", default="present", choices=["absent", "present"]),
@@ -137,6 +143,7 @@ argument_spec = dict(
     certificate=dict(type="str"),
     private_keyfile=dict(type="path"),
     private_key=dict(type="str", no_log=True),
+    passphrase=dict(type="str", no_log=True),
     revoked=dict(type="bool", default=False),
 )
 required_if = [
@@ -159,7 +166,6 @@ def main():
     setup.require_scale_min_version(module)
 
     result = dict(changed=False, msg="")
-
     mw = MW.client()
 
     # Assign variables from properties, for convenience
@@ -167,134 +173,83 @@ def main():
     state = module.params["state"]
     certificate = module.params["certificate"]
     private_key = module.params["private_key"]
+    passphrase = module.params["passphrase"]
     revoked = module.params["revoked"]
 
-    # Look up the certificate
+    # Look up the certificate. On SCALE 25.10 certificate.query also
+    # returns CA certs (the two stores were merged), so callers should
+    # keep cert and CA names distinct.
     try:
         cert_info = mw.call("certificate.query", [["name", "=", name]])
-        if len(cert_info) == 0:
-            # No such cert
-            cert_info = None
-        else:
-            # Cert exists
-            cert_info = cert_info[0]
+        cert_info = cert_info[0] if cert_info else None
     except Exception as e:
-        module.fail_json(msg=f"Error looking up certificate {name}: {e}")
+        setup.fail(module, f"Error looking up certificate {name}: {e}")
 
-    # First, check whether the certificate even exists.
     if cert_info is None:
-        # Cert doesn't exist
+        # Cert doesn't exist.
 
         if state == "present":
             # Cert is supposed to exist, so create it.
-
-            # Collect arguments to pass to certificate.create()
             arg = {
                 "name": name,
                 "create_type": "CERTIFICATE_CREATE_IMPORTED",
             }
 
-            # When importing a key, 'certificate' and 'private_key'
-            # are required.
             if certificate is not None:
                 arg["certificate"] = certificate
-
             if private_key is not None:
                 arg["privatekey"] = private_key
+            if passphrase is not None:
+                arg["passphrase"] = passphrase
 
             if module.check_mode:
                 result["msg"] = f"Would have created certificate {name} with {arg}"
             else:
-                #
-                # Create new cert
-                #
                 try:
-                    # Note that this is a job, not a regular call.
+                    # certificate.create is a job, not a regular call.
                     err = mw.job("certificate.create", arg)
-                    result["certificate"] = err
                 except Exception as e:
                     result["failed_invocation"] = arg
-                    module.fail_json(msg=f"Error creating certificate {name}: {e}")
-
-                # Return whichever interesting bits certificate.create()
-                # returned.
+                    setup.fail(module, f"Error creating certificate {name}: {e}")
                 result["certificate"] = err
 
-            if revoked is not None and revoked:
+            if revoked:
                 # XXX - To revoke a cert, need its private key. Add
-                # this to requirements.
+                # this to requirements when we have one.
                 if module.check_mode:
                     result["msg"] += f"\nWould mark certificate {name} as revoked."
                 else:
-                    arg2 = {
-                        "revoked": revoked,
-                    }
-
                     try:
-                        err2 = mw.call("certificate.update", err["id"], arg2)
-                        # This overwrites the earlier result[certificate].
+                        err2 = mw.call("certificate.update", err["id"], {"revoked": revoked})
                         result["certificate"] = err2
                     except Exception as e:
-                        module.fail_json(msg=f"Error revoking certificate {name}: {e}")
-                        # XXX - Do we need to roll back the cert creation? Can we?
+                        # XXX - Roll back the create? Can we?
+                        setup.fail(module, f"Error revoking certificate {name}: {e}")
 
             result["changed"] = True
         else:
-            # Cert is not supposed to exist.
-            # All is well
+            # Cert is not supposed to exist; nothing to do.
             result["changed"] = False
 
     else:
-        # Cert exists
+        # Cert exists.
         if state == "present":
-            # Cert is supposed to exist
-
-            # Make list of differences between what is and what should
-            # be.
-            #
-            # Note that certificate.update() can only change 'name'
-            # and 'revoked'. And since we use 'name' as an identifier
-            arg = {}
-
-            if revoked is not None and cert_info["revoked"] != revoked:
-                # XXX - You can revoke a cert, but you can't un-revoke it.
-                arg["revoked"] = revoked
-
-            # If there are any changes, certificate.update()
-            if len(arg) == 0:
-                # No changes
-                result["changed"] = False
-            else:
-                #
-                # Update certificate.
-                #
-                if module.check_mode:
-                    result["msg"] = f"Would have updated certificate {name}: {arg}"
-                else:
-                    try:
-                        err = mw.call("certificate.update", cert_info["id"], arg)
-                        # certificate.update
-                        result["status"] = err
-                    except Exception as e:
-                        module.fail_json(msg=f"Error updating certificate {name} with {arg}: {e}")
-                        # Return any interesting bits from err
-                        result["status"] = err["status"]
-                result["changed"] = True
+            # certificate.update on 25.10 only accepts name and revoked,
+            # but middleware rejects toggling 'revoked' here — and we
+            # use name as the identifier, so there's nothing legitimate
+            # to update on an existing cert. Treat as a no-op.
+            result["changed"] = False
         else:
-            # Cert is not supposed to exist
-
-            # XXX - "force" option?
-
+            # Cert is not supposed to exist.
             if module.check_mode:
                 result["msg"] = f"Would have deleted certificate {name}"
             else:
                 try:
-                    #
-                    # Delete certificate.
-                    #
+                    # certificate.delete is a job on 25.10.
                     err = mw.job("certificate.delete", cert_info["id"])
                 except Exception as e:
-                    module.fail_json(msg=f"Error deleting certificate {name}: {e}")
+                    setup.fail(module, f"Error deleting certificate {name}: {e}")
+                result["status"] = err
             result["changed"] = True
 
     module.exit_json(**result)
