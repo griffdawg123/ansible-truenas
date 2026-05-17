@@ -44,8 +44,8 @@ MODULES = $(addprefix ${COLLECTION}., \
 	$(wildcard plugins/modules/*.py))))
 
 check-docs:	ansible_collections/$(subst .,/,${COLLECTION})
-	/usr/bin/env ANSIBLE_COLLECTIONS_PATH=. \
-	ansible-doc \
+	ANSIBLE_COLLECTIONS_PATH=. \
+	uv run --with ansible-core ansible-doc \
 		-M .\
 		--json \
 		--type module \
@@ -91,23 +91,37 @@ update-doc-site:	documentation
 	)
 	echo "Don't forget to git push the docs site."
 
-# Check for errors.
+# Individual checks. The unified entry point is `pre-commit run
+# --all-files`, which runs all of these and reports each one's status
+# in one pass. The targets below are kept so pre-commit can call them
+# and so each check is still reachable on its own.
+
 lint::
 	$(PYTHON) -m py_compile plugins/*/*.py
-	ruff check plugins/
+	uv run --with ruff ruff check plugins/
 
 # Run the official Ansible validation suite against this collection
 # (ansible-test's 'sanity' subcommand: pep8, validate-modules,
 # ansible-doc, import, etc.). The underlying subcommand name comes
-# from ansible-core and we can't rename it, but we expose it locally
-# as 'validate'.
+# from ansible-core; we expose it locally as 'validate'.
 #
-# Requires the collection to be installed at
-# ansible_collections/$(subst .,/,${COLLECTION}); the
-# compatibility-link target sets that up locally.
-validate:	compatibility-link
-	ANSIBLE_COLLECTIONS_PATH=. \
-	    ansible-test sanity --venv --color
+# ansible-test sanity insists that the current working directory be
+# inside an ansible_collections/<ns>/<name>/ tree, and it resolves
+# symlinks before checking that, so the compatibility-link approach
+# doesn't satisfy it. Instead, rsync the source into a temp tree and
+# run from there.
+validate:
+	@tmp=$$(mktemp -d) && \
+	dest="$$tmp/ansible_collections/$(subst .,/,${COLLECTION})" && \
+	mkdir -p "$$dest" && \
+	rsync -aq --exclude=.git --exclude=ansible_collections --exclude=__pycache__ \
+	    --exclude=venv-docs --exclude=tests/output --exclude=.venv \
+	    --exclude=.local ./ "$$dest/" && \
+	UV_PROJECT_ENVIRONMENT="$$tmp/.uvenv" \
+	(cd "$$dest" && \
+	 UV_PROJECT_ENVIRONMENT="$$tmp/.uvenv" \
+	 uv run --with ansible-core ansible-test sanity --venv --color); \
+	rc=$$?; rm -rf "$$tmp"; exit $$rc
 
 # Type-check with mypy. Has to be invoked through the
 # ansible_collections/$(subst .,/,${COLLECTION}) path so that the
@@ -115,4 +129,5 @@ validate:	compatibility-link
 # resolve to the same namespace package that Ansible uses at runtime.
 # Config lives in pyproject.toml ([tool.mypy]).
 typecheck:	compatibility-link
-	mypy ansible_collections/$(subst .,/,${COLLECTION})/plugins/
+	uv run --with mypy --with ansible-core mypy \
+	    ansible_collections/$(subst .,/,${COLLECTION})/plugins/
