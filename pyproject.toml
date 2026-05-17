@@ -31,8 +31,8 @@ ignore = [
 # mypy
 #
 # Patterned on community.general PR #10997. Pragmatic adoption: enable
-# type checking in CI / 'make typecheck' so future changes are
-# validated, without forcing fully-annotated module code today.
+# type checking in CI so future changes are validated, without forcing
+# fully-annotated module code today.
 # ----------------------------------------------------------------------
 
 [tool.mypy]
@@ -46,9 +46,9 @@ ignore_missing_imports = false
 # explicit_package_bases lets mypy treat action/certificate.py and
 # modules/certificate.py as distinct modules instead of a duplicate.
 #
-# 'make typecheck' invokes mypy through the compatibility-link path
-# (ansible_collections/jdevera/truenas/plugins/) so that the relative
-# imports inside plugins/ resolve as
+# The pre-commit mypy hook invokes mypy through the compatibility-link
+# path (ansible_collections/jdevera/truenas/plugins/) so that the
+# relative imports inside plugins/ resolve as
 # 'ansible_collections.jdevera.truenas.plugins.module_utils.*' — the
 # same namespace package Ansible's loader uses at runtime.
 explicit_package_bases = true
@@ -78,8 +78,8 @@ ignore_missing_imports = true
 # pyright
 #
 # Editor-time type checker. The collection's authoritative type check
-# is mypy via 'make typecheck'; pyright is here to keep IDE noise out
-# of the way for agent-driven workflows.
+# is mypy via the pre-commit hook; pyright is here to keep IDE noise
+# out of the way for agent-driven workflows.
 #
 # To get pyright fully resolving ansible.* imports locally, create a
 # venv at ./.venv with ansible-core installed:

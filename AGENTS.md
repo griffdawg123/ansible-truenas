@@ -37,7 +37,7 @@ Use `setup.fail(module, msg, **kwargs)` instead of `module.fail_json(msg=..., **
 
 ## Checks
 
-One command: `pre-commit run --all-files`. It runs ruff, ruff-format, mypy, ansible-doc, and ansible-test sanity, with each hook bringing its own dependencies (`additional_dependencies: [ansible-core]`) — no Makefile glue. Run `pre-commit install` once per checkout to also trigger it on `git commit`. To call any tool directly, use uv: `uv run --with ruff ruff check plugins/` etc.
+One command: `pre-commit run --all-files`. It runs ruff, ruff-format, mypy, ansible-doc, and ansible-test sanity, with each hook bringing its own dependencies (`additional_dependencies: [ansible-core]`). Run `pre-commit install` once per checkout to also trigger it on `git commit`. To call any tool directly, use uv: `uv run --with ruff ruff check plugins/` etc.
 
 ## Docs
 

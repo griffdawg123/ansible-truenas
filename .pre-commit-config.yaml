@@ -3,8 +3,8 @@
 # One-shot status:    pre-commit run --all-files
 # Auto-run on commit: pre-commit install   (one-time, per checkout)
 #
-# Each hook brings its own dependencies via pre-commit's built-in venv
-# management — no Makefile glue, no `uv run --with` indirection.
+# Each hook brings its own dependencies via pre-commit's built-in
+# venv management; no external task runner needed.
 
 default_stages: [pre-commit]
 
