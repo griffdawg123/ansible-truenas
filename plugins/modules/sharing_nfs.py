@@ -180,8 +180,7 @@ def main():
             # Export exists
             export_info = export_info[0]
     except Exception as e:
-        module.fail_json(msg=f"Error looking up NFS export {name}: {e}")
-        return  # fail_json exits; helps static analysis
+        setup.fail(module, f"Error looking up NFS export {name}: {e}")
 
     # First, check whether the export even exists.
     if export_info is None:
@@ -231,8 +230,7 @@ def main():
                     result['msg'] = err
                 except Exception as e:
                     # result['failed_invocation'] = arg
-                    module.fail_json(msg=f"Error creating NFS export \"{name}\": {e}")
-                    return  # fail_json exits; helps static analysis
+                    setup.fail(module, f"Error creating NFS export \"{name}\": {e}")
 
                 # Return whichever interesting bits sharing.nfs.create()
                 # returned.
@@ -328,8 +326,7 @@ def main():
                                       arg)
                         result['status'] = err
                     except Exception as e:
-                        module.fail_json(msg=f"Error updating NFS export \"{name}\" with {arg}: {e}")
-                        return  # fail_json exits; helps static analysis
+                        setup.fail(module, f"Error updating NFS export \"{name}\" with {arg}: {e}")
                 result['changed'] = True
         else:
             # NFS export is not supposed to exist
@@ -345,8 +342,7 @@ def main():
                                   export_info['id'])
                     result['status'] = err
                 except Exception as e:
-                    module.fail_json(msg=f"Error deleting NFS export \"{name}\": {e}")
-                    return  # fail_json exits; helps static analysis
+                    setup.fail(module, f"Error deleting NFS export \"{name}\": {e}")
             result['changed'] = True
 
     module.exit_json(**result)
