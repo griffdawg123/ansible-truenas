@@ -10,3 +10,5 @@ arensb-truenas-*.tar.gz
 /changelogs/.plugin-cache.yaml
 # uv stray lockfile from tool-only pyproject.toml runs
 uv.lock
+# Personal/local scratch space — notes, TODO lists, agent dropbox.
+/.local/
