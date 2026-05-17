@@ -83,8 +83,6 @@ from ..module_utils.middleware import MiddleWare as MW
 
 
 def main():
-    setup.require_scale_min_version()
-
     module = AnsibleModule(
         argument_spec=dict(
             from_name=dict(type='str'),
@@ -103,6 +101,8 @@ def main():
         supports_check_mode=True,
         # XXX - 'smtp_user' and 'smtp_pass' are required when 'smtp' is true.
     )
+
+    setup.require_scale_min_version(module)
 
     result = dict(
         changed=False,

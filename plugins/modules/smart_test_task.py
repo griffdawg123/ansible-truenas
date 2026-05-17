@@ -152,8 +152,6 @@ from ..module_utils.middleware import MiddleWare as MW
 
 
 def main():
-    setup.require_scale_min_version()
-
     def diskname2id(name: str):
         """Convert a disk name like 'da0' to an ID."""
 
@@ -192,6 +190,8 @@ def main():
         ],
         supports_check_mode=True,
     )
+
+    setup.require_scale_min_version(module)
 
     result = dict(
         changed=False,

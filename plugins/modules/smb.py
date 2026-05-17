@@ -162,8 +162,6 @@ SET_FIELDS = {'netbiosalias', 'bindip'}
 
 
 def main():
-    setup.require_scale_min_version()
-
     module = AnsibleModule(
         argument_spec=dict(
             netbiosname=dict(type='str'),
@@ -190,6 +188,8 @@ def main():
         ),
         supports_check_mode=True,
     )
+
+    setup.require_scale_min_version(module)
 
     result = dict(
         changed=False,

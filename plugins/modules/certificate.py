@@ -150,8 +150,6 @@ mutually_exclusive = [
     ('private_keyfile', 'private_key'),
 ]
 def main():
-    setup.require_scale_min_version()
-
     global argument_spec
 
     module = AnsibleModule(
@@ -160,6 +158,8 @@ def main():
         required_if=required_if,
         mutually_exclusive=mutually_exclusive,
     )
+
+    setup.require_scale_min_version(module)
 
     result = dict(
         changed=False,

@@ -206,8 +206,6 @@ from ..module_utils.middleware import MiddleWare as MW
 
 
 def main():
-    setup.require_scale_min_version()
-
     # Required arguments:
     # - recursive (bool)
     #   I don't know what a good default might be
@@ -252,6 +250,8 @@ def main():
             ),
         supports_check_mode=True,
     )
+
+    setup.require_scale_min_version(module)
 
     result = dict(
         changed=False,

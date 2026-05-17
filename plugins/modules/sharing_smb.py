@@ -236,8 +236,6 @@ def values_differ(param_value, current_value, param_name):
 
 
 def main():
-    setup.require_scale_min_version()
-
     module = AnsibleModule(
         argument_spec=dict(
             path=dict(type='str', required=True),
@@ -272,6 +270,8 @@ def main():
             ),
         supports_check_mode=True,
     )
+
+    setup.require_scale_min_version(module)
 
     result = dict(
         changed=False,

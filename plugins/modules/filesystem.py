@@ -112,8 +112,6 @@ from ..module_utils.middleware import MiddleWare as MW
 
 
 def main():
-    setup.require_scale_min_version()
-
     argument_spec = dict(
         name=dict(type="str", required=True),
         state=dict(type="str", choices=["absent", "present"], default="present"),
@@ -192,6 +190,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    setup.require_scale_min_version(module)
 
     result = dict(changed=False, filesystem={}, msg="")
     mw = MW.client()

@@ -81,8 +81,6 @@ from ..module_utils.middleware import MiddleWare as MW
 
 
 def main():
-    setup.require_scale_min_version()
-
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str'),
@@ -94,6 +92,8 @@ def main():
         ],
         supports_check_mode=True,
     )
+
+    setup.require_scale_min_version(module)
 
     result = dict(
         changed=False,

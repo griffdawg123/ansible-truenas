@@ -125,8 +125,6 @@ SET_FIELDS = {'bindiface', 'password_login_groups', 'weak_ciphers'}
 
 
 def main():
-    setup.require_scale_min_version()
-
     module = AnsibleModule(
         argument_spec=dict(
             bindiface=dict(type='list', elements='str'),
@@ -150,6 +148,8 @@ def main():
         ),
         supports_check_mode=True,
     )
+
+    setup.require_scale_min_version(module)
 
     result = dict(
         changed=False,

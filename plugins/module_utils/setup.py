@@ -2,7 +2,7 @@
 # Code that it'd be nice to have in Ansible's 'setup' module.
 
 import re
-import sys
+from typing import NoReturn
 
 from ..module_utils.middleware import MiddleWare as MW
 
@@ -93,24 +93,32 @@ def get_tn_version():
     return tn_version
 
 
-def require_scale_min_version():
-    """Fail fast if the host isn't running TrueNAS SCALE >= MIN_SCALE_VERSION.
+def fail(module, msg: str, **kwargs) -> NoReturn:
+    """Report a module error via fail_json and never return.
 
-    Modules in this collection target current SCALE; calling this at
-    the top of main() short-circuits unsupported hosts with a clear
-    message instead of letting middleware emit a cryptic error.
+    AnsibleModule.fail_json calls sys.exit(0) with a failure JSON
+    payload, but it isn't typed as NoReturn, so static analyzers
+    don't prune subsequent control flow. This wrapper carries the
+    NoReturn annotation; the trailing raise is a defensive backstop
+    in case fail_json's behavior ever changes.
+    """
+    module.fail_json(msg=msg, **kwargs)
+    raise SystemExit(0)
+
+
+def require_scale_min_version(module) -> None:
+    """Fail the module if the host isn't running SCALE >= MIN_SCALE_VERSION.
+
+    Must be called after AnsibleModule construction so fail_json can
+    report the version mismatch through the standard Ansible protocol.
     """
     try:
         tn = get_tn_version()
     except Exception as e:
-        print(f'{{"failed":true, "msg": "Error getting TrueNAS version: {e}"}}')
-        sys.exit(1)
+        fail(module, f"Error getting TrueNAS version: {e}")
 
+    minimum = ".".join(str(p) for p in MIN_SCALE_VERSION)
     if not (tn['name'] == "TrueNAS" and
             tn['type'] in {"SCALE", "COMMUNITY_EDITION"} and
             tn['version'] >= MIN_SCALE_VERSION):
-        print(
-            '{"failed":true, "msg": "This collection requires '
-            f'TrueNAS SCALE {MIN_SCALE_VERSION} or newer."}}'
-        )
-        sys.exit(1)
+        fail(module, f"This collection requires TrueNAS SCALE {minimum} or newer.")

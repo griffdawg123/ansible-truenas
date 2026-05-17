@@ -226,8 +226,6 @@ from ..module_utils.middleware import MiddleWare as MW
 
 
 def main():
-    setup.require_scale_min_version()
-
     # user.create() arguments:
     # x uid (int)
     # x username (str)
@@ -361,6 +359,8 @@ def main():
         supports_check_mode=True,
         required_if=mod_required_if
     )
+
+    setup.require_scale_min_version(module)
 
     result = dict(
         changed=False,

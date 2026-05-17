@@ -171,12 +171,12 @@ from ..module_utils.exceptions import MethodNotFoundError as AnsibleMethodNotFou
 
 
 def main():
-    setup.require_scale_min_version()
-
     module = AnsibleModule(
         argument_spec=dict(),
         supports_check_mode=True,
     )
+
+    setup.require_scale_min_version(module)
 
     result = dict(
         changed=False,
