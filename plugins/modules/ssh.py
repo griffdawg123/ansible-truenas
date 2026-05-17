@@ -5,7 +5,7 @@
 # midclt call ssh.config
 # midclt call ssh.update '{"tcpport": 22}'
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: ssh
 short_description: Configure SSH service
@@ -73,9 +73,9 @@ notes:
 seealso:
   - module: jdevera.truenas.service
 version_added: 1.15.0
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Set SSH port and disable password auth
   jdevera.truenas.ssh:
     tcpport: 2222
@@ -90,15 +90,15 @@ EXAMPLES = '''
   jdevera.truenas.ssh:
     compression: true
     tcpfwd: true
-'''
+"""
 
-RETURN = '''
+RETURN = """
 status:
   returned: always
   description:
     - The SSH service configuration after any changes.
   type: dict
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -108,54 +108,73 @@ from ..module_utils.middleware import MiddleWare as MW
 # Maps Ansible param name -> API field name.
 # Only includes fields where they differ or need explicit mapping.
 FIELDS = {
-    'bindiface': 'bindiface',
-    'tcpport': 'tcpport',
-    'passwordauth': 'passwordauth',
-    'password_login_groups': 'password_login_groups',
-    'kerberosauth': 'kerberosauth',
-    'tcpfwd': 'tcpfwd',
-    'compression': 'compression',
-    'sftp_log_level': 'sftp_log_level',
-    'sftp_log_facility': 'sftp_log_facility',
-    'weak_ciphers': 'weak_ciphers',
-    'options': 'options',
+    "bindiface": "bindiface",
+    "tcpport": "tcpport",
+    "passwordauth": "passwordauth",
+    "password_login_groups": "password_login_groups",
+    "kerberosauth": "kerberosauth",
+    "tcpfwd": "tcpfwd",
+    "compression": "compression",
+    "sftp_log_level": "sftp_log_level",
+    "sftp_log_facility": "sftp_log_facility",
+    "weak_ciphers": "weak_ciphers",
+    "options": "options",
 }
 
 # Fields where order doesn't matter (compare as sets)
-SET_FIELDS = {'bindiface', 'password_login_groups', 'weak_ciphers'}
+SET_FIELDS = {"bindiface", "password_login_groups", "weak_ciphers"}
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            bindiface=dict(type='list', elements='str'),
-            tcpport=dict(type='int'),
-            passwordauth=dict(type='bool'),
-            password_login_groups=dict(type='list', elements='str', no_log=False),
-            kerberosauth=dict(type='bool'),
-            tcpfwd=dict(type='bool'),
-            compression=dict(type='bool'),
-            sftp_log_level=dict(type='str',
-                                choices=['', 'QUIET', 'FATAL', 'ERROR',
-                                         'INFO', 'VERBOSE', 'DEBUG',
-                                         'DEBUG2', 'DEBUG3']),
-            sftp_log_facility=dict(type='str',
-                                   choices=['', 'DAEMON', 'USER', 'AUTH',
-                                            'LOCAL0', 'LOCAL1', 'LOCAL2',
-                                            'LOCAL3', 'LOCAL4', 'LOCAL5',
-                                            'LOCAL6', 'LOCAL7']),
-            weak_ciphers=dict(type='list', elements='str'),
-            options=dict(type='str'),
+            bindiface=dict(type="list", elements="str"),
+            tcpport=dict(type="int"),
+            passwordauth=dict(type="bool"),
+            password_login_groups=dict(type="list", elements="str", no_log=False),
+            kerberosauth=dict(type="bool"),
+            tcpfwd=dict(type="bool"),
+            compression=dict(type="bool"),
+            sftp_log_level=dict(
+                type="str",
+                choices=[
+                    "",
+                    "QUIET",
+                    "FATAL",
+                    "ERROR",
+                    "INFO",
+                    "VERBOSE",
+                    "DEBUG",
+                    "DEBUG2",
+                    "DEBUG3",
+                ],
+            ),
+            sftp_log_facility=dict(
+                type="str",
+                choices=[
+                    "",
+                    "DAEMON",
+                    "USER",
+                    "AUTH",
+                    "LOCAL0",
+                    "LOCAL1",
+                    "LOCAL2",
+                    "LOCAL3",
+                    "LOCAL4",
+                    "LOCAL5",
+                    "LOCAL6",
+                    "LOCAL7",
+                ],
+            ),
+            weak_ciphers=dict(type="list", elements="str"),
+            options=dict(type="str"),
         ),
         supports_check_mode=True,
     )
 
     setup.require_scale_min_version(module)
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
@@ -164,7 +183,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=f"Error looking up SSH configuration: {e}")
 
-    result['status'] = ssh_info
+    result["status"] = ssh_info
 
     # Build diff
     arg = {}
@@ -180,17 +199,17 @@ def main():
             arg[api_field] = value
 
     if len(arg) == 0:
-        result['changed'] = False
+        result["changed"] = False
     else:
         if module.check_mode:
-            result['msg'] = f"Would have updated SSH: {arg}"
+            result["msg"] = f"Would have updated SSH: {arg}"
         else:
             try:
                 err = mw.call("ssh.update", arg)
-                result['status'] = err
+                result["status"] = err
             except Exception as e:
                 module.fail_json(msg=f"Error updating SSH with {arg}: {e}")
-        result['changed'] = True
+        result["changed"] = True
 
     module.exit_json(**result)
 

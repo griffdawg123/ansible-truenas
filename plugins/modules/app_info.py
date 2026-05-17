@@ -6,7 +6,7 @@
 # midclt call app.available
 # midclt call app.config "plex"
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: app_info
 short_description: Gather information about apps
@@ -33,9 +33,9 @@ seealso:
   - module: jdevera.truenas.app
   - module: jdevera.truenas.app_service
 version_added: 1.15.0
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: List all installed apps
   jdevera.truenas.app_info:
   register: installed
@@ -54,9 +54,9 @@ EXAMPLES = '''
   jdevera.truenas.app_info:
     available: true
   register: catalog
-'''
+"""
 
-RETURN = '''
+RETURN = """
 apps:
   description:
     - List of app objects (installed or available).
@@ -68,7 +68,7 @@ config:
     - Configuration values for a specific installed app.
   type: dict
   returned: when C(name) is specified
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -79,11 +79,11 @@ from ..module_utils.middleware import MiddleWare as MW
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str'),
-            available=dict(type='bool', default=False),
+            name=dict(type="str"),
+            available=dict(type="bool", default=False),
         ),
         mutually_exclusive=[
-            ['name', 'available'],
+            ["name", "available"],
         ],
         supports_check_mode=True,
     )
@@ -96,25 +96,24 @@ def main():
 
     mw = MW.client()
 
-    name = module.params['name']
-    available = module.params['available']
+    name = module.params["name"]
+    available = module.params["available"]
 
     try:
         if available:
-            result['apps'] = mw.call("app.available")
+            result["apps"] = mw.call("app.available")
         elif name is not None:
-            apps = mw.call("app.query",
-                           [["name", "=", name]])
+            apps = mw.call("app.query", [["name", "=", name]])
             if len(apps) == 0:
                 module.fail_json(msg=f"App '{name}' not found")
-            result['apps'] = apps
+            result["apps"] = apps
             # Also fetch the app's config values
             try:
-                result['config'] = mw.call("app.config", name)
+                result["config"] = mw.call("app.config", name)
             except Exception:
                 pass
         else:
-            result['apps'] = mw.call("app.query")
+            result["apps"] = mw.call("app.query")
     except Exception as e:
         module.fail_json(msg=f"Error querying apps: {e}")
 

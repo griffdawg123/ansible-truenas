@@ -9,7 +9,7 @@
 # midclt call auth.me  (to see current user info)
 # midclt call auth.set_attribute "preferences" '{"lifetime": 300}'
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: user_preferences
 short_description: Manage UI preferences for the connection user
@@ -75,9 +75,9 @@ notes:
   - Only the specified preferences are updated. Unspecified preferences
     retain their current values.
 version_added: 1.15.0
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Set session timeout to 5 minutes
   jdevera.truenas.user_preferences:
     lifetime: 300
@@ -103,15 +103,15 @@ EXAMPLES = '''
   loop:
     - truenas_admin
     - jacobo
-'''
+"""
 
-RETURN = '''
+RETURN = """
 preferences:
   returned: always
   description:
     - The full preferences dict after the update.
   type: dict
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -119,52 +119,49 @@ from ..module_utils import setup
 from ..module_utils.middleware import MiddleWare as MW
 
 PREF_FIELDS = {
-    'lifetime': 'lifetime',
-    'language': 'language',
-    'userTheme': 'userTheme',
-    'dateFormat': 'dateFormat',
-    'timeFormat': 'timeFormat',
-    'hideBuiltinUsers': 'hideBuiltinUsers',
-    'hideBuiltinGroups': 'hideBuiltinGroups',
-    'autoRefreshReports': 'autoRefreshReports',
-    'rebootAfterManualUpdate': 'rebootAfterManualUpdate',
-    'showSnapshotExtraColumns': 'showSnapshotExtraColumns',
-    'terminalFontSize': 'terminalFontSize',
+    "lifetime": "lifetime",
+    "language": "language",
+    "userTheme": "userTheme",
+    "dateFormat": "dateFormat",
+    "timeFormat": "timeFormat",
+    "hideBuiltinUsers": "hideBuiltinUsers",
+    "hideBuiltinGroups": "hideBuiltinGroups",
+    "autoRefreshReports": "autoRefreshReports",
+    "rebootAfterManualUpdate": "rebootAfterManualUpdate",
+    "showSnapshotExtraColumns": "showSnapshotExtraColumns",
+    "terminalFontSize": "terminalFontSize",
 }
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            lifetime=dict(type='int'),
-            language=dict(type='str'),
-            userTheme=dict(type='str'),
-            dateFormat=dict(type='str'),
-            timeFormat=dict(type='str'),
-            hideBuiltinUsers=dict(type='bool'),
-            hideBuiltinGroups=dict(type='bool'),
-            autoRefreshReports=dict(type='bool'),
-            rebootAfterManualUpdate=dict(type='bool'),
-            showSnapshotExtraColumns=dict(type='bool'),
-            terminalFontSize=dict(type='int'),
+            lifetime=dict(type="int"),
+            language=dict(type="str"),
+            userTheme=dict(type="str"),
+            dateFormat=dict(type="str"),
+            timeFormat=dict(type="str"),
+            hideBuiltinUsers=dict(type="bool"),
+            hideBuiltinGroups=dict(type="bool"),
+            autoRefreshReports=dict(type="bool"),
+            rebootAfterManualUpdate=dict(type="bool"),
+            showSnapshotExtraColumns=dict(type="bool"),
+            terminalFontSize=dict(type="int"),
         ),
         supports_check_mode=True,
     )
 
     setup.require_scale_min_version(module)
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
     # Get current user info and preferences
     try:
         me = mw.call("auth.me")
-        attributes = me.get('attributes', {})
-        current_prefs = attributes.get('preferences', {})
+        attributes = me.get("attributes", {})
+        current_prefs = attributes.get("preferences", {})
     except Exception as e:
         module.fail_json(msg=f"Error getting current user info: {e}")
 
@@ -178,24 +175,23 @@ def main():
             changes[pref_key] = value
 
     if len(changes) == 0:
-        result['changed'] = False
-        result['preferences'] = current_prefs
+        result["changed"] = False
+        result["preferences"] = current_prefs
     else:
         # Merge changes into current preferences
         new_prefs = dict(current_prefs)
         new_prefs.update(changes)
 
         if module.check_mode:
-            result['msg'] = f"Would have updated preferences: {changes}"
-            result['preferences'] = new_prefs
+            result["msg"] = f"Would have updated preferences: {changes}"
+            result["preferences"] = new_prefs
         else:
             try:
                 mw.call("auth.set_attribute", "preferences", new_prefs)
-                result['preferences'] = new_prefs
+                result["preferences"] = new_prefs
             except Exception as e:
-                module.fail_json(
-                    msg=f"Error updating preferences: {e}")
-        result['changed'] = True
+                module.fail_json(msg=f"Error updating preferences: {e}")
+        result["changed"] = True
 
     module.exit_json(**result)
 

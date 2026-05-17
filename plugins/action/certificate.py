@@ -1,4 +1,3 @@
-
 # certificate action plugin.
 #
 # Several options to the 'certificate' module involve reading a file
@@ -25,34 +24,36 @@ class ActionModule(ActionBase):
 
         subtask = self._task.copy()
 
-        if 'src' in subtask.args and subtask.args['src'] is not None:
+        if "src" in subtask.args and subtask.args["src"] is not None:
             # We were given a 'src' argument. Replace it with a
             # 'certificate' argument.
             try:
-                with open(subtask.args['src']) as f:
+                with open(subtask.args["src"]) as f:
                     certificate = f.read()
             except Exception as e:
                 raise AnsibleActionFail(f"Error opening 'src: {subtask.args['src']}': {e}") from e
 
             # Replace 'src' with 'certificate'.
-            del subtask.args['src']
-            subtask.args['certificate'] = certificate
+            del subtask.args["src"]
+            subtask.args["certificate"] = certificate
 
-        if 'private_keyfile' in subtask.args and subtask.args['private_keyfile'] is not None:
+        if "private_keyfile" in subtask.args and subtask.args["private_keyfile"] is not None:
             # We were given a 'private_keyfile' argument. Replace it
             # with a 'private_key' argument.
             try:
-                with open(subtask.args['private_keyfile']) as f:
+                with open(subtask.args["private_keyfile"]) as f:
                     private_key = f.read()
             except Exception as e:
-                raise AnsibleActionFail(f"Error opening 'src: {subtask.args['private_keyfile']}': {e}") from e
+                raise AnsibleActionFail(
+                    f"Error opening 'src: {subtask.args['private_keyfile']}': {e}"
+                ) from e
 
             # Replace 'private_keyfile' with 'private_key'.
-            del subtask.args['private_keyfile']
-            subtask.args['private_key'] = private_key
+            del subtask.args["private_keyfile"]
+            subtask.args["private_key"] = private_key
 
         # Now run the actual module.
-        result = self._execute_module(module_name="certificate",
-                                      module_args=subtask.args,
-                                      task_vars=task_vars)
+        result = self._execute_module(
+            module_name="certificate", module_args=subtask.args, task_vars=task_vars
+        )
         return result

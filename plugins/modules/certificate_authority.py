@@ -11,7 +11,7 @@
 # XXX - Can't delete a CA while it's in use by a cert. Make sure this
 # is indicated in an error message if it happens.
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: certificate_authority
 short_description: Manage Certificate Authorities.
@@ -77,9 +77,9 @@ notes:
     TrueNAS devices. Failing that, you can manually generate a CA in the
     TrueNAS console, and download it to your Ansible server.
 version_added: 1.12.0
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Install a CA cert from a file
   jdevera.truenas.certificate_authority:
     name: my_ca_cert
@@ -118,9 +118,9 @@ EXAMPLES = '''
     name: my_ca_cert
     state: present
     revoked: yes
-'''
+"""
 
-RETURN = '''
+RETURN = """
 ca_cert:
   returned: always
   description:
@@ -136,7 +136,7 @@ ca_cert:
         certificate: "Certificate string"
         privatekey: "Private key string"
         create_type: "CA_CREATE_IMPORTED"
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -146,33 +146,28 @@ from ..module_utils.middleware import MiddleWare as MW
 # Put this at file scope so that the action module can slurp this in
 # and validate arguments.
 argument_spec = dict(
-    name=dict(type='str', required=True),
-    state=dict(type='str', default='present',
-               choices=['absent', 'present']),
-    src=dict(type='path'),
-    certificate=dict(type='str',
-                     aliases=['ca', 'cert', 'ca_cert']),
-    private_keyfile=dict(type='path'),
-    private_key=dict(type='str', no_log=True),
-    passphrase=dict(type='str', no_log=True),
-    revoked=dict(type='bool', default=False),
+    name=dict(type="str", required=True),
+    state=dict(type="str", default="present", choices=["absent", "present"]),
+    src=dict(type="path"),
+    certificate=dict(type="str", aliases=["ca", "cert", "ca_cert"]),
+    private_keyfile=dict(type="path"),
+    private_key=dict(type="str", no_log=True),
+    passphrase=dict(type="str", no_log=True),
+    revoked=dict(type="bool", default=False),
 )
 required_if = [
-    ('state', 'present', ('src', 'certificate', 'revoked'), True),
+    ("state", "present", ("src", "certificate", "revoked"), True),
 ]
 mutually_exclusive = [
-    ('src', 'certificate'),
-    ('private_keyfile', 'private_key'),
+    ("src", "certificate"),
+    ("private_keyfile", "private_key"),
 ]
 
 
 def main():
-    global argument_spec, required_if, mutually_exclusive
-
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-
         # If we're creating/uploading a CA, need to give either the CA
         # cert, or a path to it, but not both.
         required_if=required_if,
@@ -181,27 +176,23 @@ def main():
 
     setup.require_scale_min_version(module)
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
     # Assign variables from properties, for convenience
-    name = module.params['name']
-    state = module.params['state']
+    name = module.params["name"]
+    state = module.params["state"]
     # src = module.params['src']
-    certificate = module.params['certificate']
+    certificate = module.params["certificate"]
     # private_keyfile = module.params['private_keyfile']
-    private_key = module.params['private_key']
-    passphrase = module.params['passphrase']
-    revoked = module.params['revoked']
+    private_key = module.params["private_key"]
+    passphrase = module.params["passphrase"]
+    revoked = module.params["revoked"]
 
     # Look up the CA cert
     try:
-        ca_cert_info = mw.call("certificateauthority.query",
-                               [["name", "=", name]])
+        ca_cert_info = mw.call("certificateauthority.query", [["name", "=", name]])
         if len(ca_cert_info) == 0:
             # No such CA cert
             ca_cert_info = None
@@ -215,7 +206,7 @@ def main():
     if ca_cert_info is None:
         # CA cert doesn't exist
 
-        if state == 'present':
+        if state == "present":
             # CA cert is supposed to exist, so create it.
 
             # Collect arguments to pass to certificateauthority.create()
@@ -231,16 +222,16 @@ def main():
             # certificateauthority.update(revoked=true)
 
             if certificate is not None:
-                arg['certificate'] = certificate
+                arg["certificate"] = certificate
 
             if private_key is not None:
-                arg['privatekey'] = private_key
+                arg["privatekey"] = private_key
 
             if passphrase is not None:
-                arg['passphrase'] = passphrase
+                arg["passphrase"] = passphrase
 
             if module.check_mode:
-                result['msg'] = f"Would have created CA certificate {name} with {arg}"
+                result["msg"] = f"Would have created CA certificate {name} with {arg}"
             else:
                 #
                 # Install new CA cert
@@ -258,40 +249,40 @@ def main():
                     # .update only allows us to change the name and
                     # revokedness, not update a key.
                     err = mw.call("certificateauthority.create", arg)
-                    result['msg'] = err
+                    result["msg"] = err
                 except Exception as e:
-                    result['failed_invocation'] = arg
+                    result["failed_invocation"] = arg
                     module.fail_json(msg=f"Error creating CA certificate {name}: {e}")
 
                 # Return whichever interesting bits certificateauthority.create()
                 # returned.
-                result['ca_cert'] = err
+                result["ca_cert"] = err
 
             if revoked is not None and revoked:
                 # XXX - To revoke a CA, need its private key. Add this
                 # to requirements.
                 if module.check_mode:
-                    result['msg'] += f"Would mark CA {name} as revoked."
+                    result["msg"] += f"Would mark CA {name} as revoked."
                 else:
                     arg2 = {
                         "revoked": revoked,
                     }
 
                     try:
-                        mw.call("certificateauthority.update", err['id'], arg2)
+                        mw.call("certificateauthority.update", err["id"], arg2)
                     except Exception as e:
                         module.fail_json(msg=f"Error revoking CA certificate {name}: {e}")
                         # XXX - Do we need to roll back the CA creation? Can we?
 
-            result['changed'] = True
+            result["changed"] = True
         else:
             # The CA cert is not supposed to exist.
             # All is well
-            result['changed'] = False
+            result["changed"] = False
 
     else:
         # CA exists
-        if state == 'present':
+        if state == "present":
             # This CA is supposed to exist
 
             # Make list of differences between what is and what should
@@ -302,46 +293,45 @@ def main():
             # be changed, either.
             arg = {}
 
-            if revoked is not None and ca_cert_info['revoked'] != revoked:
+            if revoked is not None and ca_cert_info["revoked"] != revoked:
                 # You can revoke a cert, but you can't un-revoke it:
                 # SCALE will fail if you try.
-                arg['revoked'] = revoked
+                arg["revoked"] = revoked
 
             # If there are any changes, certificateauthority.update()
             if len(arg) == 0:
                 # No changes
-                result['changed'] = False
+                result["changed"] = False
             else:
                 #
                 # Update the CA.
                 #
                 if module.check_mode:
-                    result['msg'] = f"Would have updated CA cert {name}: {arg}"
+                    result["msg"] = f"Would have updated CA cert {name}: {arg}"
                 else:
                     try:
-                        err = mw.call("certificateauthority.update",
-                                      ca_cert_info['id'],
-                                      arg)
+                        err = mw.call("certificateauthority.update", ca_cert_info["id"], arg)
                     except Exception as e:
-                        module.fail_json(msg=f"Error updating CA cert {name} ({ca_cert_info['id']}) with {arg}: {e}")
+                        module.fail_json(
+                            msg=f"Error updating CA cert {name} ({ca_cert_info['id']}) with {arg}: {e}"
+                        )
                         # Return any interesting bits from err
-                        result['status'] = err['status']
-                result['changed'] = True
+                        result["status"] = err["status"]
+                result["changed"] = True
         else:
             # CA is not supposed to exist
 
             if module.check_mode:
-                result['msg'] = f"Would have deleted CA {name}"
+                result["msg"] = f"Would have deleted CA {name}"
             else:
                 try:
                     #
                     # Delete CA.
                     #
-                    err = mw.call("certificateauthority.delete",
-                                  ca_cert_info['id'])
+                    err = mw.call("certificateauthority.delete", ca_cert_info["id"])
                 except Exception as e:
                     module.fail_json(msg=f"Error deleting CA cert {name}: {e}")
-            result['changed'] = True
+            result["changed"] = True
 
     module.exit_json(**result)
 

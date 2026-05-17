@@ -6,7 +6,7 @@
 # midclt call pool.dataset.query '[["name", "=", "tank/data"]]'
 # midclt call pool.dataset.query '[["pool", "=", "tank"]]'
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: dataset_info
 short_description: Gather information about ZFS datasets
@@ -37,9 +37,9 @@ options:
 notes:
   - Supports C(check_mode).
 version_added: 1.15.0
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Get all datasets
   jdevera.truenas.dataset_info:
   register: datasets
@@ -63,16 +63,16 @@ EXAMPLES = '''
   jdevera.truenas.dataset_info:
     type: FILESYSTEM
   register: filesystems
-'''
+"""
 
-RETURN = '''
+RETURN = """
 datasets:
   description:
     - A list of dataset objects with their properties.
   type: list
   elements: dict
   returned: always
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -83,12 +83,12 @@ from ..module_utils.middleware import MiddleWare as MW
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str'),
-            pool=dict(type='str'),
-            type=dict(type='str', choices=['FILESYSTEM', 'VOLUME']),
+            name=dict(type="str"),
+            pool=dict(type="str"),
+            type=dict(type="str", choices=["FILESYSTEM", "VOLUME"]),
         ),
         mutually_exclusive=[
-            ['name', 'pool'],
+            ["name", "pool"],
         ],
         supports_check_mode=True,
     )
@@ -102,9 +102,9 @@ def main():
 
     mw = MW.client()
 
-    name = module.params['name']
-    pool = module.params['pool']
-    ds_type = module.params['type']
+    name = module.params["name"]
+    pool = module.params["pool"]
+    ds_type = module.params["type"]
 
     # Build query filters
     filters = []
@@ -120,7 +120,7 @@ def main():
             datasets = mw.call("pool.dataset.query", filters)
         else:
             datasets = mw.call("pool.dataset.query")
-        result['datasets'] = datasets
+        result["datasets"] = datasets
     except Exception as e:
         module.fail_json(msg=f"Error querying datasets: {e}")
 

@@ -5,7 +5,7 @@
 # midclt call system.general.config
 # midclt call system.general.update '{"timezone": "UTC"}'
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: system_general
 short_description: Configure general system settings
@@ -82,9 +82,9 @@ options:
 notes:
   - Supports C(check_mode).
 version_added: 1.15.0
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Set timezone and keyboard layout
   jdevera.truenas.system_general:
     timezone: America/New_York
@@ -106,15 +106,15 @@ EXAMPLES = '''
 - name: Set the web UI SSL certificate
   jdevera.truenas.system_general:
     ui_certificate: my_custom_cert
-'''
+"""
 
-RETURN = '''
+RETURN = """
 status:
   returned: always
   description:
     - The system general configuration after any changes.
   type: dict
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -122,53 +122,48 @@ from ..module_utils import setup
 from ..module_utils.middleware import MiddleWare as MW
 
 FIELDS = {
-    'ui_port': 'ui_port',
-    'ui_httpsport': 'ui_httpsport',
-    'ui_httpsredirect': 'ui_httpsredirect',
-    'ui_httpsprotocols': 'ui_httpsprotocols',
-    'ui_address': 'ui_address',
-    'ui_v6address': 'ui_v6address',
-    'ui_allowlist': 'ui_allowlist',
-    'ui_consolemsg': 'ui_consolemsg',
-    'ui_x_frame_options': 'ui_x_frame_options',
-    'kbdmap': 'kbdmap',
-    'timezone': 'timezone',
-    'usage_collection': 'usage_collection',
-    'ds_auth': 'ds_auth',
+    "ui_port": "ui_port",
+    "ui_httpsport": "ui_httpsport",
+    "ui_httpsredirect": "ui_httpsredirect",
+    "ui_httpsprotocols": "ui_httpsprotocols",
+    "ui_address": "ui_address",
+    "ui_v6address": "ui_v6address",
+    "ui_allowlist": "ui_allowlist",
+    "ui_consolemsg": "ui_consolemsg",
+    "ui_x_frame_options": "ui_x_frame_options",
+    "kbdmap": "kbdmap",
+    "timezone": "timezone",
+    "usage_collection": "usage_collection",
+    "ds_auth": "ds_auth",
 }
 
-SET_FIELDS = {'ui_httpsprotocols', 'ui_address', 'ui_v6address', 'ui_allowlist'}
+SET_FIELDS = {"ui_httpsprotocols", "ui_address", "ui_v6address", "ui_allowlist"}
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            ui_port=dict(type='int'),
-            ui_httpsport=dict(type='int'),
-            ui_httpsredirect=dict(type='bool'),
-            ui_httpsprotocols=dict(type='list', elements='str'),
-            ui_address=dict(type='list', elements='str'),
-            ui_v6address=dict(type='list', elements='str'),
-            ui_allowlist=dict(type='list', elements='str'),
-            ui_consolemsg=dict(type='bool'),
-            ui_x_frame_options=dict(type='str',
-                                    choices=['SAMEORIGIN', 'DENY',
-                                             'ALLOW_ALL']),
-            kbdmap=dict(type='str'),
-            timezone=dict(type='str'),
-            usage_collection=dict(type='bool'),
-            ui_certificate=dict(type='str'),
-            ds_auth=dict(type='bool'),
+            ui_port=dict(type="int"),
+            ui_httpsport=dict(type="int"),
+            ui_httpsredirect=dict(type="bool"),
+            ui_httpsprotocols=dict(type="list", elements="str"),
+            ui_address=dict(type="list", elements="str"),
+            ui_v6address=dict(type="list", elements="str"),
+            ui_allowlist=dict(type="list", elements="str"),
+            ui_consolemsg=dict(type="bool"),
+            ui_x_frame_options=dict(type="str", choices=["SAMEORIGIN", "DENY", "ALLOW_ALL"]),
+            kbdmap=dict(type="str"),
+            timezone=dict(type="str"),
+            usage_collection=dict(type="bool"),
+            ui_certificate=dict(type="str"),
+            ds_auth=dict(type="bool"),
         ),
         supports_check_mode=True,
     )
 
     setup.require_scale_min_version(module)
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
@@ -177,7 +172,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=f"Error looking up system general config: {e}")
 
-    result['status'] = config
+    result["status"] = config
 
     arg = {}
     for param_name, api_field in FIELDS.items():
@@ -192,34 +187,30 @@ def main():
             arg[api_field] = value
 
     # Handle ui_certificate by name -> ID resolution
-    cert_name = module.params['ui_certificate']
+    cert_name = module.params["ui_certificate"]
     if cert_name is not None:
-        current_cert = config.get('ui_certificate') or {}
-        if current_cert.get('name') != cert_name:
+        current_cert = config.get("ui_certificate") or {}
+        if current_cert.get("name") != cert_name:
             try:
-                certs = mw.call("certificate.query",
-                                [["name", "=", cert_name]])
+                certs = mw.call("certificate.query", [["name", "=", cert_name]])
                 if len(certs) == 0:
-                    module.fail_json(
-                        msg=f"Certificate '{cert_name}' not found")
-                arg['ui_certificate'] = certs[0]['id']
+                    module.fail_json(msg=f"Certificate '{cert_name}' not found")
+                arg["ui_certificate"] = certs[0]["id"]
             except Exception as e:
-                module.fail_json(
-                    msg=f"Error looking up certificate '{cert_name}': {e}")
+                module.fail_json(msg=f"Error looking up certificate '{cert_name}': {e}")
 
     if len(arg) == 0:
-        result['changed'] = False
+        result["changed"] = False
     else:
         if module.check_mode:
-            result['msg'] = f"Would have updated system general: {arg}"
+            result["msg"] = f"Would have updated system general: {arg}"
         else:
             try:
                 err = mw.call("system.general.update", arg)
-                result['status'] = err
+                result["status"] = err
             except Exception as e:
-                module.fail_json(
-                    msg=f"Error updating system general with {arg}: {e}")
-        result['changed'] = True
+                module.fail_json(msg=f"Error updating system general with {arg}: {e}")
+        result["changed"] = True
 
     module.exit_json(**result)
 

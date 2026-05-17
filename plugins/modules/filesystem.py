@@ -261,9 +261,11 @@ def main():
     argument_spec = dict(
         name=dict(type="str", required=True),
         state=dict(type="str", choices=["absent", "present"], default="present"),
-        type=dict(type="str",
-                  choices=["FILESYSTEM", "VOLUME", "filesystem", "volume"],
-                  default="FILESYSTEM"),
+        type=dict(
+            type="str",
+            choices=["FILESYSTEM", "VOLUME", "filesystem", "volume"],
+            default="FILESYSTEM",
+        ),
         volsize=dict(type="str"),
         volblocksize=dict(
             type="str",
@@ -350,9 +352,9 @@ def main():
     # value.
     # This seems like the sort of thing that Ansible argument_spec
     # would support, but apparently it doesn't.
-    if 'type' in module.params:
-        if module.params['type'] in ["filesystem", "volume"]:
-            module.params['type'] = module.params['type'].upper()
+    if "type" in module.params:
+        if module.params["type"] in ["filesystem", "volume"]:
+            module.params["type"] = module.params["type"].upper()
 
     # Query if it exists
     try:
@@ -368,9 +370,7 @@ def main():
     if state == "absent":
         # If not found, no changes
         if not existing_ds:
-            module.exit_json(
-                changed=False, msg=f"Dataset '{ds_name}' is already absent."
-            )
+            module.exit_json(changed=False, msg=f"Dataset '{ds_name}' is already absent.")
         # else delete it
         if module.check_mode:
             module.exit_json(changed=True, msg=f"Would delete dataset '{ds_name}'.")
@@ -516,9 +516,7 @@ def build_update_args(params, existing_ds, module):
         # If user tries to update sparse => check if it differs
         # If differs => error, if same => skip
         if params.get("sparse") is not None:
-            module.warn(
-                "Cannot update 'sparse' on existing volume, ignoring parameter."
-            )
+            module.warn("Cannot update 'sparse' on existing volume, ignoring parameter.")
 
         # force_size can be used if resizing
         if params.get("force_size"):
@@ -609,6 +607,7 @@ def parse_volblocksize(value):
         return int(val)
     raise ValueError(f"Cannot parse volblocksize='{value}'")
 
+
 def parse_volsize(value):
     """
     Convert a string giving a volume size, like '25GB', into an
@@ -621,25 +620,25 @@ def parse_volsize(value):
     """
 
     # Split the value into an integer prefix and a suffix.
-    match = re.match(r'^\s*(\d+)\s*([KMGT]i?B?)?\s*$', value)
+    match = re.match(r"^\s*(\d+)\s*([KMGT]i?B?)?\s*$", value)
 
     # the volume size is supposed to be a multiplier of the block
     # size, which in turn is usually a power of 2. So if the caller
     # just specifies K, M, G, or T, we'll use powers of 2.
     unit_multiplier = {
-        "":       1,
-        "K":   1<<10,
-        "KB":  1000,
-        "KiB": 1<<10,
-        "M":   1<<20,
-        "MB":  1000**2,
-        "MiB": 1<<20,
-        "G":   1<<30,
-        "GB":  1000**3,
-        "GiB": 1<<30,
-        "T":   1<<40,
-        "TB":  1000**4,
-        "TiB": 1<<40,
+        "": 1,
+        "K": 1 << 10,
+        "KB": 1000,
+        "KiB": 1 << 10,
+        "M": 1 << 20,
+        "MB": 1000**2,
+        "MiB": 1 << 20,
+        "G": 1 << 30,
+        "GB": 1000**3,
+        "GiB": 1 << 30,
+        "T": 1 << 40,
+        "TB": 1000**4,
+        "TiB": 1 << 40,
     }
 
     if match:
@@ -648,6 +647,7 @@ def parse_volsize(value):
         return n * unit_multiplier[unit]
     else:
         raise ValueError(f"Can't parse volsize={value}")
+
 
 def prop_rawvalue(dataset_entry, prop_name):
     """

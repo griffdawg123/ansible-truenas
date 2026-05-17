@@ -53,8 +53,7 @@ class MiddlewareClient:
             raise AnsibleMethodNotFoundError(func, str(e)) from e
         except MWClient.ClientException as e:
             # raise Exception(f"errno: {e.errno}, error {e.error}, trace {e.trace}, extra {e.extra}")
-            if e.errno == 201 or \
-               e.error == "Method does not exist":
+            if e.errno == 201 or e.error == "Method does not exist":
                 # errno 201, error [ENOMETHOD] Service 'bogus' not found, extra None
                 raise AnsibleMethodNotFoundError(func, e.error) from e
 
@@ -77,7 +76,5 @@ class MiddlewareClient:
         """
 
         client = MiddlewareClient._client()
-        err = client.call(func,
-                          *args,
-                          job=True)
+        err = client.call(func, *args, job=True)
         return err

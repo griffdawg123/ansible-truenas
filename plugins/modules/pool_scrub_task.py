@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: pool_scrub_task
 short_description: Schedule periodic scrub of ZFS pools.
@@ -65,9 +65,9 @@ options:
     choices: [ absent, present ]
     default: present
 version_added: 1.8.0
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Create a default periodic scrub task.
   hosts: zfs_host
   become: yes
@@ -95,15 +95,15 @@ EXAMPLES = '''
     - jdevera.truenas.pool_scrub_task:
       pool: tank
       state: absent
-'''
+"""
 
-RETURN = '''
+RETURN = """
 task:
   returned: always
   type: dict
   description:
     - A structure describing a newly-created task.
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -114,53 +114,46 @@ from ..module_utils.middleware import MiddleWare as MW
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            pool=dict(type='str', required=True),
-            description=dict(type='str'),
-            threshold=dict(type='int'),
-            enabled=dict(type='bool'),
-            state=dict(type='str', default='present',
-                       choices=['absent', 'present']),
-
+            pool=dict(type="str", required=True),
+            description=dict(type="str"),
+            threshold=dict(type="int"),
+            enabled=dict(type="bool"),
+            state=dict(type="str", default="present", choices=["absent", "present"]),
             # Time specification copied from the builtin.cron module.
-            minute=dict(type='str'),
-            hour=dict(type='str'),
-            day=dict(type='str', aliases=['date', 'dom']),
-            month=dict(type='str'),
-            weekday=dict(type='str', aliases=['dow']),
-            ),
+            minute=dict(type="str"),
+            hour=dict(type="str"),
+            day=dict(type="str", aliases=["date", "dom"]),
+            month=dict(type="str"),
+            weekday=dict(type="str", aliases=["dow"]),
+        ),
         supports_check_mode=True,
     )
 
     setup.require_scale_min_version(module)
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
     # Assign variables from properties, for convenience
-    description = module.params['description']
-    pool = module.params['pool']
-    threshold = module.params['threshold']
-    enabled = module.params['enabled']
-    state = module.params['state']
-    minute = module.params['minute']
-    hour = module.params['hour']
-    day = module.params['day']
-    month = module.params['month']
-    weekday = module.params['weekday']
+    description = module.params["description"]
+    pool = module.params["pool"]
+    threshold = module.params["threshold"]
+    enabled = module.params["enabled"]
+    state = module.params["state"]
+    minute = module.params["minute"]
+    hour = module.params["hour"]
+    day = module.params["day"]
+    month = module.params["month"]
+    weekday = module.params["weekday"]
 
-    # 'minute' isn't actually used anywhere; it's just here for
-    # argument compatibility with builtin.cron. But let's use it just
-    # to shut lint up.
-    minute = minute
+    # 'minute' is accepted as a parameter for builtin.cron API
+    # compatibility but isn't actually used here.
+    minute = minute  # pylint: disable=self-assigning-variable
 
     # Look up the scrub task
     try:
-        scrub_info = mw.call("pool.scrub.query",
-                             [["pool_name", "=", pool]])
+        scrub_info = mw.call("pool.scrub.query", [["pool_name", "=", pool]])
         if len(scrub_info) == 0:
             # No such resource
             scrub_info = None
@@ -174,7 +167,7 @@ def main():
     if scrub_info is None:
         # Task doesn't exist
 
-        if state == 'present':
+        if state == "present":
             # Task is supposed to exist, so create it.
 
             # Collect arguments to pass to pool.scrub.create()
@@ -183,8 +176,7 @@ def main():
             # We were given a pool name, but we need an integer pool
             # ID, so look up the pool by name.
             try:
-                pool_info = mw.call("pool.query",
-                                    [["name", "=", pool]])
+                pool_info = mw.call("pool.query", [["name", "=", pool]])
                 if len(pool_info) == 0:
                     # No such pool
                     module.fail_json(msg="Error: no such pool: {pool}")
@@ -193,78 +185,76 @@ def main():
             except Exception as e:
                 module.fail_json(msg=f"Error looking up pool {pool}: {e}")
 
-            arg['pool'] = pool_info['id']
+            arg["pool"] = pool_info["id"]
 
             if description is not None:
-                arg['description'] = description
+                arg["description"] = description
 
             if threshold is not None:
-                arg['threshold'] = threshold
+                arg["threshold"] = threshold
 
             if enabled is not None:
-                arg['enabled'] = enabled
+                arg["enabled"] = enabled
 
             # Start with an empty schedule.
             schedule = {}
 
             # Set the time when the task should occur.
             if hour is not None:
-                schedule['hour'] = hour
+                schedule["hour"] = hour
 
             if day is not None:
-                schedule['dom'] = day
+                schedule["dom"] = day
 
             if month is not None:
-                schedule['month'] = month
+                schedule["month"] = month
 
             if weekday is not None:
-                schedule['dow'] = weekday
+                schedule["dow"] = weekday
 
             if len(schedule) > 0:
                 # One or more schedule fields were specified.
-                arg['schedule'] = schedule
+                arg["schedule"] = schedule
 
             if module.check_mode:
-                result['msg'] = "Would have created " \
-                    f"scrub task with {arg}"
+                result["msg"] = f"Would have created scrub task with {arg}"
             else:
                 #
                 # Create new scrub task
                 #
                 try:
                     err = mw.call("pool.scrub.create", arg)
-                    result['msg'] = err
+                    result["msg"] = err
                 except Exception as e:
-                    result['failed_invocation'] = arg
+                    result["failed_invocation"] = arg
                     module.fail_json(msg=f"Error creating scrub task: {e}")
 
                 # Return a description of the newly-created scrub task.
-                result['task'] = err
+                result["task"] = err
 
-            result['changed'] = True
+            result["changed"] = True
         else:
             # Task is not supposed to exist.
             # All is well
-            result['changed'] = False
+            result["changed"] = False
 
     else:
         # Task exists
-        if state == 'present':
+        if state == "present":
             # Task is supposed to exist
 
             # Make list of differences between what is and what should
             # be.
             arg = {}
 
-            if description is not None and \
-               scrub_info['description'] != description:
-                arg['description'] = description
+            if description is not None and scrub_info["description"] != description:
+                arg["description"] = description
 
-            if threshold is not None and scrub_info['threshold'] != threshold:
-                arg['threshold'] = threshold
+            if threshold is not None and scrub_info["threshold"] != threshold:
+                arg["threshold"] = threshold
 
-            if enabled is not None and scrub_info['enabled'] != enabled:
-                arg['enabled'] = enabled
+            if enabled is not None and scrub_info["enabled"] != enabled:
+                arg["enabled"] = enabled
 
             # Schedule.
             # Create an empty schedule.
@@ -276,60 +266,53 @@ def main():
             #
             # But implementing a real schedule comparison is probably
             # not worth the effort.
-            if hour is not None and \
-               scrub_info['schedule']['hour'] != hour:
-                schedule['hour'] = hour
+            if hour is not None and scrub_info["schedule"]["hour"] != hour:
+                schedule["hour"] = hour
 
-            if day is not None and scrub_info['schedule']['dom'] != day:
-                schedule['dom'] = day
+            if day is not None and scrub_info["schedule"]["dom"] != day:
+                schedule["dom"] = day
 
-            if month is not None and \
-               scrub_info['schedule']['month'] != month:
-                schedule['month'] = month
+            if month is not None and scrub_info["schedule"]["month"] != month:
+                schedule["month"] = month
 
-            if weekday is not None and \
-               scrub_info['schedule']['dow'] != weekday:
-                schedule['dow'] = weekday
+            if weekday is not None and scrub_info["schedule"]["dow"] != weekday:
+                schedule["dow"] = weekday
 
             if len(schedule) > 0:
-                arg['schedule'] = schedule
+                arg["schedule"] = schedule
 
             # If there are any changes, pool.scrub.update()
             if len(arg) == 0:
                 # No changes
-                result['changed'] = False
+                result["changed"] = False
             else:
                 #
                 # Update the task.
                 #
                 if module.check_mode:
-                    result['msg'] = f"Would have updated scrub task: {arg}"
+                    result["msg"] = f"Would have updated scrub task: {arg}"
                 else:
                     try:
-                        err = mw.call("pool.scrub.update",
-                                      scrub_info['id'],
-                                      arg)
+                        err = mw.call("pool.scrub.update", scrub_info["id"], arg)
                     except Exception as e:
-                        module.fail_json(msg="Error updating scrub task "
-                                         f"with {arg}: {e}")
+                        module.fail_json(msg=f"Error updating scrub task with {arg}: {e}")
                         # Return any interesting bits from err
-                        result['status'] = err['status']
-                result['changed'] = True
+                        result["status"] = err["status"]
+                result["changed"] = True
         else:
             # Scrub task is not supposed to exist
 
             if module.check_mode:
-                result['msg'] = f"Would have deleted scrub task for {pool}"
+                result["msg"] = f"Would have deleted scrub task for {pool}"
             else:
                 try:
                     #
                     # Delete scrub task.
                     #
-                    err = mw.call("pool.scrub.delete",
-                                  scrub_info['id'])
+                    err = mw.call("pool.scrub.delete", scrub_info["id"])
                 except Exception as e:
                     module.fail_json(msg=f"Error deleting scrub task: {e}")
-            result['changed'] = True
+            result["changed"] = True
 
     module.exit_json(**result)
 

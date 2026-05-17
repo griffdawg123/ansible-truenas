@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: nfs
 short_description: Configure NFS service
@@ -94,9 +94,9 @@ options:
       - These are debugging flags and are not normally needed.
     type: bool
 version_added: 0.4.0
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Forbid mount requests from non-root accounts
   hosts: nfs_server
   become: yes
@@ -135,9 +135,9 @@ EXAMPLES = '''
         krb: true
 
 - name: Listen on a specific interface
-'''
+"""
 
-RETURN = '''
+RETURN = """
 status:
   returned: always
   description:
@@ -146,7 +146,7 @@ status:
       state of the NFS service. When changes have successfully been made,
       this is the new state of the NFS service.
   type: dict
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -157,61 +157,76 @@ from ..module_utils.middleware import MiddleWare as MW
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            servers=dict(type='int'),
-            allow_nonroot=dict(type='bool'),
-            protocols=dict(type='list', elements='str',
-                           choices=['nfsv3', 'NFSv3', 'NFSV3', 'v3', 'V3',
-                                    'nfsv4', 'NFSv4', 'NFSV4', 'v4', 'V4']),
-            rdma=dict(type='bool'),
-            krb=dict(type='bool'),
-            domain=dict(type='str'),
-            bindip=dict(type='list', elements='str'),
-            mountd_port=dict(type='int'),
-            rpcstatd_port=dict(type='int'),
-            rpclockd_port=dict(type='int'),
-            userd_manage_gids=dict(type='bool'),
-            mountd_log=dict(type='bool'),
-            statd_lockd_log=dict(type='bool'),
+            servers=dict(type="int"),
+            allow_nonroot=dict(type="bool"),
+            protocols=dict(
+                type="list",
+                elements="str",
+                choices=[
+                    "nfsv3",
+                    "NFSv3",
+                    "NFSV3",
+                    "v3",
+                    "V3",
+                    "nfsv4",
+                    "NFSv4",
+                    "NFSV4",
+                    "v4",
+                    "V4",
+                ],
             ),
+            rdma=dict(type="bool"),
+            krb=dict(type="bool"),
+            domain=dict(type="str"),
+            bindip=dict(type="list", elements="str"),
+            mountd_port=dict(type="int"),
+            rpcstatd_port=dict(type="int"),
+            rpclockd_port=dict(type="int"),
+            userd_manage_gids=dict(type="bool"),
+            mountd_log=dict(type="bool"),
+            statd_lockd_log=dict(type="bool"),
+        ),
         supports_check_mode=True,
     )
 
     setup.require_scale_min_version(module)
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
     # Assign variables from properties, for convenience
-    servers = module.params['servers']
-    allow_nonroot = module.params['allow_nonroot']
-    protocols = module.params['protocols']
-    rdma = module.params['rdma']
-    krb = module.params['krb']
-    domain = module.params['domain']
-    bindip = module.params['bindip']
-    mountd_port = module.params['mountd_port']
-    rpcstatd_port = module.params['rpcstatd_port']
-    rpclockd_port = module.params['rpclockd_port']
-    userd_manage_gids = module.params['userd_manage_gids']
-    mountd_log = module.params['mountd_log']
-    statd_lockd_log = module.params['statd_lockd_log']
+    servers = module.params["servers"]
+    allow_nonroot = module.params["allow_nonroot"]
+    protocols = module.params["protocols"]
+    rdma = module.params["rdma"]
+    krb = module.params["krb"]
+    domain = module.params["domain"]
+    bindip = module.params["bindip"]
+    mountd_port = module.params["mountd_port"]
+    rpcstatd_port = module.params["rpcstatd_port"]
+    rpclockd_port = module.params["rpclockd_port"]
+    userd_manage_gids = module.params["userd_manage_gids"]
+    mountd_log = module.params["mountd_log"]
+    statd_lockd_log = module.params["statd_lockd_log"]
 
     # XXX - Debugging
-    result['protocols'] = protocols
+    result["protocols"] = protocols
 
     # Add a table of acceptable synonyms for the protocol names.
     # nfsvN, NFSvN, NFSVN, vN, VN.
     # Make it a dict that maps to the values to pass to midclt: NFSV3, NFSV4.
     protocol_names = {
-        "nfsv3": "NFSV3",	"nfsv4": "NFSV4",
-        "NFSv3": "NFSV3",	"NFSv4": "NFSV4",
-        "NFSV3": "NFSV3",	"NFSV4": "NFSV4",
-        "v3": "NFSV3",  	"v4": "NFSV4",
-        "V3": "NFSV3",          "V4": "NFSV4",
+        "nfsv3": "NFSV3",
+        "nfsv4": "NFSV4",
+        "NFSv3": "NFSV3",
+        "NFSv4": "NFSV4",
+        "NFSV3": "NFSV3",
+        "NFSV4": "NFSV4",
+        "v3": "NFSV3",
+        "v4": "NFSV4",
+        "V3": "NFSV3",
+        "V4": "NFSV4",
     }
 
     # Get the list of protocols that we want. "None" means leave
@@ -224,86 +239,79 @@ def main():
     if protocols is not None:
         want_protocols = set([protocol_names[i] for i in protocols])
     # XXX - Debugging
-    result['want_protocols'] = want_protocols
+    result["want_protocols"] = want_protocols
     try:
         nfs_info = mw.call("nfs.config")
     except Exception as e:
         module.fail_json(msg=f"Error looking up nfs configuration: {e}")
 
-    result['status'] = nfs_info
+    result["status"] = nfs_info
 
     # Make list of differences between what is and what should
 
     arg = {}
 
-    if servers is not None and nfs_info['servers'] != servers:
-        arg['servers'] = servers
+    if servers is not None and nfs_info["servers"] != servers:
+        arg["servers"] = servers
 
-    if allow_nonroot is not None and nfs_info['allow_nonroot'] \
-       is not allow_nonroot:
-        arg['allow_nonroot'] = allow_nonroot
+    if allow_nonroot is not None and nfs_info["allow_nonroot"] is not allow_nonroot:
+        arg["allow_nonroot"] = allow_nonroot
 
-    if rdma is not None and nfs_info.get('rdma') is not rdma:
-        arg['rdma'] = rdma
+    if rdma is not None and nfs_info.get("rdma") is not rdma:
+        arg["rdma"] = rdma
 
     if want_protocols is not None:
-        have_protocols = set(nfs_info['protocols'])
+        have_protocols = set(nfs_info["protocols"])
         # XXX - Debugging
-        result['have_protocols'] = have_protocols
+        result["have_protocols"] = have_protocols
         if have_protocols != want_protocols:
-            arg['protocols'] = list(want_protocols)
+            arg["protocols"] = list(want_protocols)
 
-    if krb is not None and nfs_info['v4_krb'] is not krb:
-        arg['v4_krb'] = krb
+    if krb is not None and nfs_info["v4_krb"] is not krb:
+        arg["v4_krb"] = krb
 
-    if domain is not None and nfs_info['v4_domain'] != domain:
-        arg['v4_domain'] = domain
+    if domain is not None and nfs_info["v4_domain"] != domain:
+        arg["v4_domain"] = domain
 
-    if bindip is not None and \
-       set(bindip) != set(nfs_info['bindip']):
-        arg['bindip'] = bindip
+    if bindip is not None and set(bindip) != set(nfs_info["bindip"]):
+        arg["bindip"] = bindip
 
-    if mountd_port is not None and nfs_info['mountd_port'] != mountd_port:
-        arg['mountd_port'] = mountd_port
+    if mountd_port is not None and nfs_info["mountd_port"] != mountd_port:
+        arg["mountd_port"] = mountd_port
 
-    if rpcstatd_port is not None and \
-       nfs_info['rpcstatd_port'] != rpcstatd_port:
-        arg['rpcstatd_port'] = rpcstatd_port
+    if rpcstatd_port is not None and nfs_info["rpcstatd_port"] != rpcstatd_port:
+        arg["rpcstatd_port"] = rpcstatd_port
 
-    if rpclockd_port is not None and \
-       nfs_info['rpclockd_port'] != rpclockd_port:
-        arg['rpclockd_port'] = rpclockd_port
+    if rpclockd_port is not None and nfs_info["rpclockd_port"] != rpclockd_port:
+        arg["rpclockd_port"] = rpclockd_port
 
-    if userd_manage_gids is not None and \
-       nfs_info['userd_manage_gids'] is not userd_manage_gids:
-        arg['userd_manage_gids'] = userd_manage_gids
+    if userd_manage_gids is not None and nfs_info["userd_manage_gids"] is not userd_manage_gids:
+        arg["userd_manage_gids"] = userd_manage_gids
 
-    if mountd_log is not None and nfs_info['mountd_log'] is not mountd_log:
-        arg['mountd_log'] = mountd_log
+    if mountd_log is not None and nfs_info["mountd_log"] is not mountd_log:
+        arg["mountd_log"] = mountd_log
 
-    if statd_lockd_log is not None and \
-       nfs_info['statd_lockd_log'] is not statd_lockd_log:
-        arg['statd_lockd_log'] = statd_lockd_log
+    if statd_lockd_log is not None and nfs_info["statd_lockd_log"] is not statd_lockd_log:
+        arg["statd_lockd_log"] = statd_lockd_log
 
     # If there are any changes, nfs.update()
     if len(arg) == 0:
         # No changes
-        result['changed'] = False
+        result["changed"] = False
     else:
         #
         # Update nfs.
         #
         if module.check_mode:
-            result['msg'] = f"Would have updated nfs: {arg}"
+            result["msg"] = f"Would have updated nfs: {arg}"
         else:
             try:
-                err = mw.call("nfs.update",
-                              arg)
-                result['status'] = err
+                err = mw.call("nfs.update", arg)
+                result["status"] = err
             except Exception as e:
                 module.fail_json(msg=f"Error updating nfs with {arg}: {e}")
 
-        result['changed'] = True
+        result["changed"] = True
 
     module.exit_json(**result)
 

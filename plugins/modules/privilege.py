@@ -8,7 +8,7 @@
 # midclt call privilege.query
 # midclt call privilege.update 1 '{"local_groups": [1000, 1001]}'
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: privilege
 short_description: Manage privilege group assignments
@@ -55,9 +55,9 @@ author:
 notes:
 - Supports C(check_mode)
 version_added: 1.14.5
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Give the admins group full local admin privileges
   jdevera.truenas.privilege:
     builtin_name: LOCAL_ADMINISTRATOR
@@ -76,15 +76,15 @@ EXAMPLES = '''
     name: Local Administrator
     groups:
       - admins
-'''
+"""
 
-RETURN = '''
+RETURN = """
 privilege:
   returned: always
   description:
     - The privilege data after the update.
   type: dict
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -97,11 +97,10 @@ def resolve_group_gids(mw, module, group_names):
     gids = []
     for name in group_names:
         try:
-            result = mw.call("group.query",
-                             [["group", "=", name]])
+            result = mw.call("group.query", [["group", "=", name]])
             if len(result) == 0:
                 module.fail_json(msg=f"Group '{name}' not found")
-            gids.append(result[0]['gid'])
+            gids.append(result[0]["gid"])
         except Exception as e:
             module.fail_json(msg=f"Error looking up group '{name}': {e}")
     return gids
@@ -110,33 +109,30 @@ def resolve_group_gids(mw, module, group_names):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            builtin_name=dict(type='str'),
-            name=dict(type='str'),
-            groups=dict(type='list', elements='str', required=True),
-            append=dict(type='bool', default=False),
+            builtin_name=dict(type="str"),
+            name=dict(type="str"),
+            groups=dict(type="list", elements="str", required=True),
+            append=dict(type="bool", default=False),
         ),
         mutually_exclusive=[
-            ['builtin_name', 'name'],
+            ["builtin_name", "name"],
         ],
         required_one_of=[
-            ['builtin_name', 'name'],
+            ["builtin_name", "name"],
         ],
         supports_check_mode=True,
     )
 
     setup.require_scale_min_version(module)
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
-    builtin_name = module.params['builtin_name']
-    name = module.params['name']
-    groups = module.params['groups']
-    append = module.params['append']
+    builtin_name = module.params["builtin_name"]
+    name = module.params["name"]
+    groups = module.params["groups"]
+    append = module.params["append"]
 
     # Look up the privilege by builtin_name or display name
     if builtin_name is not None:
@@ -160,29 +156,30 @@ def main():
     # Determine the desired set of GIDs.
     # local_groups from the API is a list of group objects (dicts with
     # id, gid, name, etc.), not plain GIDs — extract the GIDs.
-    current_gids = set(g['gid'] for g in priv_info.get('local_groups', []))
+    current_gids = set(g["gid"] for g in priv_info.get("local_groups", []))
     if append:
         desired_gids = current_gids | set(wanted_gids)
     else:
         desired_gids = set(wanted_gids)
 
     if desired_gids == current_gids:
-        result['changed'] = False
+        result["changed"] = False
     else:
         if module.check_mode:
-            result['msg'] = (f"Would have updated privilege ({lookup_desc}): "
-                             f"local_groups {sorted(current_gids)} -> "
-                             f"{sorted(desired_gids)}")
+            result["msg"] = (
+                f"Would have updated privilege ({lookup_desc}): "
+                f"local_groups {sorted(current_gids)} -> "
+                f"{sorted(desired_gids)}"
+            )
         else:
             try:
-                err = mw.call("privilege.update",
-                              priv_info['id'],
-                              {"local_groups": sorted(desired_gids)})
-                result['privilege'] = err
+                err = mw.call(
+                    "privilege.update", priv_info["id"], {"local_groups": sorted(desired_gids)}
+                )
+                result["privilege"] = err
             except Exception as e:
-                module.fail_json(
-                    msg=f"Error updating privilege ({lookup_desc}): {e}")
-        result['changed'] = True
+                module.fail_json(msg=f"Error updating privilege ({lookup_desc}): {e}")
+        result["changed"] = True
 
     module.exit_json(**result)
 

@@ -15,7 +15,7 @@ def _parse_version(s):
     so this works inside ansible-test sanity venvs (which don't
     install the 'packaging' library).
     """
-    return tuple(int(m) for m in re.findall(r'\d+', s))
+    return tuple(int(m) for m in re.findall(r"\d+", s))
 
 
 # Lowest TrueNAS SCALE version supported by this collection.
@@ -44,18 +44,18 @@ def get_tn_version():
     try:
         # product_type is a string like "CORE", "SCALE", or
         # "ENTERPRISE".
-        product_type = mw.call("system.product_type", output='str')
+        product_type = mw.call("system.product_type", output="str")
 
         # product_version is a string like "TrueNAS-13.0-U5", or
         # "TrueNAS-SCALE-22.12.3.1"
-        full_version = mw.call("system.version", output='str')
+        full_version = mw.call("system.version", output="str")
 
         # product_name is a string like "TrueNAS".
         #
         # TrueNAS CORE has `system.product_name' but SCALE doesn't, at
         # least not after some version.
         if product_type in ("CORE"):
-            product_name = mw.call("system.product_name", output='str')
+            product_name = mw.call("system.product_name", output="str")
     except Exception:
         # XXX - Maybe try to soldier on with what we've got?
         raise
@@ -67,7 +67,7 @@ def get_tn_version():
     # <product_name>-<product_type>-<version>
     #
     # Though you probably shouldn't rely on this too much
-    match = re.match(r'^(?:(\w+)-)(?:(\w+)-)?(\d.*)', full_version)
+    match = re.match(r"^(?:(\w+)-)(?:(\w+)-)?(\d.*)", full_version)
     if match:
         if product_name is None:
             product_name = match[1]
@@ -118,7 +118,9 @@ def require_scale_min_version(module) -> None:
         fail(module, f"Error getting TrueNAS version: {e}")
 
     minimum = ".".join(str(p) for p in MIN_SCALE_VERSION)
-    if not (tn['name'] == "TrueNAS" and
-            tn['type'] in {"SCALE", "COMMUNITY_EDITION"} and
-            tn['version'] >= MIN_SCALE_VERSION):
+    if not (
+        tn["name"] == "TrueNAS"
+        and tn["type"] in {"SCALE", "COMMUNITY_EDITION"}
+        and tn["version"] >= MIN_SCALE_VERSION
+    ):
         fail(module, f"This collection requires TrueNAS SCALE {minimum} or newer.")

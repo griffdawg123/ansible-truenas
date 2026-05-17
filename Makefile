@@ -117,10 +117,9 @@ validate:
 	rsync -aq --exclude=.git --exclude=ansible_collections --exclude=__pycache__ \
 	    --exclude=venv-docs --exclude=tests/output --exclude=.venv \
 	    --exclude=.local ./ "$$dest/" && \
-	UV_PROJECT_ENVIRONMENT="$$tmp/.uvenv" \
-	(cd "$$dest" && \
-	 UV_PROJECT_ENVIRONMENT="$$tmp/.uvenv" \
-	 uv run --with ansible-core ansible-test sanity --venv --color); \
+	( cd "$$dest" && \
+	  env UV_PROJECT_ENVIRONMENT="$$tmp/.uvenv" \
+	    uv run --with ansible-core ansible-test sanity --venv --color ); \
 	rc=$$?; rm -rf "$$tmp"; exit $$rc
 
 # Type-check with mypy. Has to be invoked through the

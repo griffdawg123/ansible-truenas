@@ -5,7 +5,7 @@
 # midclt call ups.config
 # midclt call ups.update '{"mode": "MASTER"}'
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: ups
 short_description: Configure UPS service
@@ -108,9 +108,9 @@ notes:
 seealso:
   - module: jdevera.truenas.service
 version_added: 1.15.0
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Configure a USB UPS in master mode
   jdevera.truenas.ups:
     identifier: myups
@@ -124,15 +124,15 @@ EXAMPLES = '''
     mode: SLAVE
     remotehost: 192.168.1.10
     remoteport: 3493
-'''
+"""
 
-RETURN = '''
+RETURN = """
 status:
   returned: always
   description:
     - The UPS service configuration after any changes.
   type: dict
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -140,60 +140,57 @@ from ..module_utils import setup
 from ..module_utils.middleware import MiddleWare as MW
 
 FIELDS = {
-    'identifier': 'identifier',
-    'mode': 'mode',
-    'driver': 'driver',
-    'port': 'port',
-    'description': 'description',
-    'monuser': 'monuser',
-    'monpwd': 'monpwd',
-    'extrausers': 'extrausers',
-    'options': 'options',
-    'optionsupsd': 'optionsupsd',
-    'shutdown': 'shutdown',
-    'shutdowntimer': 'shutdowntimer',
-    'shutdowncmd': 'shutdowncmd',
-    'nocommwarntime': 'nocommwarntime',
-    'hostsync': 'hostsync',
-    'powerdown': 'powerdown',
-    'rmonitor': 'rmonitor',
-    'remotehost': 'remotehost',
-    'remoteport': 'remoteport',
+    "identifier": "identifier",
+    "mode": "mode",
+    "driver": "driver",
+    "port": "port",
+    "description": "description",
+    "monuser": "monuser",
+    "monpwd": "monpwd",
+    "extrausers": "extrausers",
+    "options": "options",
+    "optionsupsd": "optionsupsd",
+    "shutdown": "shutdown",
+    "shutdowntimer": "shutdowntimer",
+    "shutdowncmd": "shutdowncmd",
+    "nocommwarntime": "nocommwarntime",
+    "hostsync": "hostsync",
+    "powerdown": "powerdown",
+    "rmonitor": "rmonitor",
+    "remotehost": "remotehost",
+    "remoteport": "remoteport",
 }
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            identifier=dict(type='str'),
-            mode=dict(type='str', choices=['MASTER', 'SLAVE']),
-            driver=dict(type='str'),
-            port=dict(type='str'),
-            description=dict(type='str'),
-            monuser=dict(type='str'),
-            monpwd=dict(type='str', no_log=True),
-            extrausers=dict(type='str'),
-            options=dict(type='str'),
-            optionsupsd=dict(type='str'),
-            shutdown=dict(type='str', choices=['LOWBATT', 'BATT']),
-            shutdowntimer=dict(type='int'),
-            shutdowncmd=dict(type='str'),
-            nocommwarntime=dict(type='int'),
-            hostsync=dict(type='int'),
-            powerdown=dict(type='bool'),
-            rmonitor=dict(type='bool'),
-            remotehost=dict(type='str'),
-            remoteport=dict(type='int'),
+            identifier=dict(type="str"),
+            mode=dict(type="str", choices=["MASTER", "SLAVE"]),
+            driver=dict(type="str"),
+            port=dict(type="str"),
+            description=dict(type="str"),
+            monuser=dict(type="str"),
+            monpwd=dict(type="str", no_log=True),
+            extrausers=dict(type="str"),
+            options=dict(type="str"),
+            optionsupsd=dict(type="str"),
+            shutdown=dict(type="str", choices=["LOWBATT", "BATT"]),
+            shutdowntimer=dict(type="int"),
+            shutdowncmd=dict(type="str"),
+            nocommwarntime=dict(type="int"),
+            hostsync=dict(type="int"),
+            powerdown=dict(type="bool"),
+            rmonitor=dict(type="bool"),
+            remotehost=dict(type="str"),
+            remoteport=dict(type="int"),
         ),
         supports_check_mode=True,
     )
 
     setup.require_scale_min_version(module)
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
@@ -202,7 +199,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=f"Error looking up UPS configuration: {e}")
 
-    result['status'] = ups_info
+    result["status"] = ups_info
 
     arg = {}
     for param_name, api_field in FIELDS.items():
@@ -214,17 +211,17 @@ def main():
             arg[api_field] = value
 
     if len(arg) == 0:
-        result['changed'] = False
+        result["changed"] = False
     else:
         if module.check_mode:
-            result['msg'] = f"Would have updated UPS: {arg}"
+            result["msg"] = f"Would have updated UPS: {arg}"
         else:
             try:
                 err = mw.call("ups.update", arg)
-                result['status'] = err
+                result["status"] = err
             except Exception as e:
                 module.fail_json(msg=f"Error updating UPS with {arg}: {e}")
-        result['changed'] = True
+        result["changed"] = True
 
     module.exit_json(**result)
 

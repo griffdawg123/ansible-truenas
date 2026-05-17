@@ -5,7 +5,7 @@
 # midclt call smb.config
 # midclt call smb.update '{"workgroup": "WORKGROUP"}'
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: smb
 short_description: Configure SMB service
@@ -106,9 +106,9 @@ seealso:
   - module: jdevera.truenas.sharing_smb
   - module: jdevera.truenas.service
 version_added: 1.15.0
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Set workgroup and description
   jdevera.truenas.smb:
     workgroup: MYWORKGROUP
@@ -122,15 +122,15 @@ EXAMPLES = '''
 - name: Require encryption
   jdevera.truenas.smb:
     encryption: REQUIRED
-'''
+"""
 
-RETURN = '''
+RETURN = """
 status:
   returned: always
   description:
     - The SMB service configuration after any changes.
   type: dict
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -138,64 +138,59 @@ from ..module_utils import setup
 from ..module_utils.middleware import MiddleWare as MW
 
 FIELDS = {
-    'netbiosname': 'netbiosname',
-    'netbiosalias': 'netbiosalias',
-    'workgroup': 'workgroup',
-    'description': 'description',
-    'enable_smb1': 'enable_smb1',
-    'unixcharset': 'unixcharset',
-    'localmaster': 'localmaster',
-    'syslog': 'syslog',
-    'aapl_extensions': 'aapl_extensions',
-    'admin_group': 'admin_group',
-    'guest': 'guest',
-    'filemask': 'filemask',
-    'dirmask': 'dirmask',
-    'ntlmv1_auth': 'ntlmv1_auth',
-    'multichannel': 'multichannel',
-    'encryption': 'encryption',
-    'bindip': 'bindip',
-    'smb_options': 'smb_options',
-    'debug': 'debug',
+    "netbiosname": "netbiosname",
+    "netbiosalias": "netbiosalias",
+    "workgroup": "workgroup",
+    "description": "description",
+    "enable_smb1": "enable_smb1",
+    "unixcharset": "unixcharset",
+    "localmaster": "localmaster",
+    "syslog": "syslog",
+    "aapl_extensions": "aapl_extensions",
+    "admin_group": "admin_group",
+    "guest": "guest",
+    "filemask": "filemask",
+    "dirmask": "dirmask",
+    "ntlmv1_auth": "ntlmv1_auth",
+    "multichannel": "multichannel",
+    "encryption": "encryption",
+    "bindip": "bindip",
+    "smb_options": "smb_options",
+    "debug": "debug",
 }
 
-SET_FIELDS = {'netbiosalias', 'bindip'}
+SET_FIELDS = {"netbiosalias", "bindip"}
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            netbiosname=dict(type='str'),
-            netbiosalias=dict(type='list', elements='str'),
-            workgroup=dict(type='str'),
-            description=dict(type='str'),
-            enable_smb1=dict(type='bool'),
-            unixcharset=dict(type='str'),
-            localmaster=dict(type='bool'),
-            syslog=dict(type='bool'),
-            aapl_extensions=dict(type='bool'),
-            admin_group=dict(type='str'),
-            guest=dict(type='str'),
-            filemask=dict(type='str'),
-            dirmask=dict(type='str'),
-            ntlmv1_auth=dict(type='bool'),
-            multichannel=dict(type='bool'),
-            encryption=dict(type='str',
-                            choices=['DEFAULT', 'NEGOTIATE',
-                                     'DESIRED', 'REQUIRED']),
-            bindip=dict(type='list', elements='str'),
-            smb_options=dict(type='str'),
-            debug=dict(type='bool'),
+            netbiosname=dict(type="str"),
+            netbiosalias=dict(type="list", elements="str"),
+            workgroup=dict(type="str"),
+            description=dict(type="str"),
+            enable_smb1=dict(type="bool"),
+            unixcharset=dict(type="str"),
+            localmaster=dict(type="bool"),
+            syslog=dict(type="bool"),
+            aapl_extensions=dict(type="bool"),
+            admin_group=dict(type="str"),
+            guest=dict(type="str"),
+            filemask=dict(type="str"),
+            dirmask=dict(type="str"),
+            ntlmv1_auth=dict(type="bool"),
+            multichannel=dict(type="bool"),
+            encryption=dict(type="str", choices=["DEFAULT", "NEGOTIATE", "DESIRED", "REQUIRED"]),
+            bindip=dict(type="list", elements="str"),
+            smb_options=dict(type="str"),
+            debug=dict(type="bool"),
         ),
         supports_check_mode=True,
     )
 
     setup.require_scale_min_version(module)
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
@@ -204,7 +199,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=f"Error looking up SMB configuration: {e}")
 
-    result['status'] = smb_info
+    result["status"] = smb_info
 
     arg = {}
     for param_name, api_field in FIELDS.items():
@@ -219,17 +214,17 @@ def main():
             arg[api_field] = value
 
     if len(arg) == 0:
-        result['changed'] = False
+        result["changed"] = False
     else:
         if module.check_mode:
-            result['msg'] = f"Would have updated SMB: {arg}"
+            result["msg"] = f"Would have updated SMB: {arg}"
         else:
             try:
                 err = mw.call("smb.update", arg)
-                result['status'] = err
+                result["status"] = err
             except Exception as e:
                 module.fail_json(msg=f"Error updating SMB with {arg}: {e}")
-        result['changed'] = True
+        result["changed"] = True
 
     module.exit_json(**result)
 

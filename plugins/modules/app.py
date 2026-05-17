@@ -8,7 +8,7 @@
 # midclt call app.update "plex" '{"values": {...}}'
 # midclt call app.delete "plex"
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: app
 short_description: Manage TrueNAS apps
@@ -91,9 +91,9 @@ seealso:
   - module: jdevera.truenas.app_service
   - module: jdevera.truenas.app_info
 version_added: 1.15.0
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Install Plex from catalog
   jdevera.truenas.app:
     name: plex
@@ -126,15 +126,15 @@ EXAMPLES = '''
     state: absent
     remove_images: true
     remove_ix_volumes: true
-'''
+"""
 
-RETURN = '''
+RETURN = """
 app:
   returned: always
   description:
     - The app data after creation or update.
   type: dict
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -145,42 +145,37 @@ from ..module_utils.middleware import MiddleWare as MW
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str', required=True),
-            state=dict(type='str', default='present',
-                       choices=['present', 'absent']),
-            catalog_app=dict(type='str'),
-            train=dict(type='str', default='stable'),
-            version=dict(type='str'),
-            values=dict(type='dict'),
-            custom_app=dict(type='bool', default=False),
-            custom_compose_config=dict(type='dict'),
-            custom_compose_config_string=dict(type='str'),
-            remove_images=dict(type='bool', default=False),
-            remove_ix_volumes=dict(type='bool', default=False),
-            force_remove_ix_volumes=dict(type='bool', default=False),
+            name=dict(type="str", required=True),
+            state=dict(type="str", default="present", choices=["present", "absent"]),
+            catalog_app=dict(type="str"),
+            train=dict(type="str", default="stable"),
+            version=dict(type="str"),
+            values=dict(type="dict"),
+            custom_app=dict(type="bool", default=False),
+            custom_compose_config=dict(type="dict"),
+            custom_compose_config_string=dict(type="str"),
+            remove_images=dict(type="bool", default=False),
+            remove_ix_volumes=dict(type="bool", default=False),
+            force_remove_ix_volumes=dict(type="bool", default=False),
         ),
         mutually_exclusive=[
-            ['custom_compose_config', 'custom_compose_config_string'],
+            ["custom_compose_config", "custom_compose_config_string"],
         ],
         supports_check_mode=True,
     )
 
     setup.require_scale_min_version(module)
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
-    name = module.params['name']
-    state = module.params['state']
+    name = module.params["name"]
+    state = module.params["state"]
 
     # Look up the app
     try:
-        apps = mw.call("app.query",
-                       [["name", "=", name]])
+        apps = mw.call("app.query", [["name", "=", name]])
         if len(apps) == 0:
             app_info = None
         else:
@@ -188,35 +183,32 @@ def main():
     except Exception as e:
         module.fail_json(msg=f"Error looking up app '{name}': {e}")
 
-    if state == 'absent':
+    if state == "absent":
         if app_info is None:
-            result['changed'] = False
+            result["changed"] = False
         else:
             if module.check_mode:
-                result['msg'] = f"Would have deleted app {name}"
+                result["msg"] = f"Would have deleted app {name}"
             else:
                 try:
                     options = {
-                        "remove_images": module.params['remove_images'],
-                        "remove_ix_volumes": module.params['remove_ix_volumes'],
-                        "force_remove_ix_volumes":
-                            module.params['force_remove_ix_volumes'],
+                        "remove_images": module.params["remove_images"],
+                        "remove_ix_volumes": module.params["remove_ix_volumes"],
+                        "force_remove_ix_volumes": module.params["force_remove_ix_volumes"],
                     }
                     mw.job("app.delete", name, options)
                 except Exception as e:
                     module.fail_json(msg=f"Error deleting app '{name}': {e}")
-            result['changed'] = True
+            result["changed"] = True
 
-    elif state == 'present':
+    elif state == "present":
         if app_info is None:
             # App doesn't exist — create it
-            custom_app = module.params['custom_app']
-            catalog_app = module.params['catalog_app']
+            custom_app = module.params["custom_app"]
+            catalog_app = module.params["catalog_app"]
 
             if not custom_app and catalog_app is None:
-                module.fail_json(
-                    msg="'catalog_app' is required when creating a "
-                        "non-custom app")
+                module.fail_json(msg="'catalog_app' is required when creating a non-custom app")
 
             arg = {
                 "app_name": name,
@@ -224,42 +216,40 @@ def main():
             }
 
             if custom_app:
-                compose_config = module.params['custom_compose_config']
-                compose_string = module.params['custom_compose_config_string']
+                compose_config = module.params["custom_compose_config"]
+                compose_string = module.params["custom_compose_config_string"]
                 if compose_config is not None:
-                    arg['custom_compose_config'] = compose_config
+                    arg["custom_compose_config"] = compose_config
                 elif compose_string is not None:
-                    arg['custom_compose_config_string'] = compose_string
+                    arg["custom_compose_config_string"] = compose_string
             else:
-                arg['catalog_app'] = catalog_app
-                arg['train'] = module.params['train']
-                if module.params['version'] is not None:
-                    arg['version'] = module.params['version']
+                arg["catalog_app"] = catalog_app
+                arg["train"] = module.params["train"]
+                if module.params["version"] is not None:
+                    arg["version"] = module.params["version"]
 
-            if module.params['values'] is not None:
-                arg['values'] = module.params['values']
+            if module.params["values"] is not None:
+                arg["values"] = module.params["values"]
 
             if module.check_mode:
-                result['msg'] = f"Would have created app {name} with {arg}"
+                result["msg"] = f"Would have created app {name} with {arg}"
             else:
                 try:
                     err = mw.job("app.create", arg)
-                    result['app'] = err
+                    result["app"] = err
                 except Exception as e:
-                    module.fail_json(
-                        msg=f"Error creating app '{name}': {e}")
-            result['changed'] = True
+                    module.fail_json(msg=f"Error creating app '{name}': {e}")
+            result["changed"] = True
 
         else:
             # App exists — update if values are provided
-            values = module.params['values']
-            compose_config = module.params['custom_compose_config']
-            compose_string = module.params['custom_compose_config_string']
+            values = module.params["values"]
+            compose_config = module.params["custom_compose_config"]
+            compose_string = module.params["custom_compose_config_string"]
 
-            if values is None and compose_config is None \
-               and compose_string is None:
+            if values is None and compose_config is None and compose_string is None:
                 # Nothing to update
-                result['changed'] = False
+                result["changed"] = False
             else:
                 # Check if values actually differ
                 needs_update = False
@@ -267,8 +257,7 @@ def main():
                     try:
                         current_config = mw.call("app.config", name)
                     except Exception as e:
-                        module.fail_json(
-                            msg=f"Error getting config for '{name}': {e}")
+                        module.fail_json(msg=f"Error getting config for '{name}': {e}")
                     # Check if any requested values differ from current
                     for key, val in values.items():
                         if current_config.get(key) != val:
@@ -280,27 +269,25 @@ def main():
                     needs_update = True
 
                 if not needs_update:
-                    result['changed'] = False
+                    result["changed"] = False
                 else:
                     arg = {}
                     if values is not None:
-                        arg['values'] = values
+                        arg["values"] = values
                     if compose_config is not None:
-                        arg['custom_compose_config'] = compose_config
+                        arg["custom_compose_config"] = compose_config
                     if compose_string is not None:
-                        arg['custom_compose_config_string'] = compose_string
+                        arg["custom_compose_config_string"] = compose_string
 
                     if module.check_mode:
-                        result['msg'] = \
-                            f"Would have updated app {name} with {arg}"
+                        result["msg"] = f"Would have updated app {name} with {arg}"
                     else:
                         try:
                             err = mw.job("app.update", name, arg)
-                            result['app'] = err
+                            result["app"] = err
                         except Exception as e:
-                            module.fail_json(
-                                msg=f"Error updating app '{name}': {e}")
-                    result['changed'] = True
+                            module.fail_json(msg=f"Error updating app '{name}': {e}")
+                    result["changed"] = True
 
     module.exit_json(**result)
 

@@ -3,7 +3,7 @@
 # Create and manage SMB shares.
 # Updated for TrueNAS SCALE 25.10+ API where many fields moved under 'options'.
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: sharing_smb
 short_description: Manage SMB sharing
@@ -143,9 +143,9 @@ options:
       - Enables support for Apple Time Machine backups.
     type: bool
 version_added: 1.4.3
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Simple default share
   sharing_smb:
     name: export1
@@ -163,9 +163,9 @@ EXAMPLES = '''
       - 10.2.3.0/24
     hostsdeny:
       - ALL
-'''
+"""
 
-RETURN = '''
+RETURN = """
 share:
   returned: always
   description:
@@ -176,7 +176,7 @@ status:
   description:
     - When this module exits abnormally, C(status) contains an error message.
   type: str
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -186,39 +186,39 @@ from ..module_utils.middleware import MiddleWare as MW
 # Fields that are top-level in the 25.10+ API response.
 # Maps Ansible param name -> API field name (when different).
 TOP_LEVEL_FIELDS = {
-    'name': 'name',
-    'purpose': 'purpose',
-    'enabled': 'enabled',
-    'comment': 'comment',
-    'ro': 'readonly',
-    'browsable': 'browsable',
-    'abe': 'access_based_share_enumeration',
+    "name": "name",
+    "purpose": "purpose",
+    "enabled": "enabled",
+    "comment": "comment",
+    "ro": "readonly",
+    "browsable": "browsable",
+    "abe": "access_based_share_enumeration",
 }
 
 # In 25.10+, 'home' is no longer a field — home shares are created by
 # setting purpose to PRIVATE_DATASETS_SHARE.
-HOME_PURPOSE = 'PRIVATE_DATASETS_SHARE'
+HOME_PURPOSE = "PRIVATE_DATASETS_SHARE"
 
 # Fields that live under 'options' in the 25.10+ API response.
 # Maps Ansible param name -> API field name (when different).
 OPTIONS_FIELDS = {
-    'hostsallow': 'hostsallow',
-    'hostsdeny': 'hostsdeny',
-    'path_suffix': 'path_suffix',
-    'auxsmbconf': 'auxsmbconf',
-    'guestok': 'guestok',
-    'timemachine': 'timemachine',
-    'recyclebin': 'recyclebin',
-    'apple_encoding': 'aapl_name_mangling',
-    'acl': 'acl',
-    'durablehandle': 'durablehandle',
-    'shadowcopy': 'shadowcopy',
-    'streams': 'streams',
-    'fsrvp': 'fsrvp',
+    "hostsallow": "hostsallow",
+    "hostsdeny": "hostsdeny",
+    "path_suffix": "path_suffix",
+    "auxsmbconf": "auxsmbconf",
+    "guestok": "guestok",
+    "timemachine": "timemachine",
+    "recyclebin": "recyclebin",
+    "apple_encoding": "aapl_name_mangling",
+    "acl": "acl",
+    "durablehandle": "durablehandle",
+    "shadowcopy": "shadowcopy",
+    "streams": "streams",
+    "fsrvp": "fsrvp",
 }
 
 # Fields where order doesn't matter (compare as sets)
-SET_FIELDS = {'hostsallow', 'hostsdeny'}
+SET_FIELDS = {"hostsallow", "hostsdeny"}
 
 
 def get_share_value(share_info, api_field, is_option):
@@ -228,7 +228,7 @@ def get_share_value(share_info, api_field, is_option):
     Fields under 'options' may be absent depending on the share's purpose.
     """
     if is_option:
-        options = share_info.get('options', {})
+        options = share_info.get("options", {})
         return options.get(api_field)
     return share_info.get(api_field)
 
@@ -246,56 +246,59 @@ def values_differ(param_value, current_value, param_name):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(type='str', required=True),
-            name=dict(type='str', required=True),
-            state=dict(type='str', default='present',
-                       choices=['absent', 'present']),
-            purpose=dict(type='str',
-                         choices=['DEFAULT_SHARE', 'LEGACY_SHARE',
-                                  'TIMEMACHINE_SHARE', 'MULTIPROTOCOL_SHARE',
-                                  'TIME_LOCKED_SHARE', 'PRIVATE_DATASETS_SHARE',
-                                  'EXTERNAL_SHARE', 'VEEAM_REPOSITORY_SHARE',
-                                  'FCP_SHARE']),
-            hostsallow=dict(type='list', elements='str'),
-            hostsdeny=dict(type='list', elements='str'),
-            enabled=dict(type='bool'),
-            path_suffix=dict(type='str'),
-            comment=dict(type='str'),
-            auxsmbconf=dict(type='str'),
-            home=dict(type='bool'),
-            ro=dict(type='bool'),
-            browsable=dict(type='bool'),
-            timemachine=dict(type='bool'),
-            recyclebin=dict(type='bool'),
-            guestok=dict(type='bool'),
-            abe=dict(type='bool'),
-            apple_encoding=dict(type='bool'),
-            acl=dict(type='bool'),
-            durablehandle=dict(type='bool'),
-            shadowcopy=dict(type='bool'),
-            streams=dict(type='bool'),
-            fsrvp=dict(type='bool'),
+            path=dict(type="str", required=True),
+            name=dict(type="str", required=True),
+            state=dict(type="str", default="present", choices=["absent", "present"]),
+            purpose=dict(
+                type="str",
+                choices=[
+                    "DEFAULT_SHARE",
+                    "LEGACY_SHARE",
+                    "TIMEMACHINE_SHARE",
+                    "MULTIPROTOCOL_SHARE",
+                    "TIME_LOCKED_SHARE",
+                    "PRIVATE_DATASETS_SHARE",
+                    "EXTERNAL_SHARE",
+                    "VEEAM_REPOSITORY_SHARE",
+                    "FCP_SHARE",
+                ],
             ),
+            hostsallow=dict(type="list", elements="str"),
+            hostsdeny=dict(type="list", elements="str"),
+            enabled=dict(type="bool"),
+            path_suffix=dict(type="str"),
+            comment=dict(type="str"),
+            auxsmbconf=dict(type="str"),
+            home=dict(type="bool"),
+            ro=dict(type="bool"),
+            browsable=dict(type="bool"),
+            timemachine=dict(type="bool"),
+            recyclebin=dict(type="bool"),
+            guestok=dict(type="bool"),
+            abe=dict(type="bool"),
+            apple_encoding=dict(type="bool"),
+            acl=dict(type="bool"),
+            durablehandle=dict(type="bool"),
+            shadowcopy=dict(type="bool"),
+            streams=dict(type="bool"),
+            fsrvp=dict(type="bool"),
+        ),
         supports_check_mode=True,
     )
 
     setup.require_scale_min_version(module)
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
-    name = module.params['name']
-    path = module.params['path']
-    state = module.params['state']
+    name = module.params["name"]
+    path = module.params["path"]
+    state = module.params["state"]
 
     # Look up the share
     try:
-        share_info = mw.call("sharing.smb.query",
-                             [["path", "=", path]])
+        share_info = mw.call("sharing.smb.query", [["path", "=", path]])
         if len(share_info) == 0:
             share_info = None
         else:
@@ -306,7 +309,7 @@ def main():
     if share_info is None:
         # Share doesn't exist
 
-        if state == 'present':
+        if state == "present":
             # Build arguments for sharing.smb.create()
             arg = {
                 "path": path,
@@ -325,32 +328,32 @@ def main():
                     options[api_field] = value
 
             # home: true translates to purpose: PRIVATE_DATASETS_SHARE
-            if module.params['home']:
-                arg['purpose'] = HOME_PURPOSE
+            if module.params["home"]:
+                arg["purpose"] = HOME_PURPOSE
 
             if options:
-                arg['options'] = options
+                arg["options"] = options
                 # 25.10+ API requires 'purpose' when 'options' is set
-                if 'purpose' not in arg:
-                    arg['purpose'] = 'DEFAULT_SHARE'
+                if "purpose" not in arg:
+                    arg["purpose"] = "DEFAULT_SHARE"
 
             if module.check_mode:
-                result['msg'] = f"Would have created share {name} with {arg}"
+                result["msg"] = f"Would have created share {name} with {arg}"
             else:
                 try:
                     err = mw.call("sharing.smb.create", arg)
-                    result['share'] = err
+                    result["share"] = err
                 except Exception as e:
-                    result['failed_invocation'] = arg
+                    result["failed_invocation"] = arg
                     module.fail_json(msg=f"Error creating share {name}: {e}")
 
-            result['changed'] = True
+            result["changed"] = True
         else:
-            result['changed'] = False
+            result["changed"] = False
 
     else:
         # Share exists
-        if state == 'present':
+        if state == "present":
             # Build list of differences
             arg = {}
             options = {}
@@ -372,45 +375,42 @@ def main():
                         options[api_field] = value
 
             # home: true translates to purpose: PRIVATE_DATASETS_SHARE
-            home = module.params['home']
+            home = module.params["home"]
             if home is not None:
-                current_is_home = share_info.get('purpose') == HOME_PURPOSE
+                current_is_home = share_info.get("purpose") == HOME_PURPOSE
                 if home and not current_is_home:
-                    arg['purpose'] = HOME_PURPOSE
+                    arg["purpose"] = HOME_PURPOSE
                 elif not home and current_is_home:
-                    arg['purpose'] = 'DEFAULT_SHARE'
+                    arg["purpose"] = "DEFAULT_SHARE"
 
             if options:
-                arg['options'] = options
+                arg["options"] = options
                 # 25.10+ API requires 'purpose' when 'options' is set.
                 # Carry forward the existing purpose if not explicitly changed.
-                if 'purpose' not in arg:
-                    arg['purpose'] = share_info.get('purpose', 'DEFAULT_SHARE')
+                if "purpose" not in arg:
+                    arg["purpose"] = share_info.get("purpose", "DEFAULT_SHARE")
 
             if len(arg) == 0:
-                result['changed'] = False
+                result["changed"] = False
             else:
                 if module.check_mode:
-                    result['msg'] = f"Would have updated share {name}: {arg}"
+                    result["msg"] = f"Would have updated share {name}: {arg}"
                 else:
                     try:
-                        err = mw.call("sharing.smb.update",
-                                      share_info['id'],
-                                      arg)
+                        err = mw.call("sharing.smb.update", share_info["id"], arg)
                     except Exception as e:
                         module.fail_json(msg=f"Error updating share {name} with {arg}: {e}")
-                result['changed'] = True
+                result["changed"] = True
         else:
             # Share is not supposed to exist
             if module.check_mode:
-                result['msg'] = f"Would have deleted share {name}"
+                result["msg"] = f"Would have deleted share {name}"
             else:
                 try:
-                    err = mw.call("sharing.smb.delete",
-                                  share_info['id'])
+                    err = mw.call("sharing.smb.delete", share_info["id"])
                 except Exception as e:
                     module.fail_json(msg=f"Error deleting share {name}: {e}")
-            result['changed'] = True
+            result["changed"] = True
 
     module.exit_json(**result)
 

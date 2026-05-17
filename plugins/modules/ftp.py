@@ -5,7 +5,7 @@
 # midclt call ftp.config
 # midclt call ftp.update '{"onlyanonymous": false}'
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: ftp
 short_description: Configure FTP service
@@ -57,9 +57,9 @@ notes:
 seealso:
   - module: jdevera.truenas.service
 version_added: 1.15.0
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Allow only local users and set umasks
   jdevera.truenas.ftp:
     onlyanonymous: false
@@ -71,15 +71,15 @@ EXAMPLES = '''
   jdevera.truenas.ftp:
     defaultroot: false
     options: "DefaultRoot /mnt/tank/documents scanner"
-'''
+"""
 
-RETURN = '''
+RETURN = """
 status:
   returned: always
   description:
     - The FTP service configuration after any changes.
   type: dict
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -88,12 +88,12 @@ from ..module_utils.middleware import MiddleWare as MW
 
 # Maps Ansible param name -> API field name.
 FIELDS = {
-    'onlyanonymous': 'onlyanonymous',
-    'onlylocal': 'onlylocal',
-    'defaultroot': 'defaultroot',
-    'filemask': 'filemask',
-    'dirmask': 'dirmask',
-    'options': 'options',
+    "onlyanonymous": "onlyanonymous",
+    "onlylocal": "onlylocal",
+    "defaultroot": "defaultroot",
+    "filemask": "filemask",
+    "dirmask": "dirmask",
+    "options": "options",
 }
 
 # Fields where order doesn't matter (compare as sets).
@@ -103,22 +103,19 @@ SET_FIELDS: set[str] = set()
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            onlyanonymous=dict(type='bool'),
-            onlylocal=dict(type='bool'),
-            defaultroot=dict(type='bool'),
-            filemask=dict(type='str'),
-            dirmask=dict(type='str'),
-            options=dict(type='str'),
+            onlyanonymous=dict(type="bool"),
+            onlylocal=dict(type="bool"),
+            defaultroot=dict(type="bool"),
+            filemask=dict(type="str"),
+            dirmask=dict(type="str"),
+            options=dict(type="str"),
         ),
         supports_check_mode=True,
     )
 
     setup.require_scale_min_version(module)
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
@@ -127,7 +124,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=f"Error looking up FTP configuration: {e}")
 
-    result['status'] = ftp_info
+    result["status"] = ftp_info
 
     arg = {}
     for param_name, api_field in FIELDS.items():
@@ -142,17 +139,17 @@ def main():
             arg[api_field] = value
 
     if len(arg) == 0:
-        result['changed'] = False
+        result["changed"] = False
     else:
         if module.check_mode:
-            result['msg'] = f"Would have updated FTP: {arg}"
+            result["msg"] = f"Would have updated FTP: {arg}"
         else:
             try:
                 err = mw.call("ftp.update", arg)
-                result['status'] = err
+                result["status"] = err
             except Exception as e:
                 module.fail_json(msg=f"Error updating FTP with {arg}: {e}")
-        result['changed'] = True
+        result["changed"] = True
 
     module.exit_json(**result)
 
