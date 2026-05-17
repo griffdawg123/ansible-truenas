@@ -96,11 +96,16 @@ lint::
 	$(PYTHON) -m py_compile plugins/*/*.py
 	ruff check plugins/
 
-# Run the official Ansible sanity checks against this collection.
+# Run the official Ansible validation suite against this collection
+# (ansible-test's 'sanity' subcommand: pep8, validate-modules,
+# ansible-doc, import, etc.). The underlying subcommand name comes
+# from ansible-core and we can't rename it, but we expose it locally
+# as 'validate'.
+#
 # Requires the collection to be installed at
 # ansible_collections/$(subst .,/,${COLLECTION}); the
 # compatibility-link target sets that up locally.
-sanity:	compatibility-link
+validate:	compatibility-link
 	ANSIBLE_COLLECTIONS_PATH=. \
 	    ansible-test sanity --venv --color
 
@@ -108,6 +113,6 @@ sanity:	compatibility-link
 # ansible_collections/$(subst .,/,${COLLECTION}) path so that the
 # 'from ..module_utils import setup' relative imports inside plugins/
 # resolve to the same namespace package that Ansible uses at runtime.
+# Config lives in pyproject.toml ([tool.mypy]).
 typecheck:	compatibility-link
-	mypy --config-file .mypy.ini \
-	    ansible_collections/$(subst .,/,${COLLECTION})/plugins/
+	mypy ansible_collections/$(subst .,/,${COLLECTION})/plugins/
