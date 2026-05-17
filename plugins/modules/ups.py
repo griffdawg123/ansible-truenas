@@ -46,7 +46,6 @@ options:
     description:
       - Password for the UPS monitor user.
     type: str
-    no_log: true
   extrausers:
     description:
       - Additional users for upsd.users, as a raw string.

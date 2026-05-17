@@ -39,6 +39,10 @@ Use `setup.fail(module, msg, **kwargs)` instead of `module.fail_json(msg=..., **
 
 One command: `pre-commit run --all-files`. It runs ruff, ruff-format, mypy, ansible-doc, and ansible-test sanity, with each hook bringing its own dependencies (`additional_dependencies: [ansible-core]`) — no Makefile glue. Run `pre-commit install` once per checkout to also trigger it on `git commit`. To call any tool directly, use uv: `uv run --with ruff ruff check plugins/` etc.
 
+## Docs
+
+`.github/workflows/docs.yml` builds the Sphinx site (antsibull-docs + antsibull-changelog + sphinx_ansible_theme) on every push to main and deploys it to GitHub Pages. Local preview: `scripts/prepare-collection-layout.sh && uv run --with 'ansible-core>=2.13.0' --with antsibull-docs --with antsibull-changelog --with sphinx --with sphinx_ansible_theme bash docs/build.sh && open docs/build/html/index.html`.
+
 ## Repo layout idiosyncrasies
 
 - `plugins/module_utils/setup.py` holds shared helpers (`fail`, `require_scale_min_version`, `_parse_version`, `get_tn_version`, `MIN_SCALE_VERSION`).

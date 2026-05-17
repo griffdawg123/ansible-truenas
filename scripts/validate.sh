@@ -24,6 +24,9 @@ rsync -aq \
     --exclude=tests/output \
     --exclude=.venv \
     --exclude=.local \
+    --exclude=docs/build \
+    --exclude=docs/rst \
+    --exclude=docs/temp-rst \
     ./ "$dest/"
 
 cd "$dest"
