@@ -33,7 +33,7 @@ options:
   enabled:
     description:
       - Whether this snapshot task is enabled.
-    type: str
+    type: bool
   end_time:
     description:
       - Time at which to stop taking snapshots. This is a string in
@@ -58,12 +58,14 @@ options:
       - Along with C(lifetime_value), specifies the length of time a
         snapshot will be kept before being deleted.
     type: str
-    choices: [ hour, hours, day, days, week, weeks, month, months, year, years ]
+    required: true
+    choices: [ hour, hours, HOUR, HOURS, day, days, DAY, DAYS, week, weeks, WEEK, WEEKS, month, months, MONTH, MONTHS, year, years, YEAR, YEARS ]
   lifetime_value:
     description:
       - The number of units of time that the snapshot will exist before
         it is deleted. Used in conjunction with C(lifetime_unit).
     type: int
+    required: true
   match:
     description:
       - A snapshot task does not have a name or other visible unique
@@ -75,6 +77,7 @@ options:
       - If the C(state) option is C(present), only the first matching
         dataset will be updated. If C(state) is C(absent), all matching
         datasets will be deleted.
+    type: dict
     required: true
     suboptions:
       dataset:
@@ -104,6 +107,7 @@ options:
       - Whether to take snapshots of the child datasets, as well as of
         the dataset itself.
     type: bool
+    required: true
   state:
     description:
       - Whether the task should exist or not.

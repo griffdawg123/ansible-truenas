@@ -47,7 +47,7 @@ options:
         "KB", "MB", "GB", "TB" (powers of 10),
         "KiB", "MiB", "GiB", "TiB" (powers of 2)
       - This is required when creating a volume, but not when updating an existing one.
-    type: int
+    type: str
   volblocksize:
     description:
       - Volume block size if type=VOLUME, e.g. "64K" or "65536".
@@ -72,13 +72,159 @@ options:
     default: false
   comments:
     description:
-      - Arbitrary comment or notes for the dataset.
+      - Arbitrary comment or notes for the dataset (ZFS C(comments) property).
     type: str
-
-  # (Other properties truncated for brevity, same as before)...
-
-author:
-  - "Your Name (@yourhandle)"
+  sync:
+    description:
+      - Controls synchronous request behaviour (ZFS C(sync) property).
+        Typical values are C(STANDARD), C(ALWAYS), C(DISABLED).
+    type: str
+  snapdev:
+    description:
+      - Controls whether snapshot device nodes for zvols are visible
+        (ZFS C(snapdev) property). Typical values are C(VISIBLE), C(HIDDEN).
+    type: str
+  compression:
+    description:
+      - Compression algorithm for the dataset (ZFS C(compression) property).
+        Typical values include C(OFF), C(LZ4), C(ZSTD), C(GZIP), etc.
+    type: str
+  atime:
+    description:
+      - Whether to update access times when files are read
+        (ZFS C(atime) property). Typical values are C(ON), C(OFF).
+    type: str
+  exec:
+    description:
+      - Whether processes may execute binaries from the dataset
+        (ZFS C(exec) property). Typical values are C(ON), C(OFF).
+    type: str
+  managedby:
+    description:
+      - Free-form C(managedby) property identifying the
+        owner/manager of the dataset.
+    type: str
+  quota:
+    description:
+      - Hard quota for the dataset, in bytes (ZFS C(quota) property).
+    type: int
+  quota_warning:
+    description:
+      - Percentage threshold for warning-level quota alerts.
+    type: str
+  quota_critical:
+    description:
+      - Percentage threshold for critical-level quota alerts.
+    type: str
+  refquota:
+    description:
+      - Hard reference-quota for the dataset, in bytes
+        (ZFS C(refquota) property; ignores snapshots and clones).
+    type: int
+  refquota_warning:
+    description:
+      - Percentage threshold for warning-level refquota alerts.
+    type: str
+  refquota_critical:
+    description:
+      - Percentage threshold for critical-level refquota alerts.
+    type: str
+  reservation:
+    description:
+      - Minimum guaranteed space for the dataset, in bytes
+        (ZFS C(reservation) property).
+    type: int
+  refreservation:
+    description:
+      - Minimum guaranteed space excluding snapshots/clones, in bytes
+        (ZFS C(refreservation) property).
+    type: int
+  special_small_block_size:
+    description:
+      - Block-size threshold for storing small blocks on the special
+        vdev (ZFS C(special_small_blocks) property).
+    type: str
+  copies:
+    description:
+      - Number of redundant copies of the data to store
+        (ZFS C(copies) property). Typical values are C("1"), C("2"), C("3").
+    type: str
+  snapdir:
+    description:
+      - Controls visibility of the C(.zfs) snapshot directory
+        (ZFS C(snapdir) property). Typical values are C(VISIBLE), C(HIDDEN).
+    type: str
+  deduplication:
+    description:
+      - Deduplication setting (ZFS C(dedup) property).
+        Typical values are C(ON), C(OFF), C(VERIFY).
+    type: str
+  checksum:
+    description:
+      - Checksum algorithm (ZFS C(checksum) property).
+        Typical values include C(ON), C(OFF), C(FLETCHER4), C(SHA256), etc.
+    type: str
+  readonly:
+    description:
+      - Whether the dataset is read-only (ZFS C(readonly) property).
+        Typical values are C(ON), C(OFF).
+    type: str
+  recordsize:
+    description:
+      - Suggested block size for files (ZFS C(recordsize) property).
+        Typical values include C(4K), C(16K), C(128K), C(1M).
+    type: str
+  aclmode:
+    description:
+      - How ACLs are modified when a file's mode is changed
+        (ZFS C(aclmode) property). Typical values are C(PASSTHROUGH),
+        C(RESTRICTED), C(DISCARD).
+    type: str
+  acltype:
+    description:
+      - Type of ACLs used on the dataset (ZFS C(acltype) property).
+        Typical values are C(POSIX), C(NFSV4), C(OFF).
+    type: str
+  xattr:
+    description:
+      - Extended-attribute storage mode (ZFS C(xattr) property).
+        Typical values are C(ON), C(OFF), C(SA).
+    type: str
+  user_properties:
+    description:
+      - List of arbitrary user-defined ZFS properties to set at
+        creation time. Each entry must specify both C(key) and C(value).
+    type: list
+    elements: dict
+    default: []
+    suboptions:
+      key:
+        description: Property name.
+        type: str
+        required: true
+      value:
+        description: Property value.
+        type: str
+        required: true
+  user_properties_update:
+    description:
+      - List of arbitrary user-defined ZFS properties to update on an
+        existing dataset. Each entry specifies a C(key), and either a
+        C(value) to set or C(remove=true) to clear the property.
+    type: list
+    elements: dict
+    default: []
+    suboptions:
+      key:
+        description: Property name.
+        type: str
+        required: true
+      value:
+        description: Property value.
+        type: str
+      remove:
+        description: If true, remove the property instead of setting it.
+        type: bool
 """
 
 EXAMPLES = r"""
@@ -170,7 +316,7 @@ def main():
             elements="dict",
             default=[],
             options=dict(
-                key=dict(type="str", required=True),
+                key=dict(type="str", required=True, no_log=False),
                 value=dict(type="str", required=True),
             ),
         ),
@@ -179,7 +325,7 @@ def main():
             elements="dict",
             default=[],
             options=dict(
-                key=dict(type="str", required=True),
+                key=dict(type="str", required=True, no_log=False),
                 value=dict(type="str"),
                 remove=dict(type="bool"),
             ),

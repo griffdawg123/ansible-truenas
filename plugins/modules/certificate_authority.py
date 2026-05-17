@@ -48,6 +48,7 @@ options:
     description:
       - Passphrase for the CA cert.
       - When uploading a CA certificate, the passphrase for the private key must be supplied, if there is one.
+    type: str
   state:
     description:
       - "'present': Ensure that the CA cert is installed."
@@ -152,7 +153,7 @@ argument_spec = dict(
     certificate=dict(type='str',
                      aliases=['ca', 'cert', 'ca_cert']),
     private_keyfile=dict(type='path'),
-    private_key=dict(type='str'),
+    private_key=dict(type='str', no_log=True),
     passphrase=dict(type='str', no_log=True),
     revoked=dict(type='bool', default=False),
 )

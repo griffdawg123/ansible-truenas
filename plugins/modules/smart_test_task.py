@@ -168,8 +168,7 @@ def main():
         argument_spec=dict(
             name=dict(type='str', required=True),
             test=dict(type='str',
-                      choices=['long', 'short', 'conveyance', 'offline',
-                               'LONG', 'SHORT', 'CONVEYANCE', 'OFFLINE']),
+                      choices=['long', 'short', 'conveyance', 'offline']),
             state=dict(type='str', default='present',
                        choices=['absent', 'present']),
             disks=dict(type='list', elements='str',

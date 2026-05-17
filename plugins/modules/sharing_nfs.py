@@ -21,6 +21,7 @@ options:
       - List of allowed hosts, either hostnames or addresses.
       - An empty list means to allow all.
     type: list
+    elements: str
   mapall_user:
     description:
       - All requests (including by root) are limited to the permissions
@@ -55,8 +56,6 @@ options:
       - Name for this export group.
       - This will show up as the comment.
     type: str
-    default: ""
-    required: true
     aliases: [ comment ]
   networks:
     description:
@@ -67,6 +66,7 @@ options:
         "10.1.2.3/16", TrueNAS will normalize this to "10.1.0.0/16", but
         afterward, this module will think that you want to make a change.
     type: list
+    elements: str
   path:
     description:
       - A directory to export.
@@ -126,7 +126,7 @@ def main():
             state=dict(type='str', default='present',
                        choices=['absent', 'present']),
             enabled=dict(type='bool'),
-            readonly=dict(type='bool'),
+            readonly=dict(type='bool', aliases=['ro', 'read_only']),
             maproot_user=dict(type='str'),
             maproot_group=dict(type='str'),
             mapall_user=dict(type='str'),

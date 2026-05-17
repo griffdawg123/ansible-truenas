@@ -81,7 +81,7 @@ def main():
             name=dict(type='str', required=True),
 
             sudo_commands=dict(type='list', elements='str'),
-            sudo_commands_nopasswd=dict(type='list', elements='str'),
+            sudo_commands_nopasswd=dict(type='list', elements='str', no_log=False),
 
             state=dict(type='str', default='present',
                        choices=['absent', 'present'])

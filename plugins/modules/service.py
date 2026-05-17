@@ -15,6 +15,7 @@ options:
     description:
       - I don't know. I think this is for High Availability in
         TrueNAS Enterprise.
+    type: bool
   name:
     description:
     - Name of the service.
@@ -106,7 +107,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str', required=True, default=None),
+            name=dict(type='str', required=True),
             # state doesn't default to anything, for compatibility with
             # builtin.service.
             state=dict(type='str',

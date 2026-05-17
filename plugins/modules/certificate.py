@@ -50,9 +50,6 @@ options:
     description:
       - Used instead of O(private_keyfile) to specify a CA private key inline.
     type: str
-  passphrase:
-    description:
-      - Passphrase for the certificate.
   state:
     description:
       - Whether the certificate should exist or not.
@@ -140,7 +137,7 @@ argument_spec=dict(
     src=dict(type='path'),
     certificate=dict(type='str'),
     private_keyfile=dict(type='path'),
-    private_key=dict(type='str'),
+    private_key=dict(type='str', no_log=True),
     revoked=dict(type='bool', default=False),
 )
 required_if = [

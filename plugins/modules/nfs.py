@@ -21,11 +21,15 @@ options:
     elements: str
     choices:
       - nfsv3
-      - nfsv4
       - NFSv3
-      - NFSv4
+      - NFSV3
       - v3
+      - V3
+      - nfsv4
+      - NFSv4
+      - NFSV4
       - v4
+      - V4
   servers:
     description:
       - The number of NFS servers to create. This value is passed
@@ -43,6 +47,7 @@ options:
         Kerberos ticket.
       - This enables the C(gssd) daemon.
       - Ignored unless NFSv4 is enabled via C(protocols).
+    type: bool
   domain:
     description:
       - Overrides the default DNS domain name for NFSv4.

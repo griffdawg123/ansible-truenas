@@ -73,6 +73,7 @@ options:
       - If C(append) is false, then in addition, the user will be removed
         from all other groups (except the primary).
     type: list
+    elements: str
   home:
     description:
       - User's home directory.
@@ -87,6 +88,7 @@ options:
         form the real home directory (C(/mnt/pool0/homes/bob), in this
         example). This is not recommended. It is better to use the full
         home directory, ending with the username."
+    type: path
   home_create:
     description:
       - If true, create the home directory if it does not already exist.
@@ -121,7 +123,6 @@ options:
       - "Note that under TrueNAS SCALE, a user with C(password_disabled)
         may not use SMB, so be sure to set C(smb: false)."
     type: bool
-    default: false
   shell:
     description:
       - User's shell.
@@ -156,7 +157,6 @@ options:
       - Commands may include options, e.g., C("/bin/ls -l").
     type: list
     elements: str
-    default: []
   sudo_commands_nopasswd:
     description:
       - List of commands the user is allowed to execute using C(sudo),
@@ -166,7 +166,6 @@ options:
       - Commands may include options, e.g., C("/bin/ls -l").
     type: list
     elements: str
-    default: []
   uid:
     description:
       - Set the I(UID) of the user.
@@ -275,10 +274,10 @@ def main():
             # same way that 'append' says whether or not to allow
             # additional groups.
             ssh_authorized_keys=dict(type='list', elements='str',
-                                     aliases=['pubkeys']),
+                                     aliases=['pubkeys'], no_log=False),
             append_pubkeys=dict(type='bool', default=False),
 
-            groups=dict(type='list'),
+            groups=dict(type='list', elements='str'),
             home=dict(type='path'),
             home_create=dict(type='bool', default=False),
             # XXX - remove: delete home directory. builtin.user allows
@@ -286,10 +285,9 @@ def main():
 
             smb=dict(type='bool'),
 
-            sudo_commands=dict(type='list',
-                               elements='str'),
-            sudo_commands_nopasswd=dict(type='list',
-                                        elements='str'),
+            sudo_commands=dict(type='list', elements='str'),
+            sudo_commands_nopasswd=dict(type='list', elements='str',
+                                        no_log=False),
 
             # I think the way builtin.user works is, if you delete a
             # user without 'force: yes', the old home directory sticks

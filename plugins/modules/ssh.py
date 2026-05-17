@@ -131,7 +131,7 @@ def main():
             bindiface=dict(type='list', elements='str'),
             tcpport=dict(type='int'),
             passwordauth=dict(type='bool'),
-            password_login_groups=dict(type='list', elements='str'),
+            password_login_groups=dict(type='list', elements='str', no_log=False),
             kerberosauth=dict(type='bool'),
             tcpfwd=dict(type='bool'),
             compression=dict(type='bool'),

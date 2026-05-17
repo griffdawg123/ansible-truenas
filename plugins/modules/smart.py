@@ -29,7 +29,7 @@ options:
       - "C(idle): Check the device unless it is in C(sleep), C(standby), or
         C(idle) mode."
     type: str
-    choices: [ NEVER, SLEEP, STANDBY, IDLE ]
+    choices: [ never, sleep, standby, idle ]
   temp_difference:
     description:
       - Significant temperature difference. A report will be generated if

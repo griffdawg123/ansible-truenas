@@ -19,6 +19,7 @@ options:
   from_name:
     description:
       - Full name used in the email's \"From\" header.
+    type: str
   server:
     description:
       - Outgoing mail server. This may be either the hostname or IP address
@@ -43,6 +44,7 @@ options:
       - The encryption to use for outgoing mail.
     type: str
     choices: [ PLAIN, SSL, TLS ]
+    default: PLAIN
   smtp:
     description:
       - If true, means that SMTP authentication is enabled on the server,
@@ -59,6 +61,7 @@ options:
       - Password for I(smtp_user) on the SMTP server. Required if C(smtp=true).
       - See also I(smtp) and I(smtp_user).
     type: str
+    aliases: [ password ]
 version_added: 1.3.0
 '''
 
@@ -96,7 +99,7 @@ def main():
             smtp_password=dict(type='str', no_log=True, aliases=['password']),
             oauth_id=dict(type='str'),
             oauth_secret=dict(type='str', no_log=True),
-            oauth_token=dict(type='str'),
+            oauth_token=dict(type='str', no_log=True),
             ),
         supports_check_mode=True,
         # XXX - 'smtp_user' and 'smtp_pass' are required when 'smtp' is true.

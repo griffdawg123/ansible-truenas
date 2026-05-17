@@ -99,15 +99,21 @@ options:
     type: str
   purpose:
     description:
-      - |
-        Specifies a family of configuration parameters for different use
-        cases. Legal values include:
-      - C(DEFAULT_SHARE), C(LEGACY_SHARE), C(TIMEMACHINE_SHARE),
-        C(MULTIPROTOCOL_SHARE), C(TIME_LOCKED_SHARE), C(PRIVATE_DATASETS_SHARE),
-        C(EXTERNAL_SHARE), C(VEEAM_REPOSITORY_SHARE), C(FCP_SHARE).
+      - Specifies a family of configuration parameters for different use cases.
       - Note that the C(purpose) parameter may override other parameters.
         In particular, C(DEFAULT_SHARE) specifies an empty C(hostsallow)
         and C(hostsdeny).
+    type: str
+    choices:
+      - DEFAULT_SHARE
+      - LEGACY_SHARE
+      - TIMEMACHINE_SHARE
+      - MULTIPROTOCOL_SHARE
+      - TIME_LOCKED_SHARE
+      - PRIVATE_DATASETS_SHARE
+      - EXTERNAL_SHARE
+      - VEEAM_REPOSITORY_SHARE
+      - FCP_SHARE
   recyclebin:
     description:
       - |

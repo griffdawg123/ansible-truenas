@@ -40,6 +40,7 @@ options:
       - "C(postinit): late in the boot process, after most services have
         started, but before TrueNAS services."
       - "C(shutdown): during shutdown."
+    type: str
     choices:
       - preinit
       - postinit
@@ -102,13 +103,12 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             # XXX
-            name=dict(type='str'),
+            name=dict(type='str', required=True),
             cmd=dict(type='str', aliases=['command']),
             path=dict(type='str'),
             script=dict(type='str'),
             when=dict(type='str',
-                      choices=['preinit', 'postinit', 'shutdown',
-                               'PREINIT', 'POSTINIT', 'SHUTDOWN']),
+                      choices=['preinit', 'postinit', 'shutdown']),
             timeout=dict(type='int'),
             state=dict(type='str', default='present',
                        choices=['absent', 'present']),
@@ -122,7 +122,7 @@ def main():
         required_if=[
             ('state', 'present', ('cmd', 'path', 'script'), True)
         ],
-        mutually_exclusive=['cmd', 'path', 'script'],
+        mutually_exclusive=[['cmd', 'path', 'script']],
     )
 
     setup.require_scale_min_version(module)

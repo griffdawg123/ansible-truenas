@@ -53,7 +53,7 @@ from ..module_utils.middleware import MiddleWare as MW
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str'),
+            name=dict(type='str', required=True),
             ),
         supports_check_mode=True,
     )
