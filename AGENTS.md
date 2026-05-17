@@ -37,7 +37,7 @@ Use `setup.fail(module, msg, **kwargs)` instead of `module.fail_json(msg=..., **
 
 ## Checks
 
-One command shows the full picture: `pre-commit run --all-files`. It runs ruff, mypy, ansible-doc, and ansible-test sanity (validate-modules) and reports each one as Passed/Failed in a single pass. Run `pre-commit install` once per checkout to also trigger it on `git commit`. Validate-modules currently fails on inherited doc nits — see `.local/doc-backlog.md`.
+One command: `pre-commit run --all-files`. It runs ruff, ruff-format, mypy, ansible-doc, and ansible-test sanity, with each hook bringing its own dependencies (`additional_dependencies: [ansible-core]`) — no Makefile glue. Run `pre-commit install` once per checkout to also trigger it on `git commit`. To call any tool directly, use uv: `uv run --with ruff ruff check plugins/` etc.
 
 ## Repo layout idiosyncrasies
 

@@ -34,31 +34,8 @@ tarball:	docs
 clean::
 	${RM} $(subst .,-,${COLLECTION})-*.tar.gz
 
-# Generate list of modules from plugins/modules/*.py:
-# List the files, strip the directory name and .py suffix, then
-# add the collection name in front, so
-# plugins/modules/foo.py -> arensb.truenas.foo
-MODULES = $(addprefix ${COLLECTION}., \
-	$(basename \
-	$(notdir \
-	$(wildcard plugins/modules/*.py))))
-
-check-docs:	ansible_collections/$(subst .,/,${COLLECTION})
-	ANSIBLE_COLLECTIONS_PATH=. \
-	uv run --with ansible-core ansible-doc \
-		-M .\
-		--json \
-		--type module \
-		${MODULES} >/dev/null
-
-# This is a crude hack: make a symlink to fool 'ansible-doc': it looks
-# for module foo.bar.baz in
-# $ANSIBLE_COLLECTIONS_PATH/ansible_collections/foo/bar/baz.py
-compatibility-link:	ansible_collections/$(subst .,/,${COLLECTION})
-
-ansible_collections/$(subst .,/,${COLLECTION}):
-	install -d -m 775 `dirname "$@"`
-	ln -s ../.. $@
+compatibility-link:
+	@scripts/prepare-collection-layout.sh
 
 documentation:	venv-docs compatibility-link plugins/modules/*.py
 	(. venv-docs/bin/activate; \
@@ -91,42 +68,8 @@ update-doc-site:	documentation
 	)
 	echo "Don't forget to git push the docs site."
 
-# Individual checks. The unified entry point is `pre-commit run
-# --all-files`, which runs all of these and reports each one's status
-# in one pass. The targets below are kept so pre-commit can call them
-# and so each check is still reachable on its own.
-
-lint::
-	$(PYTHON) -m py_compile plugins/*/*.py
-	uv run --with ruff ruff check plugins/
-
-# Run the official Ansible validation suite against this collection
-# (ansible-test's 'sanity' subcommand: pep8, validate-modules,
-# ansible-doc, import, etc.). The underlying subcommand name comes
-# from ansible-core; we expose it locally as 'validate'.
-#
-# ansible-test sanity insists that the current working directory be
-# inside an ansible_collections/<ns>/<name>/ tree, and it resolves
-# symlinks before checking that, so the compatibility-link approach
-# doesn't satisfy it. Instead, rsync the source into a temp tree and
-# run from there.
-validate:
-	@tmp=$$(mktemp -d) && \
-	dest="$$tmp/ansible_collections/$(subst .,/,${COLLECTION})" && \
-	mkdir -p "$$dest" && \
-	rsync -aq --exclude=.git --exclude=ansible_collections --exclude=__pycache__ \
-	    --exclude=venv-docs --exclude=tests/output --exclude=.venv \
-	    --exclude=.local ./ "$$dest/" && \
-	( cd "$$dest" && \
-	  env UV_PROJECT_ENVIRONMENT="$$tmp/.uvenv" \
-	    uv run --with ansible-core ansible-test sanity --venv --color ); \
-	rc=$$?; rm -rf "$$tmp"; exit $$rc
-
-# Type-check with mypy. Has to be invoked through the
-# ansible_collections/$(subst .,/,${COLLECTION}) path so that the
-# 'from ..module_utils import setup' relative imports inside plugins/
-# resolve to the same namespace package that Ansible uses at runtime.
-# Config lives in pyproject.toml ([tool.mypy]).
-typecheck:	compatibility-link
-	uv run --with mypy --with ansible-core mypy \
-	    ansible_collections/$(subst .,/,${COLLECTION})/plugins/
+# All lint / typecheck / validate / docs checks are driven by
+# 'pre-commit run --all-files'. See .pre-commit-config.yaml and the
+# scripts/ directory for the wiring. There are no Makefile targets
+# that wrap them — call pre-commit directly, or invoke the underlying
+# tools via uv (e.g. `uv run --with ruff ruff check plugins/`).

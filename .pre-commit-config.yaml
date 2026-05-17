@@ -3,38 +3,56 @@
 # One-shot status:    pre-commit run --all-files
 # Auto-run on commit: pre-commit install   (one-time, per checkout)
 #
-# pre-commit runs every configured hook regardless of earlier failures, so a
-# single invocation gives the full picture: each hook reports Passed / Failed
-# with its own output inlined under the failing entry.
+# Each hook brings its own dependencies via pre-commit's built-in venv
+# management — no Makefile glue, no `uv run --with` indirection.
 
 default_stages: [pre-commit]
 
 repos:
+  # Creates the compatibility symlink that mypy / ansible-doc /
+  # ansible-test all rely on. Runs first so the hooks below see it.
+  - repo: local
+    hooks:
+      - id: prepare-collection-layout
+        name: prepare collection layout
+        language: system
+        entry: scripts/prepare-collection-layout.sh
+        pass_filenames: false
+        always_run: true
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.7.4
     hooks:
       - id: ruff
       - id: ruff-format
 
-  - repo: local
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
     hooks:
       - id: mypy
-        name: mypy
-        entry: make typecheck
-        language: system
-        types: [python]
+        # mypy needs to see the collection at its canonical
+        # ansible_collections/<ns>/<name>/plugins/ path so that
+        # `from ..module_utils import setup` resolves the same way
+        # Ansible resolves it at runtime. Config in pyproject.toml.
+        additional_dependencies: [ansible-core]
+        files: ^(plugins|scripts)/.*\.py$
+        args: [ansible_collections/jdevera/truenas/plugins/]
         pass_filenames: false
 
+  - repo: local
+    hooks:
       - id: ansible-doc
         name: ansible-doc parses every module
-        entry: make check-docs
-        language: system
-        types: [python]
+        language: python
+        additional_dependencies: [ansible-core]
+        files: ^plugins/modules/.*\.py$
+        entry: scripts/check-docs.sh
         pass_filenames: false
 
-      - id: validate-modules
-        name: ansible-test validate-modules
-        entry: make validate
-        language: system
-        types: [python]
+      - id: ansible-test-sanity
+        name: ansible-test sanity
+        language: python
+        additional_dependencies: [ansible-core]
+        files: ^(plugins|tests/sanity)/.*$
+        entry: scripts/validate.sh
         pass_filenames: false

@@ -61,9 +61,12 @@ namespace_packages = true
 
 [[tool.mypy.overrides]]
 # ansible-core is only partially typed. Let mypy follow it without
-# requiring full annotation coverage.
-module = "ansible.*"
+# requiring full annotation coverage. The two patterns cover both
+# 'ansible.foo' and 'ansible.foo.bar.baz' — mypy's wildcard only
+# matches a single component.
+module = ["ansible.*", "ansible.**.*"]
 follow_untyped_imports = true
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 # Optional runtime libs that don't ship stubs.
