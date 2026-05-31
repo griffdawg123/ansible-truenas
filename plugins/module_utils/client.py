@@ -8,13 +8,7 @@ natively.
 """
 
 # Import the classes we want, to be a TrueNAS API client.
-try:
-    # TrueNAS SCALE
-    import truenas_api_client as MWClient
-except ImportError:
-    # TrueNAS CORE
-    import middlewared.client as MWClient
-
+import truenas_api_client as MWClient
 from middlewared.utils.service.call import MethodNotFoundError
 
 from ..module_utils.exceptions import MethodNotFoundError as AnsibleMethodNotFoundError

@@ -3,6 +3,7 @@ plugins/module_utils/client.py import-3.12
 plugins/module_utils/client.py import-3.14
 plugins/module_utils/midclt.py import-3.12
 plugins/module_utils/midclt.py import-3.14
+plugins/module_utils/midclt.py pylint:ansible-bad-function
 plugins/modules/app_info.py validate-modules:invalid-documentation
 plugins/modules/app_info.py validate-modules:missing-gplv3-license
 plugins/modules/app_service.py validate-modules:invalid-documentation
@@ -58,6 +59,8 @@ plugins/modules/systemdataset.py validate-modules:invalid-documentation
 plugins/modules/systemdataset.py validate-modules:missing-gplv3-license
 plugins/modules/truenas_facts.py validate-modules:invalid-documentation
 plugins/modules/truenas_facts.py validate-modules:missing-gplv3-license
+plugins/modules/tunable.py validate-modules:invalid-documentation
+plugins/modules/tunable.py validate-modules:missing-gplv3-license
 plugins/modules/ups.py validate-modules:invalid-documentation
 plugins/modules/ups.py validate-modules:missing-gplv3-license
 plugins/modules/user_preferences.py validate-modules:invalid-documentation

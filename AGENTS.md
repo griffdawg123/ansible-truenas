@@ -28,7 +28,7 @@ Use `setup.fail(module, msg, **kwargs)` instead of `module.fail_json(msg=..., **
 ## License and author
 
 - License is **Apache-2.0**
-- Author and (GPL) license fields are intentionally left out. Both ignores are per-file in `tests/sanity/ignore-2.20.txt`. If you add a new module, append the same two lines for it.
+- Author and (GPL) license fields are intentionally left out. Both ignores are per-file in `tests/sanity/ignore-2.21.txt`. If you add a new module, append the same two lines for it.
 
 ## Conventions
 
@@ -62,6 +62,6 @@ git commit .upstream-reviewed -m 'Note upstream review checkpoint.'
 ## Repo layout idiosyncrasies
 
 - `plugins/module_utils/setup.py` holds shared helpers (`fail`, `require_scale_min_version`, `_parse_version`, `get_tn_version`, `MIN_SCALE_VERSION`).
-- `plugins/module_utils/middleware.py` wraps either `client.py` (faster, newer) or `midclt.py` (subprocess-based, fallback). The choice is via `middleware_method` env var. Treat `MiddleWare.client().call(...)` returns as `Any`.
+- `plugins/module_utils/middleware.py` wraps either `client.py` (faster, opt-in) or `midclt.py` (subprocess-based, default). The choice is via the `middleware_method` env var. Treat `MiddleWare.client().call(...)` returns as `Any`.
 - `.local/` is gitignored — personal scratch space, agent dropbox. Anything that needs to ship goes into a real path.
 

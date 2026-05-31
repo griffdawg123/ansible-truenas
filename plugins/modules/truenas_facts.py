@@ -60,108 +60,113 @@ EXAMPLES = """
 """
 
 RETURN = """
-ansible_facts.truenas_boot_id:
-  description:
-    - The host's unique boot identifier. Changes every time the
-      system boots.
+ansible_facts:
+  description: Facts about the TrueNAS host, added to C(ansible_facts).
   returned: always
-  type: str
-  sample: 1f065a66-a5de-464d-a6b3-f786143028fc
-ansible_facts.truenas_host_id:
-  description:
-    - A hex string based on (but not identical to) the contents of
-      C(/etc/hostid).
-    - This ID is permanent and persists across both reboots and upgrades,
-      so it can be used as a unique identifier for the machine.
-  returned: always
-  type: str
-  sample: 6f7145029674ad4f49fac7090dce20de0d02eef3bb462c25dce3ab15a367ac41
-ansible_facts.truenas_product_name:
-  description:
-    - A string giving the overall name of the product, usually
-      C(TrueNAS)
-  returned: always
-  type: str
-  sample: TrueNAS
-ansible_facts.truenas_product_type:
-  description:
-    - The flavor of TrueNAS. One of C(CORE), C(ENTERPRISE), or C(SCALE).
-  type: str
-  returned: always
-  sample: CORE
-ansible_facts.truenas_environment:
-  description:
-    - The environment in which TrueNAS is running. One of
-      C(DEFAULT) or C(EC2).
-  type: str
-  returned: always
-  sample: DEFAULT
-ansible_facts.truenas_features:
-  description:
-    - A map that says, for each system feature, whether it is enabled
-      or not.
   type: dict
-  returned: always
-  sample: {
-      "DEDUP": true,
-      "FIBRECHANNEL": false,
-      "JAILS": true,
-      "VM": true,
-    }
-ansible_facts.truenas_state:
-  description:
-    - The current state of the system, one of
-      C(BOOTING), C(SHUTTING_DOWN), or C(READY).
-  type: str
-  returned: always
-  sample: READY
-ansible_facts.truenas_system_info:
-  description:
-    - A dictionary with a number of facts about the system. See the
-      sample value below.
-  type: dict
-  returned: always
-  sample: {
-    "version": "TrueNAS-13.0-U5",
-    "buildtime": {
-      "$date": 1685357420000
-    },
-    "hostname": "myhost.dom.ain",
-    "physmem": 8421797888,
-    "model": "AMD(R) Razor(R) CPU  J1900  @ 3.99GHz",
-    "cores": 8,
-    "loadavg": [
-      0.2568359375,
-      0.28369140625,
-      0.2607421875
-    ],
-    "uptime": "46 days, 13:14:50.823465",
-    "uptime_seconds": 4022090.823465127,
-    "system_serial": "To be filled by O.E.M.",
-    "system_product": "To be filled by O.E.M.",
-    "system_product_version": "To be filled by O.E.M.",
-    "license": null,
-    "boottime": {
-      "$date": 1685626178000
-    },
-    "datetime": {
-      "$date": 1689648269852
-    },
-    "birthday": {
-      "$date": 1677351513088
-    },
-    "timezone": "America/New_York",
-    "system_manufacturer": "To be filled by O.E.M.",
-    "ecc_memory": false
-  }
-ansible_facts.truenas_build_time:
-  description:
-    - The system build time, when the OS was built.
-    - Internally, this is a Python C(datetime.datetime) object, and is
-      converted to a string by the time it gets to the Ansible client.
-  type: str
-  returned: always
-  sample: "2023-05-29T06:50:20"
+  contains:
+    truenas_boot_id:
+      description:
+        - The host's unique boot identifier. Changes every time the
+          system boots.
+      returned: always
+      type: str
+      sample: 1f065a66-a5de-464d-a6b3-f786143028fc
+    truenas_host_id:
+      description:
+        - A hex string based on (but not identical to) the contents of
+          C(/etc/hostid).
+        - This ID is permanent and persists across both reboots and upgrades,
+          so it can be used as a unique identifier for the machine.
+      returned: always
+      type: str
+      sample: 6f7145029674ad4f49fac7090dce20de0d02eef3bb462c25dce3ab15a367ac41
+    truenas_product_name:
+      description:
+        - A string giving the overall name of the product, usually
+          C(TrueNAS)
+      returned: always
+      type: str
+      sample: TrueNAS
+    truenas_product_type:
+      description:
+        - The flavor of TrueNAS. One of C(CORE), C(ENTERPRISE), or C(SCALE).
+      type: str
+      returned: always
+      sample: CORE
+    truenas_environment:
+      description:
+        - The environment in which TrueNAS is running. One of
+          C(DEFAULT) or C(EC2).
+      type: str
+      returned: always
+      sample: DEFAULT
+    truenas_features:
+      description:
+        - A map that says, for each system feature, whether it is enabled
+          or not.
+      type: dict
+      returned: always
+      sample: {
+          "DEDUP": true,
+          "FIBRECHANNEL": false,
+          "JAILS": true,
+          "VM": true,
+        }
+    truenas_state:
+      description:
+        - The current state of the system, one of
+          C(BOOTING), C(SHUTTING_DOWN), or C(READY).
+      type: str
+      returned: always
+      sample: READY
+    truenas_system_info:
+      description:
+        - A dictionary with a number of facts about the system. See the
+          sample value below.
+      type: dict
+      returned: always
+      sample: {
+        "version": "TrueNAS-13.0-U5",
+        "buildtime": {
+          "$date": 1685357420000
+        },
+        "hostname": "myhost.dom.ain",
+        "physmem": 8421797888,
+        "model": "AMD(R) Razor(R) CPU  J1900  @ 3.99GHz",
+        "cores": 8,
+        "loadavg": [
+          0.2568359375,
+          0.28369140625,
+          0.2607421875
+        ],
+        "uptime": "46 days, 13:14:50.823465",
+        "uptime_seconds": 4022090.823465127,
+        "system_serial": "To be filled by O.E.M.",
+        "system_product": "To be filled by O.E.M.",
+        "system_product_version": "To be filled by O.E.M.",
+        "license": null,
+        "boottime": {
+          "$date": 1685626178000
+        },
+        "datetime": {
+          "$date": 1689648269852
+        },
+        "birthday": {
+          "$date": 1677351513088
+        },
+        "timezone": "America/New_York",
+        "system_manufacturer": "To be filled by O.E.M.",
+        "ecc_memory": false
+      }
+    truenas_build_time:
+      description:
+        - The system build time, when the OS was built.
+        - Internally, this is a Python C(datetime.datetime) object, and is
+          converted to a string by the time it gets to the Ansible client.
+      type: str
+      returned: always
+      sample: "2023-05-29T06:50:20"
 """
 
 from datetime import datetime
