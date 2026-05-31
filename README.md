@@ -53,19 +53,6 @@ Several module names overlap with builtins (`user`, `group`,
 `hostname`, `service`, ...), so prefer the fully-qualified
 `jdevera.truenas.NAME` form rather than the unqualified one.
 
-## Environment variables
-
-### `middleware_method`
-
-There are two ways of communicating with the middleware daemon on
-TrueNAS, referred to here as `midclt` and `client`. `midclt` is older
-and better-tested, while `client` is faster but less-well-tested. The
-default is `client`.
-
-Set the `middleware_method` environment variable to either `client` or
-`midclt` at either the play or task level in your playbook to manually
-select how this module communicates with the middleware daemon.
-
 ## Changelog
 
 See [changelogs/changelog.yaml](changelogs/changelog.yaml).

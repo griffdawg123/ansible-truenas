@@ -44,18 +44,18 @@ def get_tn_version():
     try:
         # product_type is a string like "CORE", "SCALE", or
         # "ENTERPRISE".
-        product_type = mw.call("system.product_type", output="str")
+        product_type = mw.call("system.product_type")
 
         # product_version is a string like "TrueNAS-13.0-U5", or
         # "TrueNAS-SCALE-22.12.3.1"
-        full_version = mw.call("system.version", output="str")
+        full_version = mw.call("system.version")
 
         # product_name is a string like "TrueNAS".
         #
         # TrueNAS CORE has `system.product_name' but SCALE doesn't, at
         # least not after some version.
         if product_type in ("CORE"):
-            product_name = mw.call("system.product_name", output="str")
+            product_name = mw.call("system.product_name")
     except Exception:
         # XXX - Maybe try to soldier on with what we've got?
         raise

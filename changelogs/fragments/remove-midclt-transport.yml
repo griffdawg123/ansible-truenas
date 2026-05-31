@@ -1,0 +1,7 @@
+breaking_changes:
+  - "Removed the ``midclt`` middleware transport and the
+    ``middleware_method`` environment variable. The collection now always
+    talks to middlewared natively through the ``truenas_api_client``
+    library (the former ``client`` method). Modules must run under a
+    Python interpreter that can import ``truenas_api_client`` — the
+    TrueNAS host's system interpreter, which Ansible selects by default."

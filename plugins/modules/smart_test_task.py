@@ -156,7 +156,7 @@ def main():
         """Convert a disk name like 'da0' to an ID."""
 
         try:
-            disk_id = mw.call("disk.device_to_identifier", name, output="str")
+            disk_id = mw.call("disk.device_to_identifier", name)
         except Exception as e:
             module.fail_json(msg=f"Can't look up disk {name}: {e}")
 

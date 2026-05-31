@@ -215,19 +215,17 @@ def main():
         module.exit_json(**result)
 
     try:
-        result["ansible_facts"]["truenas_boot_id"] = mw.call("system.boot_id", output="str")
-        result["ansible_facts"]["truenas_host_id"] = mw.call("system.host_id", output="str")
+        result["ansible_facts"]["truenas_boot_id"] = mw.call("system.boot_id")
+        result["ansible_facts"]["truenas_host_id"] = mw.call("system.host_id")
 
         # Get the product type first, so that we can decide whether to
         # print error messages or not.
-        product_type = mw.call("system.product_type", output="str")
+        product_type = mw.call("system.product_type")
         result["ansible_facts"]["truenas_product_type"] = product_type
 
         # system.product_name doesn't exist on SCALE (anymore).
         try:
-            result["ansible_facts"]["truenas_product_name"] = mw.call(
-                "system.product_name", output="str"
-            )
+            result["ansible_facts"]["truenas_product_name"] = mw.call("system.product_name")
         except AnsibleMethodNotFoundError:
             # We expect this to fail on TrueNAS SCALE, but not CORE.
             if product_type == "CORE":
@@ -239,9 +237,7 @@ def main():
 
         # system.environment doesn't exist on SCALE (anymore).
         try:
-            result["ansible_facts"]["truenas_environment"] = mw.call(
-                "system.environment", output="str"
-            )
+            result["ansible_facts"]["truenas_environment"] = mw.call("system.environment")
         except AnsibleMethodNotFoundError:
             # We expect this to fail on TrueNAS SCALE, but not CORE.
             if product_type == "CORE":
@@ -251,7 +247,7 @@ def main():
             module.warn(f"Error looking up environment: {e}")
             raise
 
-        result["ansible_facts"]["truenas_state"] = mw.call("system.state", output="str")
+        result["ansible_facts"]["truenas_state"] = mw.call("system.state")
         result["ansible_facts"]["truenas_system_info"] = mw.call("system.info")
 
         # The build time is a timestamp, but it's returned in different
@@ -283,7 +279,7 @@ def main():
         result["truenas_features"] = {}
         for feat in ("DEDUP", "FIBRECHANNEL", "JAILS", "VM"):
             try:
-                feat_set = mw.call("system.feature_enabled", feat, output="str")
+                feat_set = mw.call("system.feature_enabled", feat)
                 result["truenas_features"][feat] = feat_set
             except Exception as e:
                 # SCALE doesn't have "JAILS". This is expected, so

@@ -28,10 +28,8 @@ class MiddlewareClient:
         return MiddlewareClient.client
 
     @staticmethod
-    def call(func, *args, output=None):
+    def call(func, *args):
         """Call the API function 'func' with arguments 'args'.
-
-        'output' is just for compatibility, and is ignored.
 
         Returns the returned value.
         """
