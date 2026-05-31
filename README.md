@@ -22,7 +22,13 @@ have a TrueNAS API to talk to) has been removed.
 - **`home: /nonexistent`** is no longer documented; the `user` module
   expects `/var/empty` to match what 25.10 middleware stores and
   returns.
-- **Added module:** `ftp` for configuring the FTP service.
+- **Added modules:** `ftp` for configuring the FTP service, and
+  `tunable` for managing sysctl/udev/ZFS tunables.
+- **Middleware transport:** removed the `midclt` subprocess transport
+  and the `middleware_method` environment variable. The collection now
+  talks to middlewared only through the native `truenas_api_client`
+  library, so modules must run under an interpreter that can import it
+  (the TrueNAS host's system Python, which Ansible selects by default).
 
 ## Installing
 
