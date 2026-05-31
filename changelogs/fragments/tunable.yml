@@ -1,4 +1,0 @@
-minor_changes:
-  - "Added ``tunable`` module to manage TrueNAS tunables (SYSCTL, UDEV,
-    and ZFS kernel module parameters), identified by the (type, var)
-    pair."

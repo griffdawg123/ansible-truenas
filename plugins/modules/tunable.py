@@ -66,7 +66,7 @@ notes:
     treats as a separate resource (it will not rename an existing one).
   - Some tunables only take effect after a reboot. This module does not
     reboot the host; orchestrate that yourself if required.
-version_added: 2.1.0
+version_added: 3.0.0
 """
 
 EXAMPLES = """

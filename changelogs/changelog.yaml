@@ -119,6 +119,95 @@ releases:
       - In ``filesystem``, ``comment`` is now ``comments``.
       release_summary: Some bug fixes. A new role to set up Time Machine backups.
     release_date: '2025-11-08'
+  1.14.4:
+    changes:
+      bugfixes:
+      - Can now create a new user with a password.
+      minor_changes:
+      - Can now change the password of an existing user.
+    release_date: '2026-01-01'
+  1.15.0:
+    changes:
+      bugfixes:
+      - '``privilege``: Fix ``unhashable type: dict`` error. The API returns ``local_groups``
+        as group objects, not plain GIDs.'
+      - '``sharing_smb``: Fix ``home`` parameter for 25.10. The ``home`` field no
+        longer exists in the API; home shares are now created by setting ``purpose``
+        to ``PRIVATE_DATASETS_SHARE``. The module translates ``home: true`` to the
+        correct purpose automatically.'
+      - '``sharing_smb``: Fix setting options like ``home`` failing with ''You must
+        set purpose if you set options''. The 25.10+ API requires a ``purpose`` field
+        whenever ``options`` is set. The module now auto-sets ``purpose`` to ``DEFAULT_SHARE``
+        on create, or carries forward the existing purpose on update. Also updated
+        purpose choices to match the 25.10 API.'
+      - '``sharing_smb``: Fix updates failing on TrueNAS SCALE 25.10+ due to API restructuring.
+        Fields moved under ``options`` dict and some were renamed (``ro`` to ``readonly``,
+        ``abe`` to ``access_based_share_enumeration``). (https://github.com/jdevera/ansible-truenas/issues/58)'
+      major_changes:
+      - Added ``app``, ``app_service``, and ``app_info`` modules for full app lifecycle
+        management (install, configure, start/stop, upgrade, remove, and query).
+      - Added ``pool_info`` and ``dataset_info`` info modules for querying ZFS pools
+        and datasets without modifying the host.
+      - Added ``ssh``, ``smb``, and ``ups`` modules for configuring service-specific
+        settings via the middleware API.
+      - Added ``system_general`` and ``system_advanced`` modules for configuring system
+        settings (UI, timezone, MOTD, syslog, etc.).
+      - Added ``user_preferences`` module for managing UI preferences (session timeout,
+        theme, language, date/time format, etc.).
+      - Added the ``privilege`` module for managing group-to-privilege assignments
+        (LOCAL_ADMINISTRATOR, READONLY_ADMINISTRATOR, SHARING_ADMINISTRATOR). Supports
+        lookup by stable ``builtin_name`` or display ``name``.
+      minor_changes:
+      - '``group``: Added ``sudo_commands`` and ``sudo_commands_nopasswd`` parameters.'
+      - '``nfs``: Remove ``udp`` and ``v3owner`` parameters (removed from 25.10 API).
+        Add ``rdma`` parameter. Fix duplicate main() call.'
+      - '``user``: Added ``home_create`` parameter to create home directories automatically.'
+      - '``user``: Fix idempotency when ``password`` is provided. The module no longer
+        sends the password on update unless explicitly set.'
+      - '``user``: Fix managing built-in users (e.g. ``truenas_admin``). The ``smb``
+        parameter is no longer sent on update unless explicitly set, avoiding errors
+        on built-in users where it is immutable.'
+      - '``user``: Renamed ``comment`` parameter to ``full_name`` to match the TrueNAS
+        UI and API. ``comment`` is kept as a backwards-compatible alias.'
+      release_summary: TrueNAS SCALE 25.10+ compatibility fixes and new features.
+    modules:
+    - description: Manage TrueNAS apps.
+      name: app
+      namespace: ''
+    - description: Gather information about apps.
+      name: app_info
+      namespace: ''
+    - description: Manage app runtime state.
+      name: app_service
+      namespace: ''
+    - description: Gather information about ZFS datasets.
+      name: dataset_info
+      namespace: ''
+    - description: Gather information about ZFS pools.
+      name: pool_info
+      namespace: ''
+    - description: Manage privilege group assignments.
+      name: privilege
+      namespace: ''
+    - description: Configure SMB service.
+      name: smb
+      namespace: ''
+    - description: Configure SSH service.
+      name: ssh
+      namespace: ''
+    - description: Configure advanced system settings.
+      name: system_advanced
+      namespace: ''
+    - description: Configure general system settings.
+      name: system_general
+      namespace: ''
+    - description: Configure UPS service.
+      name: ups
+      namespace: ''
+    - description: Manage UI preferences for the connection user.
+      name: user_preferences
+      namespace: ''
+    release_date: '2026-04-02'
   1.4.5:
     changes:
       breaking_changes:
@@ -292,138 +381,61 @@ releases:
     fragments:
     - pool-scrub-json.yaml
     release_date: '2024-05-29'
-  1.14.4:
-    changes:
-      bugfixes:
-      - "Can now create a new user with a password."
-      minor_changes:
-      - "Can now change the password of an existing user."
-    release_date: '2026-01-01'
-  1.15.0:
-    changes:
-      bugfixes:
-      - "``sharing_smb``: Fix updates failing on TrueNAS SCALE 25.10+ due to API
-        restructuring. Fields moved under ``options`` dict and some were renamed
-        (``ro`` to ``readonly``, ``abe`` to ``access_based_share_enumeration``).
-        (https://github.com/jdevera/ansible-truenas/issues/58)"
-      - "``privilege``: Fix ``unhashable type: dict`` error. The API returns
-        ``local_groups`` as group objects, not plain GIDs."
-      - "``sharing_smb``: Fix setting options like ``home`` failing with
-        'You must set purpose if you set options'. The 25.10+ API requires
-        a ``purpose`` field whenever ``options`` is set. The module now
-        auto-sets ``purpose`` to ``DEFAULT_SHARE`` on create, or carries
-        forward the existing purpose on update. Also updated purpose choices
-        to match the 25.10 API."
-      - "``sharing_smb``: Fix ``home`` parameter for 25.10. The ``home``
-        field no longer exists in the API; home shares are now created by
-        setting ``purpose`` to ``PRIVATE_DATASETS_SHARE``. The module
-        translates ``home: true`` to the correct purpose automatically."
-      major_changes:
-      - "Added the ``privilege`` module for managing group-to-privilege assignments
-        (LOCAL_ADMINISTRATOR, READONLY_ADMINISTRATOR, SHARING_ADMINISTRATOR).
-        Supports lookup by stable ``builtin_name`` or display ``name``."
-      - "Added ``pool_info`` and ``dataset_info`` info modules for querying
-        ZFS pools and datasets without modifying the host."
-      - "Added ``ssh``, ``smb``, and ``ups`` modules for configuring
-        service-specific settings via the middleware API."
-      - "Added ``system_general`` and ``system_advanced`` modules for
-        configuring system settings (UI, timezone, MOTD, syslog, etc.)."
-      - "Added ``user_preferences`` module for managing UI preferences
-        (session timeout, theme, language, date/time format, etc.)."
-      - "Added ``app``, ``app_service``, and ``app_info`` modules for
-        full app lifecycle management (install, configure, start/stop,
-        upgrade, remove, and query)."
-      minor_changes:
-      - "``group``: Added ``sudo_commands`` and ``sudo_commands_nopasswd`` parameters."
-      - "``user``: Added ``home_create`` parameter to create home directories
-        automatically."
-      - "``user``: Renamed ``comment`` parameter to ``full_name`` to match the
-        TrueNAS UI and API. ``comment`` is kept as a backwards-compatible alias."
-      - "``nfs``: Remove ``udp`` and ``v3owner`` parameters (removed from
-        25.10 API). Add ``rdma`` parameter. Fix duplicate main() call."
-      - "``user``: Fix idempotency when ``password`` is provided. The module
-        no longer sends the password on update unless explicitly set."
-      - "``user``: Fix managing built-in users (e.g. ``truenas_admin``).
-        The ``smb`` parameter is no longer sent on update unless explicitly
-        set, avoiding errors on built-in users where it is immutable."
-      release_summary: "TrueNAS SCALE 25.10+ compatibility fixes and new features."
-    modules:
-    - description: Manage privilege group assignments.
-      name: privilege
-      namespace: ''
-    - description: Gather information about ZFS pools.
-      name: pool_info
-      namespace: ''
-    - description: Gather information about ZFS datasets.
-      name: dataset_info
-      namespace: ''
-    - description: Configure SSH service.
-      name: ssh
-      namespace: ''
-    - description: Configure SMB service.
-      name: smb
-      namespace: ''
-    - description: Configure UPS service.
-      name: ups
-      namespace: ''
-    - description: Configure general system settings.
-      name: system_general
-      namespace: ''
-    - description: Configure advanced system settings.
-      name: system_advanced
-      namespace: ''
-    - description: Manage UI preferences for the connection user.
-      name: user_preferences
-      namespace: ''
-    - description: Manage TrueNAS apps.
-      name: app
-      namespace: ''
-    - description: Manage app runtime state.
-      name: app_service
-      namespace: ''
-    - description: Gather information about apps.
-      name: app_info
-      namespace: ''
-    release_date: '2026-04-02'
   2.0.0:
     changes:
-      release_summary: "First release of jdevera.truenas, a personal fork of
-        arensb.truenas. Targets TrueNAS SCALE 25.10+ only."
       breaking_changes:
-      - "Renamed collection from ``arensb.truenas`` to ``jdevera.truenas``.
-        Update playbooks accordingly."
-      - "Floor raised to TrueNAS SCALE 25.10. Every module now calls
-        ``setup.require_scale_min_version()`` and fails fast on older or
-        non-SCALE hosts."
-      - "Removed the ``jail``, ``jails``, ``jail_fstab``, and ``plugin``
-        modules. TrueNAS SCALE no longer ships jails or the jail-based
-        plugin system."
-      - "``sharing_nfs``: Removed the entire pre-22.12.2 NFS1 path and
-        dropped the ``alldirs``, ``quiet``, and ``paths`` options
-        (no longer accepted by the 25.10 API)."
-      - "``nfs``: Removed the deprecated ``nfsv4`` option. Use
-        ``protocols`` instead."
-      - "``group``: Removed the ``non_unique`` option (no longer accepted
-        by the 25.04+ API)."
-      - "``user``: Removed the deprecated ``sudo`` and ``sudo_nopasswd``
-        options. Use ``sudo_commands`` and ``sudo_commands_nopasswd``.
-        ``home`` now documents ``/var/empty`` (not ``/nonexistent``) as
-        the no-home value, matching 25.10 middleware."
-      - "``filesystem``: Removed the CORE-only branch in
-        ``build_create_args``. Also fixed a latent missing ``sys``
-        import that would have raised ``NameError`` on the error path."
+      - Floor raised to TrueNAS SCALE 25.10. Every module now calls ``setup.require_scale_min_version()``
+        and fails fast on older or non-SCALE hosts.
+      - Removed the ``jail``, ``jails``, ``jail_fstab``, and ``plugin`` modules. TrueNAS
+        SCALE no longer ships jails or the jail-based plugin system.
+      - Renamed collection from ``arensb.truenas`` to ``jdevera.truenas``. Update
+        playbooks accordingly.
+      - '``filesystem``: Removed the CORE-only branch in ``build_create_args``. Also
+        fixed a latent missing ``sys`` import that would have raised ``NameError``
+        on the error path.'
+      - '``group``: Removed the ``non_unique`` option (no longer accepted by the 25.04+
+        API).'
+      - '``nfs``: Removed the deprecated ``nfsv4`` option. Use ``protocols`` instead.'
+      - '``sharing_nfs``: Removed the entire pre-22.12.2 NFS1 path and dropped the
+        ``alldirs``, ``quiet``, and ``paths`` options (no longer accepted by the 25.10
+        API).'
+      - '``user``: Removed the deprecated ``sudo`` and ``sudo_nopasswd`` options.
+        Use ``sudo_commands`` and ``sudo_commands_nopasswd``. ``home`` now documents
+        ``/var/empty`` (not ``/nonexistent``) as the no-home value, matching 25.10
+        middleware.'
       minor_changes:
-      - "Added ``ftp`` module for configuring the FTP service
-        (onlyanonymous, onlylocal, defaultroot, filemask, dirmask,
-        options)."
-      - "``sharing_nfs``, ``user``, ``group``, ``nfs``, ``filesystem``:
-        added explicit ``return`` statements after ``fail_json`` calls
-        so static analyzers don't flag the post-fail use sites as
-        possibly-unbound."
-      - "``certificate_authority``: trimmed a stale CORE-13 reference
-        from an in-code comment."
+      - Added ``ftp`` module for configuring the FTP service (onlyanonymous, onlylocal,
+        defaultroot, filemask, dirmask, options).
+      - '``certificate_authority``: trimmed a stale CORE-13 reference from an in-code
+        comment.'
+      - '``sharing_nfs``, ``user``, ``group``, ``nfs``, ``filesystem``: added explicit
+        ``return`` statements after ``fail_json`` calls so static analyzers don''t
+        flag the post-fail use sites as possibly-unbound.'
+      release_summary: First release of jdevera.truenas, a personal fork of arensb.truenas.
+        Targets TrueNAS SCALE 25.10+ only.
     modules:
     - description: Configure the FTP service.
       name: ftp
       namespace: ''
     release_date: '2026-05-16'
+  3.0.0:
+    changes:
+      release_summary: Drop the midclt middleware transport in favor of the native
+        truenas_api_client, and add the tunable module.
+      breaking_changes:
+      - "Removed the ``midclt`` middleware transport and the ``middleware_method``
+        environment variable. The collection now always talks to middlewared natively
+        through the ``truenas_api_client`` library (the former ``client`` method).
+        Modules must run under a Python interpreter that can import ``truenas_api_client``
+        \u2014 the TrueNAS host's system interpreter, which Ansible selects by default."
+      minor_changes:
+      - Added ``tunable`` module to manage TrueNAS tunables (SYSCTL, UDEV, and ZFS
+        kernel module parameters), identified by the (type, var) pair.
+    fragments:
+    - remove-midclt-transport.yml
+    - tunable.yml
+    modules:
+    - description: Manage TrueNAS tunables
+      name: tunable
+      namespace: ''
+    release_date: '2026-05-31'
