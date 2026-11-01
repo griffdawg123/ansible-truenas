@@ -555,6 +555,10 @@ def build_update_args(params, existing_ds, module):
             continue
         desired_val = params[prop]
         current_val = prop_rawvalue(existing_ds, prop)
+        if prop == "recordsize" and same_size(desired_val, current_val):
+            # Middleware reports recordsize in bytes ("131072") while
+            # callers usually write "128K"; compare as sizes.
+            continue
         if not compare_prop(prop, desired_val, current_val):
             update_args[prop] = desired_val
 
@@ -650,6 +654,18 @@ def parse_volsize(value):
         return n * unit_multiplier[unit]
     else:
         raise ValueError(f"Can't parse volsize={value}")
+
+
+def same_size(desired_val, current_str):
+    """
+    Return True if desired_val and current_str parse to the same
+    number of bytes. Unparseable values never match, so the caller
+    falls back to a plain comparison.
+    """
+    try:
+        return parse_volsize(str(desired_val)) == parse_volsize(str(current_str))
+    except ValueError:
+        return False
 
 
 def prop_rawvalue(dataset_entry, prop_name):

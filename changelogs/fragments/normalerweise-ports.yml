@@ -1,0 +1,7 @@
+minor_changes:
+  - cronjob, app_images, filesystem_acl - new modules, ported from
+    normalerweise/ansible-truenas.
+  - filesystem_acl - compares ACL entries order-independently and only on the
+    keys given, so re-running with the same ACL no longer reports a change;
+    ``stripacl`` is a no-op on an already-trivial ACL; ``nfs41_flags`` is sent
+    at the top level of ``filesystem.setacl`` as the 25.10 API expects.
