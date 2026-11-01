@@ -602,8 +602,19 @@ def main():
             if uid is not None and user_info["uid"] != uid:
                 arg["uid"] = uid
 
-            # Compare the given password to the existing hash.
-            if password is not None and not _password_matches(password, user_info["unixhash"]):
+            # Compare the given password to the existing hash. Skip it
+            # when the account will have password login disabled:
+            # middleware rejects a password there, and there's nothing
+            # to compare against.
+            if password_disabled is None:
+                will_be_disabled = user_info["password_disabled"]
+            else:
+                will_be_disabled = password_disabled
+            if (
+                password
+                and not will_be_disabled
+                and not _password_matches(password, user_info["unixhash"])
+            ):
                 arg["password"] = password
 
             if (
