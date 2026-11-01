@@ -1,0 +1,2 @@
+class MethodNotFoundError(Exception):
+    pass

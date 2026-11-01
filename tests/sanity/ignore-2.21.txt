@@ -28,8 +28,12 @@ plugins/modules/initscript.py validate-modules:invalid-documentation
 plugins/modules/initscript.py validate-modules:missing-gplv3-license
 plugins/modules/mail.py validate-modules:invalid-documentation
 plugins/modules/mail.py validate-modules:missing-gplv3-license
+plugins/modules/middleware.py validate-modules:invalid-documentation
+plugins/modules/middleware.py validate-modules:missing-gplv3-license
 plugins/modules/nfs.py validate-modules:invalid-documentation
 plugins/modules/nfs.py validate-modules:missing-gplv3-license
+plugins/modules/ntp.py validate-modules:invalid-documentation
+plugins/modules/ntp.py validate-modules:missing-gplv3-license
 plugins/modules/pool_info.py validate-modules:invalid-documentation
 plugins/modules/pool_info.py validate-modules:missing-gplv3-license
 plugins/modules/pool_scrub_task.py validate-modules:invalid-documentation
