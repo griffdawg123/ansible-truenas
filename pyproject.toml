@@ -1,0 +1,123 @@
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = [
+    "docs",
+    "docs-site",
+    "venv-docs",
+    "changelogs",
+    "ansible_collections",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+# SIM (flake8-simplify) is intentionally not enabled: most of its
+# rewrites (ternaries, nested-if merges) hurt readability of the
+# verbose conditional chains common in Ansible module code.
+ignore = [
+    "E501",   # line length: handled by ruff's own limit; long strings/comments are fine
+    "E402",   # Ansible modules put DOCUMENTATION/EXAMPLES/RETURN strings before imports
+]
+
+
+# ----------------------------------------------------------------------
+# mypy
+#
+# Patterned on community.general PR #10997. Pragmatic adoption: enable
+# type checking in CI so future changes are validated, without forcing
+# fully-annotated module code today.
+# ----------------------------------------------------------------------
+
+[tool.mypy]
+strict_equality = true
+strict_bytes = true
+warn_redundant_casts = true
+warn_unreachable = true
+ignore_missing_imports = false
+
+# Ansible collections lay out plugins as siblings under plugins/.
+# explicit_package_bases lets mypy treat action/certificate.py and
+# modules/certificate.py as distinct modules instead of a duplicate.
+#
+# The pre-commit mypy hook invokes mypy through the compatibility-link
+# path (ansible_collections/griffdawg/truenas/plugins/) so that the
+# relative imports inside plugins/ resolve as
+# 'ansible_collections.griffdawg.truenas.plugins.module_utils.*' — the
+# same namespace package Ansible's loader uses at runtime.
+explicit_package_bases = true
+namespace_packages = true
+
+# Strict-mode rules left commented for gradual adoption. Enable as
+# coverage of type hints in the codebase grows.
+# check_untyped_defs = true
+# disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+# ansible-core is only partially typed. Let mypy follow it without
+# requiring full annotation coverage. The two patterns cover both
+# 'ansible.foo' and 'ansible.foo.bar.baz' — mypy's wildcard only
+# matches a single component.
+module = ["ansible.*", "ansible.**.*"]
+follow_untyped_imports = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Optional runtime libs that don't ship stubs or aren't on the controller
+# at all (e.g. cryptit lives on the TrueNAS host).
+module = ["middlewared.*", "truenas_api_client", "cryptit"]
+ignore_missing_imports = true
+
+
+# ----------------------------------------------------------------------
+# pyright
+#
+# Editor-time type checker. The collection's authoritative type check
+# is mypy via the pre-commit hook; pyright is here to keep IDE noise
+# out of the way for agent-driven workflows.
+#
+# To get pyright fully resolving ansible.* imports locally, create a
+# venv at ./.venv with ansible-core installed:
+#
+#   uv venv .venv
+#   uv pip install --python .venv/bin/python ansible-core
+#
+# Without that, pyright will silently skip the unresolved imports
+# (reportMissingImports below); module-level errors are still caught.
+# ----------------------------------------------------------------------
+
+[tool.pyright]
+include = ["plugins"]
+exclude = [
+    "**/__pycache__",
+    "venv-docs",
+    "docs",
+    "docs-site",
+    "changelogs",
+    "ansible_collections",
+    "tests/output",
+]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.10"
+typeCheckingMode = "basic"
+
+# Silenced because they generate noise that doesn't track real bugs in
+# this codebase:
+# - reportMissingImports: ansible-core may not be in the analyzed
+#   environment; mypy handles import resolution authoritatively.
+# - reportArgumentType / reportAttributeAccessIssue: mw.call() returns
+#   Any (no stubs), so dict-subscript on its result tripwires both.
+# - reportPossiblyUnbound: handled by the setup.fail() NoReturn
+#   helper for the fail_json pattern; the remaining cases are also
+#   covered by mypy.
+reportMissingImports = "none"
+reportArgumentType = "none"
+reportAttributeAccessIssue = "none"
+reportPossiblyUnbound = "none"

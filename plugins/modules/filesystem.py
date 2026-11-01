@@ -1,10 +1,8 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # XXX - Would be nice to specify 'volsize' in units other than bytes:
 # accept suffixes: K, KB, KiB, M, MB, MiB, G, GB, GiB, T, TB, TiB.
 
-__metaclass__ = type
 
 DOCUMENTATION = """
 ---
@@ -49,7 +47,7 @@ options:
         "KB", "MB", "GB", "TB" (powers of 10),
         "KiB", "MiB", "GiB", "TiB" (powers of 2)
       - This is required when creating a volume, but not when updating an existing one.
-    type: int
+    type: str
   volblocksize:
     description:
       - Volume block size if type=VOLUME, e.g. "64K" or "65536".
@@ -70,18 +68,163 @@ options:
   create_ancestors:
     description:
       - If True, create any missing parent datasets automatically when creating.
-      - Under TrueNAS CORE, this option is ignored. However, missing ancestors are not created.
     type: bool
     default: false
   comments:
     description:
-      - Arbitrary comment or notes for the dataset.
+      - Arbitrary comment or notes for the dataset (ZFS C(comments) property).
     type: str
-
-  # (Other properties truncated for brevity, same as before)...
-
-author:
-  - "Your Name (@yourhandle)"
+  sync:
+    description:
+      - Controls synchronous request behaviour (ZFS C(sync) property).
+        Typical values are C(STANDARD), C(ALWAYS), C(DISABLED).
+    type: str
+  snapdev:
+    description:
+      - Controls whether snapshot device nodes for zvols are visible
+        (ZFS C(snapdev) property). Typical values are C(VISIBLE), C(HIDDEN).
+    type: str
+  compression:
+    description:
+      - Compression algorithm for the dataset (ZFS C(compression) property).
+        Typical values include C(OFF), C(LZ4), C(ZSTD), C(GZIP), etc.
+    type: str
+  atime:
+    description:
+      - Whether to update access times when files are read
+        (ZFS C(atime) property). Typical values are C(ON), C(OFF).
+    type: str
+  exec:
+    description:
+      - Whether processes may execute binaries from the dataset
+        (ZFS C(exec) property). Typical values are C(ON), C(OFF).
+    type: str
+  managedby:
+    description:
+      - Free-form C(managedby) property identifying the
+        owner/manager of the dataset.
+    type: str
+  quota:
+    description:
+      - Hard quota for the dataset, in bytes (ZFS C(quota) property).
+    type: int
+  quota_warning:
+    description:
+      - Percentage threshold for warning-level quota alerts.
+    type: str
+  quota_critical:
+    description:
+      - Percentage threshold for critical-level quota alerts.
+    type: str
+  refquota:
+    description:
+      - Hard reference-quota for the dataset, in bytes
+        (ZFS C(refquota) property; ignores snapshots and clones).
+    type: int
+  refquota_warning:
+    description:
+      - Percentage threshold for warning-level refquota alerts.
+    type: str
+  refquota_critical:
+    description:
+      - Percentage threshold for critical-level refquota alerts.
+    type: str
+  reservation:
+    description:
+      - Minimum guaranteed space for the dataset, in bytes
+        (ZFS C(reservation) property).
+    type: int
+  refreservation:
+    description:
+      - Minimum guaranteed space excluding snapshots/clones, in bytes
+        (ZFS C(refreservation) property).
+    type: int
+  special_small_block_size:
+    description:
+      - Block-size threshold for storing small blocks on the special
+        vdev (ZFS C(special_small_blocks) property).
+    type: str
+  copies:
+    description:
+      - Number of redundant copies of the data to store
+        (ZFS C(copies) property). Typical values are C("1"), C("2"), C("3").
+    type: str
+  snapdir:
+    description:
+      - Controls visibility of the C(.zfs) snapshot directory
+        (ZFS C(snapdir) property). Typical values are C(VISIBLE), C(HIDDEN).
+    type: str
+  deduplication:
+    description:
+      - Deduplication setting (ZFS C(dedup) property).
+        Typical values are C(ON), C(OFF), C(VERIFY).
+    type: str
+  checksum:
+    description:
+      - Checksum algorithm (ZFS C(checksum) property).
+        Typical values include C(ON), C(OFF), C(FLETCHER4), C(SHA256), etc.
+    type: str
+  readonly:
+    description:
+      - Whether the dataset is read-only (ZFS C(readonly) property).
+        Typical values are C(ON), C(OFF).
+    type: str
+  recordsize:
+    description:
+      - Suggested block size for files (ZFS C(recordsize) property).
+        Typical values include C(4K), C(16K), C(128K), C(1M).
+    type: str
+  aclmode:
+    description:
+      - How ACLs are modified when a file's mode is changed
+        (ZFS C(aclmode) property). Typical values are C(PASSTHROUGH),
+        C(RESTRICTED), C(DISCARD).
+    type: str
+  acltype:
+    description:
+      - Type of ACLs used on the dataset (ZFS C(acltype) property).
+        Typical values are C(POSIX), C(NFSV4), C(OFF).
+    type: str
+  xattr:
+    description:
+      - Extended-attribute storage mode (ZFS C(xattr) property).
+        Typical values are C(ON), C(OFF), C(SA).
+    type: str
+  user_properties:
+    description:
+      - List of arbitrary user-defined ZFS properties to set at
+        creation time. Each entry must specify both C(key) and C(value).
+    type: list
+    elements: dict
+    default: []
+    suboptions:
+      key:
+        description: Property name.
+        type: str
+        required: true
+      value:
+        description: Property value.
+        type: str
+        required: true
+  user_properties_update:
+    description:
+      - List of arbitrary user-defined ZFS properties to update on an
+        existing dataset. Each entry specifies a C(key), and either a
+        C(value) to set or C(remove=true) to clear the property.
+    type: list
+    elements: dict
+    default: []
+    suboptions:
+      key:
+        description: Property name.
+        type: str
+        required: true
+      value:
+        description: Property value.
+        type: str
+      remove:
+        description: If true, remove the property instead of setting it.
+        type: bool
 """
 
 EXAMPLES = r"""
@@ -107,28 +250,22 @@ filesystem:
 """
 
 import re
+
 from ansible.module_utils.basic import AnsibleModule
-from ..module_utils.middleware import MiddleWare as MW
+
 from ..module_utils import setup
+from ..module_utils.middleware import MiddleWare as MW
 
 
 def main():
-    # Figure out which version of TrueNAS we're running, since not all
-    # versions support all arguments.
-    global __tn_version
-    try:
-        __tn_version = setup.get_tn_version()
-    except Exception as e:
-        # Normally we'd module.exit_json(), but we don't have a module yet.
-        print(f'{{"failed":true, "msg": "Error getting TrueNAS version: {e}"}}')
-        sys.exit(1)
-
     argument_spec = dict(
         name=dict(type="str", required=True),
         state=dict(type="str", choices=["absent", "present"], default="present"),
-        type=dict(type="str",
-                  choices=["FILESYSTEM", "VOLUME", "filesystem", "volume"],
-                  default="FILESYSTEM"),
+        type=dict(
+            type="str",
+            choices=["FILESYSTEM", "VOLUME", "filesystem", "volume"],
+            default="FILESYSTEM",
+        ),
         volsize=dict(type="str"),
         volblocksize=dict(
             type="str",
@@ -181,7 +318,7 @@ def main():
             elements="dict",
             default=[],
             options=dict(
-                key=dict(type="str", required=True),
+                key=dict(type="str", required=True, no_log=False),
                 value=dict(type="str", required=True),
             ),
         ),
@@ -190,7 +327,7 @@ def main():
             elements="dict",
             default=[],
             options=dict(
-                key=dict(type="str", required=True),
+                key=dict(type="str", required=True, no_log=False),
                 value=dict(type="str"),
                 remove=dict(type="bool"),
             ),
@@ -201,6 +338,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    setup.require_scale_min_version(module)
 
     result = dict(changed=False, filesystem={}, msg="")
     mw = MW.client()
@@ -213,9 +352,9 @@ def main():
     # value.
     # This seems like the sort of thing that Ansible argument_spec
     # would support, but apparently it doesn't.
-    if 'type' in module.params:
-        if module.params['type'] in ["filesystem", "volume"]:
-            module.params['type'] = module.params['type'].upper()
+    if "type" in module.params:
+        if module.params["type"] in ["filesystem", "volume"]:
+            module.params["type"] = module.params["type"].upper()
 
     # Query if it exists
     try:
@@ -231,9 +370,7 @@ def main():
     if state == "absent":
         # If not found, no changes
         if not existing_ds:
-            module.exit_json(
-                changed=False, msg=f"Dataset '{ds_name}' is already absent."
-            )
+            module.exit_json(changed=False, msg=f"Dataset '{ds_name}' is already absent.")
         # else delete it
         if module.check_mode:
             module.exit_json(changed=True, msg=f"Would delete dataset '{ds_name}'.")
@@ -286,21 +423,11 @@ def main():
 
 
 def build_create_args(params, module):
-    global __tn_version
-
     create_args = dict(name=params["name"], type=params["type"])
 
     create_ancestors = params.get("create_ancestors")
     if create_ancestors is not None:
-        if __tn_version['type'] == "CORE":
-            # TrueNAS CORE doesn't support create_ancestors.
-            if type(create_ancestors) == bool and create_ancestors == False:
-                # Don't send a warning message. Everything is fine.
-                pass
-            else:
-                module.warn("TrueNAS CORE doesn't support create_ancestors option.")
-        else:
-            create_args["create_ancestors"] = params["create_ancestors"]
+        create_args["create_ancestors"] = params["create_ancestors"]
 
     if create_args["type"] == "VOLUME":
         volsize = params.get("volsize")
@@ -389,12 +516,10 @@ def build_update_args(params, existing_ds, module):
         # If user tries to update sparse => check if it differs
         # If differs => error, if same => skip
         if params.get("sparse") is not None:
-            module.warn(
-                "Cannot update 'sparse' on existing volume, ignoring parameter."
-            )
+            module.warn("Cannot update 'sparse' on existing volume, ignoring parameter.")
 
         # force_size can be used if resizing
-        if params.get("force_size") is not None and params.get("force_size") == True:
+        if params.get("force_size"):
             update_args["force_size"] = True
 
     # For normal props (both filesystem + volume)
@@ -482,6 +607,7 @@ def parse_volblocksize(value):
         return int(val)
     raise ValueError(f"Cannot parse volblocksize='{value}'")
 
+
 def parse_volsize(value):
     """
     Convert a string giving a volume size, like '25GB', into an
@@ -494,34 +620,37 @@ def parse_volsize(value):
     """
 
     # Split the value into an integer prefix and a suffix.
-    match = re.match(r'^\s*(\d+)\s*([KMGT]i?B?)?\s*$', value)
+    match = re.match(r"^\s*(\d+)\s*([KMGT]i?B?)?\s*$", value)
 
     # the volume size is supposed to be a multiplier of the block
     # size, which in turn is usually a power of 2. So if the caller
     # just specifies K, M, G, or T, we'll use powers of 2.
     unit_multiplier = {
-        "":       1,
-        "K":   1<<10,
-        "KB":  1000,
-        "KiB": 1<<10,
-        "M":   1<<20,
-        "MB":  1000**2,
-        "MiB": 1<<20,
-        "G":   1<<30,
-        "GB":  1000**3,
-        "GiB": 1<<30,
-        "T":   1<<40,
-        "TB":  1000**4,
-        "TiB": 1<<40,
+        "": 1,
+        "K": 1 << 10,
+        "KB": 1000,
+        "KiB": 1 << 10,
+        "M": 1 << 20,
+        "MB": 1000**2,
+        "MiB": 1 << 20,
+        "G": 1 << 30,
+        "GB": 1000**3,
+        "GiB": 1 << 30,
+        "T": 1 << 40,
+        "TB": 1000**4,
+        "TiB": 1 << 40,
     }
 
     if match:
         n = int(match[1])
+        # re returns None (not "") for an unmatched optional group, so a
+        # bare-integer 'volsize: 655360' would crash on the multiplier
+        # lookup without this fallback.
         unit = "" if match[2] is None else match[2]
-
         return n * unit_multiplier[unit]
     else:
         raise ValueError(f"Can't parse volsize={value}")
+
 
 def prop_rawvalue(dataset_entry, prop_name):
     """

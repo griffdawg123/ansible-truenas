@@ -1,5 +1,6 @@
 # Exceptions for talking to TrueNAS Middleware daemon.
 
+
 class MethodNotFoundError(Exception):
     """This exception roughly corresponds to
     middlewared.utils.service.call.MethodNotFoundError: the caller has
