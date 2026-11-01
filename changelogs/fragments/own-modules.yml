@@ -1,0 +1,22 @@
+breaking_changes:
+  - initscript - removed the ``script`` (inline text) option. SCALE 25.10 has no
+    ``script_text`` field and only runs scripts by path; install the script
+    with ``ansible.builtin.copy`` and pass ``path`` (arensb/ansible-truenas#62).
+minor_changes:
+  - ntp - new module to manage NTP servers declaratively, with optional
+    ``purge`` of unlisted servers.
+  - middleware - new module to call any middleware method or job directly,
+    as an escape hatch for things without a dedicated module.
+  - initscript - new ``enabled`` option.
+  - app - supports diff mode.
+bugfixes:
+  - app - updating a custom app no longer always reports a change and
+    recreates its containers. The requested compose is parsed and compared
+    with the stored compose as data.
+  - app - catalog ``values`` are compared recursively against the stored
+    config, so nested values no longer force an update every run.
+  - app - fail clearly when giving ``values`` to a custom app or a compose
+    config to a catalog app.
+  - "initscript - work on SCALE 25.10 (no more ``KeyError: 'script_text'``),
+    and send ``command`` rather than ``cmd`` on update so changing a
+    command takes effect (arensb/ansible-truenas#62)."

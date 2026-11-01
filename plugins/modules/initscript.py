@@ -17,20 +17,15 @@ options:
   cmd:
     description:
       - Command to execute.
-      - Mutually exclusive with C(path) and C(script).
+      - Mutually exclusive with C(path).
     type: str
     aliases: [ command ]
   path:
     description:
-      - Path to a script to execute.
-      - Mutually exclusive with C(cmd) and C(script).
-    type: str
-  script:
-    description:
-      - Text of the script to execute.
-      - When it is time to execute the script, the text will be saved to
-        a temporary file, which will then be executed with C(sh).
-      - Mutually exclusive with C(cmd) and C(path).
+      - Path to a script on the TrueNAS host to execute.
+      - To manage the script's contents too, put it in place with
+        M(ansible.builtin.copy) first; see the examples.
+      - Mutually exclusive with C(cmd).
     type: str
   when:
     description:
@@ -40,11 +35,17 @@ options:
       - "C(postinit): late in the boot process, after most services have
         started, but before TrueNAS services."
       - "C(shutdown): during shutdown."
+      - Required when creating a script.
     type: str
     choices:
       - preinit
       - postinit
       - shutdown
+  enabled:
+    description:
+      - Whether the script should run.
+      - New scripts are enabled unless this is false.
+    type: bool
   timeout:
     description:
       - Time in seconds that the system should wait for the script to
@@ -56,40 +57,47 @@ options:
     type: str
     choices: [ absent, present ]
     default: present
+notes:
+  - Supports C(check_mode).
+  - The C(script) option (inline script text) was removed in 4.0.0;
+    SCALE 25.10 middleware only runs scripts by path.
 version_added: 1.10.0
 """
 
 EXAMPLES = """
 - name: Run a command late once everything has started
-  initscript:
+  griffdawg.truenas.initscript:
     name: Start Foo
     cmd: "service foo start"
     when: postinit
 
-- name: Run a script at shutdown
-  initscript:
-    name: Cleaning up
-    script: |
+- name: Install a shutdown script
+  ansible.builtin.copy:
+    dest: /mnt/tank/scripts/cleanup.sh
+    mode: "0700"
+    content: |
       #!/bin/sh
       echo "Cleaning up before shutdown."
-      service foo stop
-      rm /var/some-lock-file
+      rm -f /var/some-lock-file
+
+- name: Run it at shutdown
+  griffdawg.truenas.initscript:
+    name: Cleaning up
+    path: /mnt/tank/scripts/cleanup.sh
     when: shutdown
 
 - name: Delete an init script
-  initscript:
+  griffdawg.truenas.initscript:
     name: Remove old cruft
     state: absent
 """
 
-# XXX
 RETURN = """
 script:
-  returned: always
+  returned: when a script was created or updated
   description:
-    - A data structure describing a newly-created init script.
-    - Only returned when a script is created.
-  type: int
+    - The init script, as returned by middleware.
+  type: dict
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -101,191 +109,96 @@ from ..module_utils.middleware import MiddleWare as MW
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            # XXX
             name=dict(type="str", required=True),
             cmd=dict(type="str", aliases=["command"]),
             path=dict(type="str"),
-            script=dict(type="str"),
             when=dict(type="str", choices=["preinit", "postinit", "shutdown"]),
+            enabled=dict(type="bool"),
             timeout=dict(type="int"),
             state=dict(type="str", default="present", choices=["absent", "present"]),
         ),
         supports_check_mode=True,
-        # The upshot of the 'required_if' and 'mutually_exclusive'
-        # constraints is that if you want the script to exist, you
-        # have to provide exactly one of 'cmd', 'path', or 'script'.
-        # If you want it to be absent, you don't have to provide any
-        # of them.
-        required_if=[("state", "present", ("cmd", "path", "script"), True)],
-        mutually_exclusive=[["cmd", "path", "script"]],
+        # If the script should exist, exactly one of 'cmd' or 'path'
+        # must be given.
+        required_if=[("state", "present", ("cmd", "path"), True)],
+        mutually_exclusive=[["cmd", "path"]],
     )
 
     setup.require_scale_min_version(module)
 
-    result = dict(
-        changed=False,
-        msg="",
-        debug="",
-    )
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
-    # Assign variables from properties, for convenience
     name = module.params["name"]
     cmd = module.params["cmd"]
     path = module.params["path"]
-    script = module.params["script"]
     when = module.params["when"]
-    timeout = module.params["timeout"]
     state = module.params["state"]
 
-    # Look up the script.
+    # Scripts are identified by their comment.
     try:
-        script_info = mw.call("initshutdownscript.query", [["comment", "=", name]])
-        if len(script_info) == 0:
-            # No such script
-            script_info = None
-        else:
-            # Script exists
-            script_info = script_info[0]
+        found = mw.call("initshutdownscript.query", [["comment", "=", name]])
     except Exception as e:
-        module.fail_json(msg=f"Error looking up script {name}: {e}")
+        setup.fail(module, f"Error looking up script {name}: {e}")
+    script_info = found[0] if found else None
 
-    # First, check whether the script even exists.
-    if script_info is None:
-        # Script doesn't exist
-
-        if state == "present":
-            # Script is supposed to exist, so create it.
-
-            # Collect arguments to pass to initshutdownscript.create()
-            arg = {
-                "comment": name,
-            }
-
-            # Figure out what kind of script/command it is.
-            if cmd is not None:
-                arg["type"] = "COMMAND"
-                arg["command"] = cmd
-            elif path is not None:
-                arg["type"] = "SCRIPT"
-                arg["script"] = path
-            else:
-                arg["type"] = "SCRIPT"
-                arg["script_text"] = script
-
-            if when is not None:
-                arg["when"] = when.upper()
-
-            if timeout is not None:
-                arg["timeout"] = timeout
-
-            if module.check_mode:
-                result["msg"] = f"Would have created script {name} with {arg}"
-            else:
-                #
-                # Create new script.
-                #
-                try:
-                    err = mw.call("initshutdownscript.create", arg)
-                    result["msg"] = err
-                except Exception as e:
-                    result["failed_invocation"] = arg
-                    module.fail_json(msg=f"Error creating script {name}: {e}")
-
-                # Return whichever interesting bits initshutdownscript.create()
-                # returned.
-                result["script"] = err
-
-            result["changed"] = True
-        else:
-            # Script is not supposed to exist.
-            # All is well
-            result["changed"] = False
-
-    else:
-        # Script exists
-        if state == "present":
-            # Script is supposed to exist
-
-            # Make list of differences between what is and what should
-            # be.
-            arg = {}
-
-            # Check arguments, depending what kind of script this is.
-            if cmd is not None:
-                # This is a command.
-                if script_info["type"] != "COMMAND":
-                    arg["type"] = "COMMAND"
-                if script_info["command"] != cmd:
-                    arg["cmd"] = cmd
-                if script_info["script"] != "":
-                    arg["script"] = ""
-                if script_info["script_text"] != "":
-                    arg["script_text"] = ""
-            elif path is not None:
-                # This is a script, specified by pathname.
-                if script_info["type"] != "SCRIPT":
-                    arg["type"] = "SCRIPT"
-                if script_info["command"] != "":
-                    arg["cmd"] = ""
-                if script_info["script"] != path:
-                    arg["script"] = path
-                if script_info["script_text"] != "":
-                    arg["script_text"] = ""
-            else:
-                # This is a script, specified by script body.
-                if script_info["type"] != "SCRIPT":
-                    arg["type"] = "SCRIPT"
-                if script_info["command"] != "":
-                    arg["cmd"] = ""
-                if script_info["script"] != "":
-                    arg["script"] = ""
-                if script_info["script_text"] != script:
-                    arg["script_text"] = script
-
-            if when is not None and script_info["when"] != when.upper():
-                arg["when"] = when.upper()
-
-            if timeout is not None and script_info["timeout"] != timeout:
-                arg["timeout"] = timeout
-
-            # If there are any changes, initshutdownscript.update()
-            if len(arg) == 0:
-                # No changes
-                result["changed"] = False
-            else:
-                #
-                # Update script.
-                #
-                if module.check_mode:
-                    result["msg"] = f"Would have updated script {name}: {arg}"
-                else:
-                    try:
-                        err = mw.call("initshutdownscript.update", script_info["id"], arg)
-                    except Exception as e:
-                        module.fail_json(msg=f"Error updating script {name} with {arg}: {e}")
-                        # Return any interesting bits from err
-                        result["status"] = err["status"]
-                result["changed"] = True
-        else:
-            # Script is not supposed to exist
-
+    if state == "absent":
+        if script_info is not None:
             if module.check_mode:
                 result["msg"] = f"Would have deleted script {name}"
             else:
                 try:
-                    #
-                    # Delete script.
-                    #
-                    err = mw.call("initshutdownscript.delete", script_info["id"])
+                    mw.call("initshutdownscript.delete", script_info["id"])
                 except Exception as e:
-                    module.fail_json(msg=f"Error deleting script {name}: {e}")
+                    setup.fail(module, f"Error deleting script {name}: {e}")
             result["changed"] = True
+        module.exit_json(**result)
+
+    # The script should exist. Build the full desired entry; fields
+    # the caller didn't give are left alone.
+    if cmd is not None:
+        desired = {"type": "COMMAND", "command": cmd, "script": ""}
+    else:
+        desired = {"type": "SCRIPT", "command": "", "script": path}
+    if when is not None:
+        desired["when"] = when.upper()
+    for key in ("enabled", "timeout"):
+        if module.params[key] is not None:
+            desired[key] = module.params[key]
+
+    if script_info is None:
+        if "when" not in desired:
+            setup.fail(module, f"'when' is required when creating script {name}")
+        arg = dict(desired, comment=name)
+        if module.check_mode:
+            result["msg"] = f"Would have created script {name} with {arg}"
+        else:
+            try:
+                result["script"] = mw.call("initshutdownscript.create", arg)
+            except Exception as e:
+                setup.fail(module, f"Error creating script {name}: {e}", failed_invocation=arg)
+        result["changed"] = True
+        module.exit_json(**result)
+
+    # Middleware may store None rather than "" for the unused one of
+    # 'command'/'script'.
+    current = dict(script_info)
+    for key in ("command", "script"):
+        current[key] = current.get(key) or ""
+    arg = {k: v for k, v in desired.items() if current.get(k) != v}
+    if arg:
+        if module.check_mode:
+            result["msg"] = f"Would have updated script {name}: {arg}"
+        else:
+            try:
+                result["script"] = mw.call("initshutdownscript.update", script_info["id"], arg)
+            except Exception as e:
+                setup.fail(module, f"Error updating script {name} with {arg}: {e}")
+        result["changed"] = True
 
     module.exit_json(**result)
 
 
-# Main
 if __name__ == "__main__":
     main()

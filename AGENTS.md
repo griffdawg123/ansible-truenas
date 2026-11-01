@@ -39,6 +39,8 @@ Use `setup.fail(module, msg, **kwargs)` instead of `module.fail_json(msg=..., **
 
 One command: `pre-commit run --all-files`. It runs ruff, ruff-format, mypy, ansible-doc, and ansible-test sanity, with each hook bringing its own dependencies (`additional_dependencies: [ansible-core]`). Run `pre-commit install` once per checkout to also trigger it on `git commit`. To call any tool directly, use uv: `uv run --with ruff ruff check plugins/` etc.
 
+Module logic tests: `tests/local/run.sh`. It runs `tests/local/playbook.yml` on localhost against `tests/local/fakemw`, a fake `truenas_api_client` backed by a JSON state file seeded from `tests/local/state.json`. No TrueNAS host needed. Add a scenario there when you change a module's change detection.
+
 ## Upstream
 
 `.upstream-reviewed` at the repo root contains the SHA of the last `arensb/ansible-truenas` commit reviewed for porting. To see what's new since:
