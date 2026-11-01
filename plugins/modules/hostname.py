@@ -1,6 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-__metaclass__ = type
 
 # Set the hostname.
 
@@ -9,7 +7,7 @@ __metaclass__ = type
 # - domain
 
 # XXX
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: hostname
 version_added: 0.1.0
@@ -23,24 +21,26 @@ options:
       - Hostname to set (not FQDN).
     type: str
     required: yes
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Set hostname
   griffdawg.truenas.hostname:
     name: my-little-host
-'''
+"""
 
-RETURN = '''
+RETURN = """
 msg:
   description: Status message, if warranted.
   returned: In some cases
   type: str
-'''
+"""
 # status: new network configuration. But this shouldn't be an official
 # result.
 
 from ansible.module_utils.basic import AnsibleModule
+
+from ..module_utils import setup
 from ..module_utils.middleware import MiddleWare as MW
 
 # XXX - network.configuration.update includes three hostnames:
@@ -53,20 +53,19 @@ from ..module_utils.middleware import MiddleWare as MW
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str'),
-            ),
+            name=dict(type="str", required=True),
+        ),
         supports_check_mode=True,
     )
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    setup.require_scale_min_version(module)
+
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
     # Assign variables from properties, for convenience
-    name = module.params['name']
+    name = module.params["name"]
 
     # Look up the current network config.
     try:
@@ -75,20 +74,19 @@ def main():
         module.fail_json(msg=f"Error looking up network configuration: {e}")
 
     # See whether anything has changed.
-    if network_config['hostname'] != name:
+    if network_config["hostname"] != name:
         #
         # Update hostname
         #
         if module.check_mode:
-            result['msg'] = f"Would have updated hostname to {name}."
+            result["msg"] = f"Would have updated hostname to {name}."
         else:
             try:
-                err = mw.call("network.configuration.update",
-                              {"hostname": name})
+                err = mw.call("network.configuration.update", {"hostname": name})
             except Exception as e:
                 module.fail_json(msg=f"Error updating hostname to {name}: {e}")
-            result['status'] = err
-        result['changed'] = True
+            result["status"] = err
+        result["changed"] = True
 
     module.exit_json(**result)
 

@@ -8,7 +8,7 @@ namespace: griffdawg
 name: truenas
 
 # The version of the collection. Must be compatible with semantic versioning
-version: 3.0.0
+version: 4.0.0
 
 # The path to the Markdown (.md) readme file. This path is relative to the root of the collection
 readme: README.md
@@ -16,6 +16,8 @@ readme: README.md
 # A list of the collection's content authors. Can be just the name or in the format 'Full Name <email> (url)
 # @nicks:irc/im.site#channel'
 authors:
+- "griffdawg123 (https://github.com/griffdawg123)"
+- "Jacobo de Vera (https://github.com/jdevera)"
 - "Andrew Arensburger (https://ooblick.com/)"
 - "Ed Hull (https://github.com/edhull)"
 - "Steven Ellis (https://github.com/steven-ellis)"
@@ -26,7 +28,7 @@ authors:
 
 ### OPTIONAL but strongly recommended
 # A short summary description of the collection
-description: Manage a TrueNAS host
+description: Manage a TrueNAS SCALE host (25.10+). Fork of arensb.truenas.
 
 # Either a single license or a list of licenses for content inside of a collection. Ansible Galaxy currently only
 # accepts L(SPDX,https://spdx.org/licenses/) licenses. This key is mutually exclusive with 'license_file'
@@ -52,7 +54,7 @@ dependencies: {}
 repository: https://github.com/griffdawg123/ansible-truenas
 
 # The URL to any online docs
-documentation: https://github.com/griffdawg123/ansible-truenas
+# documentation:
 
 # The URL to the homepage of the collection/project
 # homepage: http://example.com
@@ -76,3 +78,5 @@ build_ignore:
 - changelogs/.plugin-cache.yaml
 - changelogs/fragments*
 - .pytest_cache
+- uv.lock
+- pyproject.toml

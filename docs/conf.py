@@ -28,17 +28,14 @@ html_use_modindex = False
 html_use_index = False
 html_copy_source = False
 
-# See https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#confval-intersphinx_mapping for the syntax
+# See https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#confval-intersphinx_mapping for the syntax.
+# Inventories are fetched live at build time; no local .inv fallbacks.
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/2/', (None, '../python2.inv')),
-    'python3': ('https://docs.python.org/3/', (None, '../python3.inv')),
-    'jinja2': ('http://jinja.palletsprojects.com/', (None, '../jinja2.inv')),
-    'ansible_devel': ('https://docs.ansible.com/ansible/devel/', (None, '../ansible_devel.inv')),
-    # If you want references to resolve to a released Ansible version (say, `5`), uncomment and replace X by this version:
-    # 'ansibleX': ('https://docs.ansible.com/ansible/X/', (None, '../ansibleX.inv')),
+    'python': ('https://docs.python.org/3/', None),
+    'jinja2': ('https://jinja.palletsprojects.com/en/latest/', None),
+    'ansible_devel': ('https://docs.ansible.com/ansible/devel/', None),
 }
 
 default_role = 'any'
 
 nitpicky = True
-

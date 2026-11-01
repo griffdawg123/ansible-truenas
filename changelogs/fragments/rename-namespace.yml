@@ -1,5 +1,6 @@
 breaking_changes:
-  - Collection renamed from ``arensb.truenas`` to ``griffdawg.truenas``. Update
-    FQCNs (e.g. ``arensb.truenas.user`` -> ``griffdawg.truenas.user``) and
+  - Collection renamed from ``jdevera.truenas`` to ``griffdawg.truenas``. Update
+    FQCNs (e.g. ``jdevera.truenas.user`` -> ``griffdawg.truenas.user``) and
     ``collections:`` lists in playbooks.
-release_summary: First release of the ``griffdawg.truenas`` fork of ``arensb.truenas``.
+release_summary: First release of ``griffdawg.truenas``, a fork of ``jdevera.truenas``
+  (itself a fork of ``arensb.truenas``).

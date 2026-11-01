@@ -1,11 +1,9 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-__metaclass__ = type
 
 # Manage the system dataset. Set which pool to put it on.
 
 # XXX
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: systemdataset
 short_description: Manage the system dataset.
@@ -23,9 +21,9 @@ options:
       - If unset, logs will be stored in C(/var).
     type: bool
 version_added: 0.5.0
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Migrate system dataset to ZFS pool mypool2
   griffdawg.truenas.systemdataset:
     pool: mypool2
@@ -33,10 +31,11 @@ EXAMPLES = '''
 - name: Don't store system logs on the system dataset.
   griffdawg.truenas.systemdataset:
     syslog: no
-'''
+"""
 
-RETURN = '''
+RETURN = """
 status:
+  returned: always
   description:
     - An object describing the new state of the system dataset.
     - This is in the same format as the value returned by systemdataset.config
@@ -53,31 +52,32 @@ status:
       "syslog": true
       "path": "/var/db/system",
     }
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
+
+from ..module_utils import setup
 from ..module_utils.middleware import MiddleWare as MW
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            pool=dict(type='str'),
-            syslog=dict(type='bool'),
-            ),
+            pool=dict(type="str"),
+            syslog=dict(type="bool"),
+        ),
         supports_check_mode=True,
     )
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    setup.require_scale_min_version(module)
+
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
     # Assign variables from properties, for convenience
-    pool = module.params['pool']
-    syslog = module.params['syslog']
+    pool = module.params["pool"]
+    syslog = module.params["syslog"]
 
     # Look up the current state of the system dataset.
     try:
@@ -89,34 +89,33 @@ def main():
     # be.
     arg = {}
 
-    if pool is not None and sysdataset_info['pool'] != pool:
-        arg['pool'] = pool
+    if pool is not None and sysdataset_info["pool"] != pool:
+        arg["pool"] = pool
 
-    if syslog is not None and sysdataset_info['syslog'] != syslog:
-        arg['syslog'] = syslog
+    if syslog is not None and sysdataset_info["syslog"] != syslog:
+        arg["syslog"] = syslog
 
     # If there are any changes, resource.update()
     if len(arg) == 0:
         # No changes
-        result['changed'] = False
+        result["changed"] = False
     else:
         #
         # Update the system dataset.
         #
         if module.check_mode:
-            result['msg'] = f"Would have updated system dataset: {arg}"
-            result['status'] = sysdataset_info
+            result["msg"] = f"Would have updated system dataset: {arg}"
+            result["status"] = sysdataset_info
         else:
             try:
-                err = mw.job("systemdataset.update",
-                             arg)
+                err = mw.job("systemdataset.update", arg)
             except Exception as e:
                 module.fail_json(msg=f"Error updating system dataset with {arg}: {e}")
             # Return any interesting bits
-            result['msg'] = "Updated"
-            result['status'] = err
+            result["msg"] = "Updated"
+            result["status"] = err
 
-        result['changed'] = True
+        result["changed"] = True
 
     module.exit_json(**result)
 

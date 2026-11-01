@@ -1,115 +1,82 @@
 # Ansible Collection - griffdawg.truenas
 
-Manage a [TrueNAS](https://www.truenas.com/) machine.
+Manage a [TrueNAS SCALE](https://www.truenas.com/) machine.
 
-This is a maintained fork of
-[arensb/ansible-truenas](https://github.com/arensb/ansible-truenas)
-(`arensb.truenas`), renamed to `griffdawg.truenas`. It targets current
-TrueNAS SCALE releases (25.10+) and talks to the middleware directly
-rather than through the deprecated `/api/v2.0` REST API.
+This collection is a personal fork of
+[jdevera.truenas](https://github.com/jdevera/ansible-truenas), itself a
+fork of [arensb.truenas](https://github.com/arensb/ansible-truenas),
+maintained against my own homelab. It targets TrueNAS SCALE 25.10 and newer only.
+All pre-25.10 compatibility (and the jail/plugin modules that no longer
+have a TrueNAS API to talk to) has been removed.
 
-## Included content
+## Differences from `arensb.truenas`
 
-This collection consists primarily of a set of Ansible modules to
-configure a TrueNAS machine, using the
-[TrueNAS API](https://www.truenas.com/docs/api/websocket.html)
-to control the Middleware Daemon.
+- **Floor raised to TrueNAS SCALE 25.10.** Every module calls
+  `setup.require_scale_min_version()` and refuses to run on anything
+  older. No CORE/TrueNAS-13 branches remain.
+- **Modules removed:** `jail`, `jails`, `jail_fstab`, `plugin` — jails
+  are gone from SCALE, so the modules can't function.
+- **Options removed** that the modern SCALE middleware no longer
+  accepts: `sharing_nfs`'s `alldirs`, `quiet`, `paths`; `nfs`'s
+  `nfsv4`; `group`'s `non_unique`; `user`'s deprecated `sudo`,
+  `sudo_nopasswd`.
+- **`home: /nonexistent`** is no longer documented; the `user` module
+  expects `/var/empty` to match what 25.10 middleware stores and
+  returns.
+- **Added modules:** `ftp` for configuring the FTP service, and
+  `tunable` for managing sysctl/udev/ZFS tunables.
+- **Middleware transport:** removed the `midclt` subprocess transport
+  and the `middleware_method` environment variable. The collection now
+  talks to middlewared only through the native `truenas_api_client`
+  library, so modules must run under an interpreter that can import it
+  (the TrueNAS host's system Python, which Ansible selects by default).
 
-It aims to be intuitive to use, and to avoid unpleasant surprises.
+## Installing
 
-Each module documents its options and examples in its `DOCUMENTATION`
-and `EXAMPLES` blocks; run `ansible-doc griffdawg.truenas.<module>`.
+Install directly from git via `ansible-galaxy`:
 
-## Installing this collection
+    ansible-galaxy collection install \
+        git+https://github.com/griffdawg123/ansible-truenas.git
 
-Install from git, pinned to a tag, via `requirements.yml`:
+Or with a `requirements.yml`:
 
     collections:
       - name: https://github.com/griffdawg123/ansible-truenas.git
         type: git
-        version: v3.0.0
+        version: main   # or pin a tag, e.g. v4.0.0
 
-then `ansible-galaxy collection install -r requirements.yml`.
-
-## Examples
-
-    - name: Example tasks
-      collections:
-        - griffdawg.truenas
-      hosts: truenas-box
-      become: yes
-      tasks:
-        - name: Set the hostname
-          hostname:
-            name: new-hostname
-        - name: Turn on sshd
-          service:
-            name: sshd
-
-Note that since several of the module names are the same as builtin
-ones, you may want to use the full name to avoid confusion:
+## Usage
 
     - hosts: truenas-box
       become: yes
       tasks:
         - griffdawg.truenas.hostname:
             name: new-hostname
+        - griffdawg.truenas.service:
+            name: sshd
+            state: started
 
-## Environment Variables
-
-### `middleware_method`
-
-There are two ways of communicating with the middleware daemon on
-TrueNAS, referred to here as `midclt` and `client`. `midclt` is older
-and better-tested, while `client` is faster but less-well-tested. The
-default is `client`.
-
-Set the `middleware_method` environment variable to either `client` or
-`midclt` at either the play or task level in your playbook to manually
-select how this module communicates with the middleware daemon.
-
-Example:
-
-    - collections: griffdawg.truenas
-      hosts: my-nas
-      become: yes
-      environment:
-        middleware_method: client
-      tasks:
-        - name: Create a jail
-          jail:
-            name: my-jail
-            release: 13.1-RELEASE
-            state: running
-
-## Contributing to this collection
-The best way to contribute a patch or feature is to create a pull request.
-
-If you'd like to write your own module, the `extras/template` file
-provides a good starting point.
-
-The [HACKING](HACKING.md) file has some tips on how to get around.
-
-## Documentation
-
-Run `ansible-doc -l griffdawg.truenas` to list modules, and
-`ansible-doc griffdawg.truenas.<module>` for details.
-
-## Supported versions of Ansible
-- Tested with 2.10.8
+Several module names overlap with builtins (`user`, `group`,
+`hostname`, `service`, ...), so prefer the fully-qualified
+`griffdawg.truenas.NAME` form rather than the unqualified one.
 
 ## Changelog
 
-See [changelog.yaml](changelogs/changelog.yaml). Releases up to 2.0.3
-are from upstream `arensb.truenas`.
+See [changelogs/changelog.yaml](changelogs/changelog.yaml).
 
-## Authors and Contributors
+## License
 
-- Andrew Arensburger ([@arensb](https://mastodon.social/@arensb))
-- Ed Hull (https://github.com/edhull)
-- Mozzie (https://github.com/MozzieBytes)
-- bmarinov (https://github.com/bmarinov)
-- Paul Heidenreich (https://github.com/Paulomart)
-- Gustavo Campos (https://github.com/guhcampos)
-- kamransaeed (https://github.com/kamransaeed)
-- pofo14 (https://github.com/pofo14)
+Apache-2.0. See [LICENSE](LICENSE).
+
+## Authors
+
+This fork is maintained by [@griffdawg123](https://github.com/griffdawg123).
+It builds on Jacobo de Vera's
+[jdevera.truenas](https://github.com/jdevera/ansible-truenas) fork, which
+did the SCALE 25.10 port, transport cleanup, sanity tooling and the
+`app*`, `system_*`, `ssh`, `smb`, `ftp`, `tunable` and other modules.
+
+Upstream `arensb.truenas` was written and is maintained by Andrew
+Arensburger and contributors. Most of the modules in this collection
+are their work; thank you. The full upstream author list is preserved
+in [galaxy.yml](galaxy.yml).

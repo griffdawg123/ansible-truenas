@@ -1,6 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-__metaclass__ = type
 
 # XXX - This module adds to the execution time: at a first pass, about
 # 1 second using client api, and 7 seconds(!) using midclt. It might
@@ -18,7 +16,7 @@ __metaclass__ = type
 # deemed to be an error.
 
 # XXX
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: truenas_facts
 short_description: Gather TrueNAS-related facts
@@ -48,9 +46,9 @@ seealso:
   - name: Ansible Configuration Settings
     description: Configure which fact-gathering modules to use.
     link: https://docs.ansible.com/ansible/latest/reference_appendices/config.html#facts-modules
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Manually gather information
   collections: griffdawg.truenas
   hosts: myhost
@@ -59,115 +57,124 @@ EXAMPLES = '''
       griffdawg.truenas.truenas_facts:
     # ansible_facts should have TrueNAS facts mixed in with the usual ones.
     - debug: var=ansible_facts
-'''
+"""
 
-RETURN = '''
-ansible_facts.truenas_boot_id:
-  description:
-    - The host's unique boot identifier. Changes every time the
-      system boots.
+RETURN = """
+ansible_facts:
+  description: Facts about the TrueNAS host, added to C(ansible_facts).
   returned: always
-  type: str
-  sample: 1f065a66-a5de-464d-a6b3-f786143028fc
-ansible_facts.truenas_host_id:
-  description:
-    - A hex string based on (but not identical to) the contents of
-      C(/etc/hostid).
-    - This ID is permanent and persists across both reboots and upgrades,
-      so it can be used as a unique identifier for the machine.
-  returned: always
-  type: str
-  sample: 6f7145029674ad4f49fac7090dce20de0d02eef3bb462c25dce3ab15a367ac41
-ansible_facts.truenas_product_name:
-  description:
-    - A string giving the overall name of the product, usually
-      C(TrueNAS)
-  returned: always
-  type: str
-  sample: TrueNAS
-ansible_facts.truenas_product_type:
-  description:
-    - The flavor of TrueNAS. One of C(CORE), C(ENTERPRISE), or C(SCALE).
-  type: str
-  returned: always
-  sample: CORE
-ansible_facts.truenas_environment:
-  description:
-    - The environment in which TrueNAS is running. One of
-      C(DEFAULT) or C(EC2).
-  type: str
-  returned: always
-  sample: DEFAULT
-ansible_facts.truenas_features:
-  description:
-    - A map that says, for each system feature, whether it is enabled
-      or not.
   type: dict
-  sample: {
-      "DEDUP": true,
-      "FIBRECHANNEL": false,
-      "JAILS": true,
-      "VM": true,
-    }
-ansible_facts.truenas_state:
-  description:
-    - The current state of the system, one of
-      C(BOOTING), C(SHUTTING_DOWN), or C(READY).
-  type: str
-  returned: always
-  sample: READY
-ansible_facts.truenas_system_info:
-  description:
-    - A dictionary with a number of facts about the system. See the
-      sample value below.
-  type: complex
-  returned: always
-  sample: {
-    "version": "TrueNAS-13.0-U5",
-    "buildtime": {
-      "$date": 1685357420000
-    },
-    "hostname": "myhost.dom.ain",
-    "physmem": 8421797888,
-    "model": "AMD(R) Razor(R) CPU  J1900  @ 3.99GHz",
-    "cores": 8,
-    "loadavg": [
-      0.2568359375,
-      0.28369140625,
-      0.2607421875
-    ],
-    "uptime": "46 days, 13:14:50.823465",
-    "uptime_seconds": 4022090.823465127,
-    "system_serial": "To be filled by O.E.M.",
-    "system_product": "To be filled by O.E.M.",
-    "system_product_version": "To be filled by O.E.M.",
-    "license": null,
-    "boottime": {
-      "$date": 1685626178000
-    },
-    "datetime": {
-      "$date": 1689648269852
-    },
-    "birthday": {
-      "$date": 1677351513088
-    },
-    "timezone": "America/New_York",
-    "system_manufacturer": "To be filled by O.E.M.",
-    "ecc_memory": false
-  }
-ansible_facts.truenas_build_time:
-  description:
-    - The system build time, when the OS was built.
-    - Internally, this is a Python C(datetime.datetime) object, and is
-      converted to a string by the time it gets to the Ansible client.
-  type: str
-  sample: 2023-05-29T06:50:20
-'''
+  contains:
+    truenas_boot_id:
+      description:
+        - The host's unique boot identifier. Changes every time the
+          system boots.
+      returned: always
+      type: str
+      sample: 1f065a66-a5de-464d-a6b3-f786143028fc
+    truenas_host_id:
+      description:
+        - A hex string based on (but not identical to) the contents of
+          C(/etc/hostid).
+        - This ID is permanent and persists across both reboots and upgrades,
+          so it can be used as a unique identifier for the machine.
+      returned: always
+      type: str
+      sample: 6f7145029674ad4f49fac7090dce20de0d02eef3bb462c25dce3ab15a367ac41
+    truenas_product_name:
+      description:
+        - A string giving the overall name of the product, usually
+          C(TrueNAS)
+      returned: always
+      type: str
+      sample: TrueNAS
+    truenas_product_type:
+      description:
+        - The flavor of TrueNAS. One of C(CORE), C(ENTERPRISE), or C(SCALE).
+      type: str
+      returned: always
+      sample: CORE
+    truenas_environment:
+      description:
+        - The environment in which TrueNAS is running. One of
+          C(DEFAULT) or C(EC2).
+      type: str
+      returned: always
+      sample: DEFAULT
+    truenas_features:
+      description:
+        - A map that says, for each system feature, whether it is enabled
+          or not.
+      type: dict
+      returned: always
+      sample: {
+          "DEDUP": true,
+          "FIBRECHANNEL": false,
+          "JAILS": true,
+          "VM": true,
+        }
+    truenas_state:
+      description:
+        - The current state of the system, one of
+          C(BOOTING), C(SHUTTING_DOWN), or C(READY).
+      type: str
+      returned: always
+      sample: READY
+    truenas_system_info:
+      description:
+        - A dictionary with a number of facts about the system. See the
+          sample value below.
+      type: dict
+      returned: always
+      sample: {
+        "version": "TrueNAS-13.0-U5",
+        "buildtime": {
+          "$date": 1685357420000
+        },
+        "hostname": "myhost.dom.ain",
+        "physmem": 8421797888,
+        "model": "AMD(R) Razor(R) CPU  J1900  @ 3.99GHz",
+        "cores": 8,
+        "loadavg": [
+          0.2568359375,
+          0.28369140625,
+          0.2607421875
+        ],
+        "uptime": "46 days, 13:14:50.823465",
+        "uptime_seconds": 4022090.823465127,
+        "system_serial": "To be filled by O.E.M.",
+        "system_product": "To be filled by O.E.M.",
+        "system_product_version": "To be filled by O.E.M.",
+        "license": null,
+        "boottime": {
+          "$date": 1685626178000
+        },
+        "datetime": {
+          "$date": 1689648269852
+        },
+        "birthday": {
+          "$date": 1677351513088
+        },
+        "timezone": "America/New_York",
+        "system_manufacturer": "To be filled by O.E.M.",
+        "ecc_memory": false
+      }
+    truenas_build_time:
+      description:
+        - The system build time, when the OS was built.
+        - Internally, this is a Python C(datetime.datetime) object, and is
+          converted to a string by the time it gets to the Ansible client.
+      type: str
+      returned: always
+      sample: "2023-05-29T06:50:20"
+"""
+
+from datetime import datetime
 
 from ansible.module_utils.basic import AnsibleModule
-from ..module_utils.exceptions \
-    import MethodNotFoundError as AnsibleMethodNotFoundError
-from datetime import datetime
+
+from ..module_utils import setup
+from ..module_utils.exceptions import MethodNotFoundError as AnsibleMethodNotFoundError
 
 
 def main():
@@ -176,9 +183,11 @@ def main():
         supports_check_mode=True,
     )
 
+    setup.require_scale_min_version(module)
+
     result = dict(
         changed=False,
-        msg='',
+        msg="",
         ansible_facts=dict(),
     )
 
@@ -188,8 +197,8 @@ def main():
         # available everywhere.
         from ..module_utils.middleware import MiddleWare as MW
     except ImportError as e:
-        result['msg'] = f"Can't load required module: {e}"
-        result['skipped'] = True
+        result["msg"] = f"Can't load required module: {e}"
+        result["skipped"] = True
         module.exit_json(**result)
 
     # Creating a MiddleWare client can fail if the TrueNAS-related
@@ -197,30 +206,26 @@ def main():
     try:
         mw = MW.client()
     except ModuleNotFoundError as e:
-        result['msg'] = f'Got module not found exeption {e}'
-        result['skipped'] = True
+        result["msg"] = f"Got module not found exeption {e}"
+        result["skipped"] = True
         module.exit_json(**result)
     except FileNotFoundError as e:
-        result['msg'] = f'Got file not found exeption {e}'
-        result['skipped'] = True
+        result["msg"] = f"Got file not found exeption {e}"
+        result["skipped"] = True
         module.exit_json(**result)
 
     try:
-        result['ansible_facts']['truenas_boot_id'] = \
-            mw.call("system.boot_id", output='str')
-        result['ansible_facts']['truenas_host_id'] = \
-            mw.call("system.host_id", output='str')
+        result["ansible_facts"]["truenas_boot_id"] = mw.call("system.boot_id")
+        result["ansible_facts"]["truenas_host_id"] = mw.call("system.host_id")
 
         # Get the product type first, so that we can decide whether to
         # print error messages or not.
-        product_type = mw.call("system.product_type", output='str')
-        result['ansible_facts']['truenas_product_type'] = \
-            product_type
+        product_type = mw.call("system.product_type")
+        result["ansible_facts"]["truenas_product_type"] = product_type
 
         # system.product_name doesn't exist on SCALE (anymore).
         try:
-            result['ansible_facts']['truenas_product_name'] = \
-                mw.call("system.product_name", output='str')
+            result["ansible_facts"]["truenas_product_name"] = mw.call("system.product_name")
         except AnsibleMethodNotFoundError:
             # We expect this to fail on TrueNAS SCALE, but not CORE.
             if product_type == "CORE":
@@ -232,8 +237,7 @@ def main():
 
         # system.environment doesn't exist on SCALE (anymore).
         try:
-            result['ansible_facts']['truenas_environment'] = \
-                mw.call("system.environment", output='str')
+            result["ansible_facts"]["truenas_environment"] = mw.call("system.environment")
         except AnsibleMethodNotFoundError:
             # We expect this to fail on TrueNAS SCALE, but not CORE.
             if product_type == "CORE":
@@ -243,10 +247,8 @@ def main():
             module.warn(f"Error looking up environment: {e}")
             raise
 
-        result['ansible_facts']['truenas_state'] = \
-            mw.call("system.state", output='str')
-        result['ansible_facts']['truenas_system_info'] = \
-            mw.call("system.info")
+        result["ansible_facts"]["truenas_state"] = mw.call("system.state")
+        result["ansible_facts"]["truenas_system_info"] = mw.call("system.info")
 
         # The build time is a timestamp, but it's returned in different
         # ways by different middlewared APIs.
@@ -258,26 +260,27 @@ def main():
         if isinstance(build_time, datetime):
             # The direct Python connection to middlewared returns
             # a datetime.datetime object, so just return that.
-            result['ansible_facts']['truenas_build_time'] = build_time
-        elif isinstance(build_time, dict) and '$date' in build_time:
+            result["ansible_facts"]["truenas_build_time"] = build_time
+        elif isinstance(build_time, dict) and "$date" in build_time:
             # 'midclt' returns a dict of the form
             #   {"$date": 1234567890000}
             # which is the number of milliseconds since the epoch.
             # Convert that to a datetime.
-            result['ansible_facts']['truenas_build_time'] = \
-                datetime.fromtimestamp(build_time['$date']/1000)
+            result["ansible_facts"]["truenas_build_time"] = datetime.fromtimestamp(
+                build_time["$date"] / 1000
+            )
         else:
             # This is unexpected. Add a warning message, return the
             # supplied value, and hope for the best.
-            module.warn(f'Unexpected type or build_time: {type(build_time)}.')
-            result['ansible_facts']['truenas_build_time'] = build_time
+            module.warn(f"Unexpected type or build_time: {type(build_time)}.")
+            result["ansible_facts"]["truenas_build_time"] = build_time
 
         # Get the set of features and whether they're enabled.
-        result['truenas_features'] = {}
-        for feat in ('DEDUP', 'FIBRECHANNEL', 'JAILS', 'VM'):
+        result["truenas_features"] = {}
+        for feat in ("DEDUP", "FIBRECHANNEL", "JAILS", "VM"):
             try:
-                feat_set = mw.call("system.feature_enabled", feat, output='str')
-                result['truenas_features'][feat] = feat_set
+                feat_set = mw.call("system.feature_enabled", feat)
+                result["truenas_features"][feat] = feat_set
             except Exception as e:
                 # SCALE doesn't have "JAILS". This is expected, so
                 # don't throw an error.
@@ -286,8 +289,8 @@ def main():
                 else:
                     module.warn(f"Error looking up feature {feat}: {e}")
     except Exception as e:
-        result['skipped'] = True
-        result['msg'] = f"Error looking up facts: {e}"
+        result["skipped"] = True
+        result["msg"] = f"Error looking up facts: {e}"
         module.exit_json(**result)
 
     module.exit_json(**result)

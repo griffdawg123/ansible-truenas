@@ -1,6 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-__metaclass__ = type
 
 # XXX - Comparing schedules is harder than it looks: hour, day of the
 # month, day of the week, month are all comma-separated lists of
@@ -44,7 +42,7 @@ __metaclass__ = type
 # case, the sensible thing to do might be to just edit the job and
 # remove ada0.
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: smart_test_task
 short_description: Schedule S.M.A.R.T. tests
@@ -108,9 +106,9 @@ options:
     choices: [ absent, present ]
     default: present
 version_added: 1.8.0
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Run a SHORT test every month
   hosts: my-truenas-server
   tasks:
@@ -134,20 +132,22 @@ EXAMPLES = '''
         hour: 3
         day: 1,15
         month: "*"
-'''
+"""
 
 # XXX - Should be the same as pool_snapshot_task, for consistency:
 # task: the newly-created task.
 # deleted_tasks: list of deleted tasks, when deleting.
-RETURN = '''
+RETURN = """
 task:
   description:
     - A structure describing a newly-created task.
   type: dict
   returned: Success, when created.
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
+
+from ..module_utils import setup
 from ..module_utils.middleware import MiddleWare as MW
 
 
@@ -156,9 +156,7 @@ def main():
         """Convert a disk name like 'da0' to an ID."""
 
         try:
-            disk_id = mw.call("disk.device_to_identifier",
-                              name,
-                              output='str')
+            disk_id = mw.call("disk.device_to_identifier", name)
         except Exception as e:
             module.fail_json(msg=f"Can't look up disk {name}: {e}")
 
@@ -166,58 +164,50 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str', required=True),
-            test=dict(type='str',
-                      choices=['long', 'short', 'conveyance', 'offline',
-                               'LONG', 'SHORT', 'CONVEYANCE', 'OFFLINE']),
-            state=dict(type='str', default='present',
-                       choices=['absent', 'present']),
-            disks=dict(type='list', elements='str',
-                       required=True, aliases=['discs']),
-
+            name=dict(type="str", required=True),
+            test=dict(type="str", choices=["long", "short", "conveyance", "offline"]),
+            state=dict(type="str", default="present", choices=["absent", "present"]),
+            disks=dict(type="list", elements="str", required=True, aliases=["discs"]),
             # Time specification copied from the builtin.cron module.
-            minute=dict(type='str'),
-            hour=dict(type='str'),
-            day=dict(type='str', aliases=['date', 'dom']),
-            month=dict(type='str'),
-            weekday=dict(type='str', aliases=['dow']),
-            ),
+            minute=dict(type="str"),
+            hour=dict(type="str"),
+            day=dict(type="str", aliases=["date", "dom"]),
+            month=dict(type="str"),
+            weekday=dict(type="str", aliases=["dow"]),
+        ),
         required_if=[
             # If you want the task to exist, need to say when it
             # should occur. (If you want it to be absent, that's not
             # required.)
-            ['state', 'present', ['hour', 'day', 'month', 'weekday'], True],
+            ["state", "present", ["hour", "day", "month", "weekday"], True],
         ],
         supports_check_mode=True,
     )
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    setup.require_scale_min_version(module)
+
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
     # Assign variables from properties, for convenience
-    name = module.params['name']
-    test = module.params['test']
-    state = module.params['state']
-    disks = module.params['disks']
-    minute = module.params['minute']
-    hour = module.params['hour']
-    day = module.params['day']
-    month = module.params['month']
-    weekday = module.params['weekday']
+    name = module.params["name"]
+    test = module.params["test"]
+    state = module.params["state"]
+    disks = module.params["disks"]
+    minute = module.params["minute"]
+    hour = module.params["hour"]
+    day = module.params["day"]
+    month = module.params["month"]
+    weekday = module.params["weekday"]
 
-    # 'minute' isn't actually used anywhere; it's just here for
-    # argument compatibility with builtin.cron. But let's use it just
-    # to shut lint up.
-    minute = minute
+    # 'minute' is accepted as a parameter for builtin.cron API
+    # compatibility but isn't actually used here.
+    minute = minute  # pylint: disable=self-assigning-variable
 
     # Look up the task
     try:
-        smart_test_info = mw.call("smart.test.query",
-                                  [["desc", "=", name]])
+        smart_test_info = mw.call("smart.test.query", [["desc", "=", name]])
         if len(smart_test_info) == 0:
             # No such resource
             smart_test_info = None
@@ -231,23 +221,23 @@ def main():
     if smart_test_info is None:
         # Resource doesn't exist
 
-        if state == 'present':
+        if state == "present":
             # Resource is supposed to exist, so create it.
 
             # Collect arguments to pass to resource.create()
             arg = {
-                'desc': name,
+                "desc": name,
             }
 
             # Special value "ALL" means to check all disks.
             # "all_disks" and "disks" are mutually-exclusive.
             if "ALL" in disks:
-                arg['all_disks'] = True
+                arg["all_disks"] = True
             else:
-                arg['disks'] = []
+                arg["disks"] = []
 
                 for disk in disks:
-                    arg['disks'].append(diskname2id(disk))
+                    arg["disks"].append(diskname2id(disk))
 
                 # At this point, arg['disks'] should be an array of
                 # the form:
@@ -258,56 +248,54 @@ def main():
 
             if test is not None:
                 # Convert to upper case.
-                arg['type'] = test.upper()
+                arg["type"] = test.upper()
 
             # Start with an empty schedule.
             schedule = {}
 
             # Set the time when the test should occur.
             if hour is not None:
-                schedule['hour'] = hour
+                schedule["hour"] = hour
 
             if day is not None:
-                schedule['dom'] = day
+                schedule["dom"] = day
 
             if month is not None:
-                schedule['month'] = month
+                schedule["month"] = month
 
             if weekday is not None:
-                schedule['dow'] = weekday
+                schedule["dow"] = weekday
 
             if len(schedule) > 0:
                 # One or more schedule fields were specified.
-                arg['schedule'] = schedule
+                arg["schedule"] = schedule
 
             if module.check_mode:
-                result['msg'] = f"Would have created resource {name} " \
-                    f"with {arg}"
+                result["msg"] = f"Would have created resource {name} with {arg}"
             else:
                 #
                 # Create new resource
                 #
                 try:
                     err = mw.call("smart.test.create", arg)
-                    result['msg'] = err
+                    result["msg"] = err
                 except Exception as e:
-                    result['failed_invocation'] = arg
-                    module.fail_json(msg="Error creating S.M.A.R.T. Test "
-                                     f"task {name}: {e}")
+                    result["failed_invocation"] = arg
+                    module.fail_json(msg=f"Error creating S.M.A.R.T. Test task {name}: {e}")
 
                 # Return whichever interesting bits smart.test.create()
                 # returned.
-                result['task'] = err
+                result["task"] = err
 
-            result['changed'] = True
+            result["changed"] = True
         else:
             # Resource is not supposed to exist.
             # All is well
-            result['changed'] = False
+            result["changed"] = False
 
     else:
         # Resource exists
-        if state == 'present':
+        if state == "present":
             # Resource is supposed to exist
 
             # Make list of differences between what is and what should
@@ -317,25 +305,25 @@ def main():
             if disks is not None:
                 if "ALL" in disks:
                     # We want to monitor all disks.
-                    if smart_test_info['all_disks'] is False:
-                        smart_test_info['all_disks'] = True
-                        result['changed'] = True
+                    if smart_test_info["all_disks"] is False:
+                        smart_test_info["all_disks"] = True
+                        result["changed"] = True
                 else:
                     # Only want to monitor some disks.
                     want_disks = [diskname2id(disk) for disk in disks]
 
-                    if smart_test_info['all_disks'] is True:
-                        arg['all_disks'] = False
-                        arg['disks'] = want_disks
-                        result['changed'] = True
+                    if smart_test_info["all_disks"] is True:
+                        arg["all_disks"] = False
+                        arg["disks"] = want_disks
+                        result["changed"] = True
                     else:
                         # Use set comparison, because order doesn't matter.
-                        if set(smart_test_info['disks']) != set(want_disks):
-                            smart_test_info['disks'] = want_disks
-                            result['changed'] = True
+                        if set(smart_test_info["disks"]) != set(want_disks):
+                            smart_test_info["disks"] = want_disks
+                            result["changed"] = True
 
-            if test is not None and smart_test_info['type'] != test.upper():
-                arg['type'] = test.upper()
+            if test is not None and smart_test_info["type"] != test.upper():
+                arg["type"] = test.upper()
 
             # Schedule.
             # Create an empty schedule.
@@ -347,63 +335,55 @@ def main():
             #
             # But implementing a real schedule comparison is probably
             # not worth the effort.
-            if hour is not None and \
-               smart_test_info['schedule']['hour'] != hour:
-                schedule['hour'] = hour
+            if hour is not None and smart_test_info["schedule"]["hour"] != hour:
+                schedule["hour"] = hour
 
-            if day is not None and smart_test_info['schedule']['dom'] != day:
-                schedule['dom'] = day
+            if day is not None and smart_test_info["schedule"]["dom"] != day:
+                schedule["dom"] = day
 
-            if month is not None and \
-               smart_test_info['schedule']['month'] != month:
-                schedule['month'] = month
+            if month is not None and smart_test_info["schedule"]["month"] != month:
+                schedule["month"] = month
 
-            if weekday is not None and \
-               smart_test_info['schedule']['dow'] != weekday:
-                schedule['dow'] = weekday
+            if weekday is not None and smart_test_info["schedule"]["dow"] != weekday:
+                schedule["dow"] = weekday
 
             if len(schedule) > 0:
-                arg['schedule'] = schedule
+                arg["schedule"] = schedule
 
             # If there are any changes, resource.update()
             if len(arg) == 0:
                 # No changes
-                result['changed'] = False
+                result["changed"] = False
             else:
                 #
                 # Update the S.M.A.R.T. Test task
                 #
                 if module.check_mode:
-                    result['msg'] = "Would have updated " \
-                        f"S.M.A.R.T. Test task {name}: {arg}"
+                    result["msg"] = f"Would have updated S.M.A.R.T. Test task {name}: {arg}"
                 else:
                     try:
-                        err = mw.call("smart.test.update",
-                                      smart_test_info['id'],
-                                      arg)
+                        err = mw.call("smart.test.update", smart_test_info["id"], arg)
                     except Exception as e:
-                        module.fail_json(msg="Error updating S.M.A.R.T. "
-                                         f"Test task {name} with {arg}: {e}")
+                        module.fail_json(
+                            msg=f"Error updating S.M.A.R.T. Test task {name} with {arg}: {e}"
+                        )
                         # Return any interesting bits from err
-                        result['status'] = err['status']
-                result['changed'] = True
+                        result["status"] = err["status"]
+                result["changed"] = True
         else:
             # S.M.A.R.T. Test task is not supposed to exist
 
             if module.check_mode:
-                result['msg'] = "Would have deleted S.M.A.R.T. Test " \
-                    f"task {name}"
+                result["msg"] = f"Would have deleted S.M.A.R.T. Test task {name}"
             else:
                 try:
                     #
                     # Delete S.M.A.R.T. Test task
                     #
-                    err = mw.call("smart.test.delete",
-                                  smart_test_info['id'])
+                    err = mw.call("smart.test.delete", smart_test_info["id"])
                 except Exception as e:
-                    module.fail_json(msg="Error deleting S.M.A.R.T. "
-                                     f"Test task {name}: {e}")
-            result['changed'] = True
+                    module.fail_json(msg=f"Error deleting S.M.A.R.T. Test task {name}: {e}")
+            result["changed"] = True
 
     module.exit_json(**result)
 

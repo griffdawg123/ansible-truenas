@@ -1,10 +1,8 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-__metaclass__ = type
 
 # Create and maintain periodic disk pool snapshot tasks.
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: pool_snapshot_task
 short_description: Maintain periodic disk pool snapshot tasks.
@@ -35,7 +33,7 @@ options:
   enabled:
     description:
       - Whether this snapshot task is enabled.
-    type: str
+    type: bool
   end_time:
     description:
       - Time at which to stop taking snapshots. This is a string in
@@ -60,12 +58,14 @@ options:
       - Along with C(lifetime_value), specifies the length of time a
         snapshot will be kept before being deleted.
     type: str
-    choices: [ hour, hours, day, days, week, weeks, month, months, year, years ]
+    required: true
+    choices: [ hour, hours, HOUR, HOURS, day, days, DAY, DAYS, week, weeks, WEEK, WEEKS, month, months, MONTH, MONTHS, year, years, YEAR, YEARS ]
   lifetime_value:
     description:
       - The number of units of time that the snapshot will exist before
         it is deleted. Used in conjunction with C(lifetime_unit).
     type: int
+    required: true
   match:
     description:
       - A snapshot task does not have a name or other visible unique
@@ -77,6 +77,7 @@ options:
       - If the C(state) option is C(present), only the first matching
         dataset will be updated. If C(state) is C(absent), all matching
         datasets will be deleted.
+    type: dict
     required: true
     suboptions:
       dataset:
@@ -106,6 +107,7 @@ options:
       - Whether to take snapshots of the child datasets, as well as of
         the dataset itself.
     type: bool
+    required: true
   state:
     description:
       - Whether the task should exist or not.
@@ -135,10 +137,10 @@ options:
     type: str
     aliases: ['dow']
 version_added: 1.5.0
-'''
+"""
 
 # XXX
-EXAMPLES = '''
+EXAMPLES = """
 - name: Hourly snapshots of data/vol1
   hosts: myhost
   collections: griffdawg.truenas
@@ -164,9 +166,9 @@ EXAMPLES = '''
         day: "*"
         month: "*"
         weekday: Mon-Fri
-'''
+"""
 
-RETURN = '''
+RETURN = """
 ---
 task:
   description:
@@ -195,13 +197,17 @@ task:
        state: "PENDING"
     vmware_sync: false
 deleted_tasks:
+  returned: always
   description: List of tasks that were deleted when C(state) is 'absent'.
   type: list
-'''
+"""
+
+import re
 
 from ansible.module_utils.basic import AnsibleModule
+
+from ..module_utils import setup
 from ..module_utils.middleware import MiddleWare as MW
-import re
 
 
 def main():
@@ -214,107 +220,129 @@ def main():
     #   "tank/iocage/download/13.3-RELEASE"
     module = AnsibleModule(
         argument_spec=dict(
-            match=dict(type='dict', required=True,
-                       options=dict(
-                           # id=dict(type='int'),
-                           dataset=dict(type='str'),
-                           name_format=dict(type='str'),
-                           # recursive=dict(type='bool'),
-                           # lifetime=dict(type='str'),
-                       )),
-            state=dict(type='str', default='present',
-                       choices=['absent', 'present']),
-            dataset=dict(type='str', required=True),
-            recursive=dict(type='bool', required=True),
-            lifetime_value=dict(type='int', required=True),
-            lifetime_unit=dict(type='str', required=True,
-                               choices=['hour', 'hours', 'HOUR', 'HOURS',
-                                        'day', 'days', 'DAY', 'DAYS',
-                                        'week', 'weeks', 'WEEK', 'WEEKS',
-                                        'month', 'months', 'MONTH', 'MONTHS',
-                                        'year', 'years', 'YEAR', 'YEARS']),
-            name_format=dict(type='str', required=True),
-            begin_time=dict(type='str'),
-            end_time=dict(type='str'),
-            exclude=dict(type='list', elements='str'),
-            allow_empty=dict(type='bool'),
-            enabled=dict(type='bool'),
-
-            # Time specification copied from the builtin.cron module.
-            minute=dict(type='str'),
-            hour=dict(type='str'),
-            day=dict(type='str', aliases=['date', 'dom']),
-            month=dict(type='str'),
-            weekday=dict(type='str', aliases=['dow']),
+            match=dict(
+                type="dict",
+                required=True,
+                options=dict(
+                    # id=dict(type='int'),
+                    dataset=dict(type="str"),
+                    name_format=dict(type="str"),
+                    # recursive=dict(type='bool'),
+                    # lifetime=dict(type='str'),
+                ),
             ),
+            state=dict(type="str", default="present", choices=["absent", "present"]),
+            dataset=dict(type="str", required=True),
+            recursive=dict(type="bool", required=True),
+            lifetime_value=dict(type="int", required=True),
+            lifetime_unit=dict(
+                type="str",
+                required=True,
+                choices=[
+                    "hour",
+                    "hours",
+                    "HOUR",
+                    "HOURS",
+                    "day",
+                    "days",
+                    "DAY",
+                    "DAYS",
+                    "week",
+                    "weeks",
+                    "WEEK",
+                    "WEEKS",
+                    "month",
+                    "months",
+                    "MONTH",
+                    "MONTHS",
+                    "year",
+                    "years",
+                    "YEAR",
+                    "YEARS",
+                ],
+            ),
+            name_format=dict(type="str", required=True),
+            begin_time=dict(type="str"),
+            end_time=dict(type="str"),
+            exclude=dict(type="list", elements="str"),
+            allow_empty=dict(type="bool"),
+            enabled=dict(type="bool"),
+            # Time specification copied from the builtin.cron module.
+            minute=dict(type="str"),
+            hour=dict(type="str"),
+            day=dict(type="str", aliases=["date", "dom"]),
+            month=dict(type="str"),
+            weekday=dict(type="str", aliases=["dow"]),
+        ),
         supports_check_mode=True,
     )
 
-    result = dict(
-        changed=False,
-        msg=''
-    )
+    setup.require_scale_min_version(module)
+
+    result = dict(changed=False, msg="")
 
     mw = MW.client()
 
     # Assign variables from properties, for convenience
-    match = module.params['match']
-    state = module.params['state']
-    dataset = module.params['dataset']
-    recursive = module.params['recursive']
-    lifetime_unit = module.params['lifetime_unit']
-    lifetime_value = module.params['lifetime_value']
-    name_format = module.params['name_format']
-    minute = module.params['minute']
-    hour = module.params['hour']
-    day = module.params['day']
-    month = module.params['month']
-    weekday = module.params['weekday']
-    begin_time = module.params['begin_time']
-    end_time = module.params['end_time']
-    exclude = module.params['exclude']
-    allow_empty = module.params['allow_empty']
-    enabled = module.params['enabled']
+    match = module.params["match"]
+    state = module.params["state"]
+    dataset = module.params["dataset"]
+    recursive = module.params["recursive"]
+    lifetime_unit = module.params["lifetime_unit"]
+    lifetime_value = module.params["lifetime_value"]
+    name_format = module.params["name_format"]
+    minute = module.params["minute"]
+    hour = module.params["hour"]
+    day = module.params["day"]
+    month = module.params["month"]
+    weekday = module.params["weekday"]
+    begin_time = module.params["begin_time"]
+    end_time = module.params["end_time"]
+    exclude = module.params["exclude"]
+    allow_empty = module.params["allow_empty"]
+    enabled = module.params["enabled"]
 
     # Convert the 'lifetime_unit' value to what middlewared expects.
     lifetime_unit = {
-        'hour': 'HOUR',
-        'hours': 'HOUR',
-        'HOURS': 'HOUR',
-        'day': 'DAY',
-        'days': 'DAY',
-        'DAYS': 'DAY',
-        'week': 'WEEK',
-        'weeks': 'WEEK',
-        'WEEKS': 'WEEK',
-        'month': 'MONTH',
-        'months': 'MONTH',
-        'MONTHS': 'MONTH',
-        'year': 'YEAR',
-        'years': 'YEAR',
-        'YEARS': 'YEAR',
-        }[lifetime_unit]
+        "hour": "HOUR",
+        "hours": "HOUR",
+        "HOURS": "HOUR",
+        "day": "DAY",
+        "days": "DAY",
+        "DAYS": "DAY",
+        "week": "WEEK",
+        "weeks": "WEEK",
+        "WEEKS": "WEEK",
+        "month": "MONTH",
+        "months": "MONTH",
+        "MONTHS": "MONTH",
+        "year": "YEAR",
+        "years": "YEAR",
+        "YEARS": "YEAR",
+    }[lifetime_unit]
 
     # Make sure that 'begin_time' and 'end_time' match ^\d?\d:\d\d$.
     if begin_time is not None:
         begin_time = begin_time.strip()
         m = re.match("^(\\d?)\\d:\\d\\d$", begin_time)
         if m is None:
-            module.fail_json(msg=f"Illegal value for begin_time: {begin_time}."
-                             " Should be of the form HH:MM.")
-        elif m[1] == '':
+            module.fail_json(
+                msg=f"Illegal value for begin_time: {begin_time}. Should be of the form HH:MM."
+            )
+        elif m[1] == "":
             # Make sure there's a two-digit hour.
-            begin_time = "0"+begin_time
+            begin_time = "0" + begin_time
 
     if end_time is not None:
         end_time = end_time.strip()
         m = re.match("^(\\d?)\\d:\\d\\d$", end_time)
         if m is None:
-            module.fail_json(msg=f"Illegal value for end_time: {end_time}."
-                             " Should be of the form HH:MM.")
-        elif m[1] == '':
+            module.fail_json(
+                msg=f"Illegal value for end_time: {end_time}. Should be of the form HH:MM."
+            )
+        elif m[1] == "":
             # Make sure there's a two-digit hour.
-            end_time = "0"+end_time
+            end_time = "0" + end_time
 
     # Look up the task.
     # Construct a set of criteria based on 'match'
@@ -323,12 +351,12 @@ def main():
         module.fail_json(msg="No match conditions given.")
 
     queries = []
-    if 'id' in match and match['id'] is not None:
-        queries.append(["id", "=", match['id']])
-    if 'dataset' in match and match['dataset'] is not None:
-        queries.append(["dataset", "=", match['dataset']])
-    if 'name_format' in match and match['name_format'] is not None:
-        queries.append(["naming_schema", "~", match['name_format']])
+    if "id" in match and match["id"] is not None:
+        queries.append(["id", "=", match["id"]])
+    if "dataset" in match and match["dataset"] is not None:
+        queries.append(["dataset", "=", match["dataset"]])
+    if "name_format" in match and match["name_format"] is not None:
+        queries.append(["naming_schema", "~", match["name_format"]])
     if len(queries) == 0:
         # This can happen if the module spec includes some new match
         # options, but the code above doesn't parse them correctly or
@@ -355,7 +383,7 @@ def main():
     if task_info is None:
         # Task doesn't exist
 
-        if state == 'present':
+        if state == "present":
             # Task is supposed to exist, so create it.
 
             # Collect arguments to pass to pool.snapshottask.create()
@@ -369,50 +397,49 @@ def main():
             schedule = {}
 
             if begin_time is not None:
-                schedule['begin'] = begin_time
+                schedule["begin"] = begin_time
 
             if end_time is not None:
-                schedule['end'] = end_time
+                schedule["end"] = end_time
 
             if exclude is not None:
                 # middlewared throws an error if exclude is nonempty,
                 # but recursive isn't true.
                 # recursive defaults to false.
                 if recursive is not None and recursive:
-                    arg['exclude'] = exclude
+                    arg["exclude"] = exclude
                 # Otherwise, quietly pretend that 'exclude' wasn't specified.
 
             if allow_empty is not None:
-                arg['allow_empty'] = allow_empty
+                arg["allow_empty"] = allow_empty
 
             if enabled is not None:
-                arg['enabled'] = enabled
+                arg["enabled"] = enabled
 
             if minute is not None:
-                schedule['minute'] = minute
+                schedule["minute"] = minute
 
             if hour is not None:
-                schedule['hour'] = hour
+                schedule["hour"] = hour
 
             if hour is not None:
-                schedule['hour'] = hour
+                schedule["hour"] = hour
 
             if day is not None:
-                schedule['dom'] = day
+                schedule["dom"] = day
 
             if month is not None:
-                schedule['month'] = month
+                schedule["month"] = month
 
             if weekday is not None:
-                schedule['dow'] = weekday
+                schedule["dow"] = weekday
 
             if len(schedule) > 0:
-                arg['schedule'] = schedule
+                arg["schedule"] = schedule
 
             if module.check_mode:
-                result['changes'] = arg
-                result['msg'] = "Would have created snapshot task. " \
-                    "See 'changes'."
+                result["changes"] = arg
+                result["msg"] = "Would have created snapshot task. See 'changes'."
             else:
                 #
                 # Create new task
@@ -423,17 +450,17 @@ def main():
                     module.fail_json(msg=f"Error creating snapshot task: {e}")
 
                 # Return the task that was created.
-                result['task'] = err
+                result["task"] = err
 
-            result['changed'] = True
+            result["changed"] = True
         else:
             # Task is not supposed to exist.
             # All is well
-            result['changed'] = False
+            result["changed"] = False
 
     else:
         # Task exists
-        if state == 'present':
+        if state == "present":
             # Task is supposed to exist
 
             # Make list of differences between what is and what should
@@ -441,112 +468,97 @@ def main():
             arg = {}
             schedule = {}
 
-            if dataset is not None and task_info['dataset'] != dataset:
-                arg['dataset'] = dataset
+            if dataset is not None and task_info["dataset"] != dataset:
+                arg["dataset"] = dataset
 
-            if recursive is not None and task_info['recursive'] != recursive:
-                arg['recursive'] = recursive
+            if recursive is not None and task_info["recursive"] != recursive:
+                arg["recursive"] = recursive
 
-            if lifetime_value is not None and \
-               task_info['lifetime_value'] != lifetime_value:
-                arg['lifetime_value'] = lifetime_value
+            if lifetime_value is not None and task_info["lifetime_value"] != lifetime_value:
+                arg["lifetime_value"] = lifetime_value
 
-            if lifetime_unit is not None and \
-               task_info['lifetime_unit'] != lifetime_unit:
-                arg['lifetime_unit'] = lifetime_unit
+            if lifetime_unit is not None and task_info["lifetime_unit"] != lifetime_unit:
+                arg["lifetime_unit"] = lifetime_unit
 
-            if name_format is not None and \
-               task_info['naming_schema'] != name_format:
-                arg['naming_schema'] = name_format
+            if name_format is not None and task_info["naming_schema"] != name_format:
+                arg["naming_schema"] = name_format
 
-            if minute is not None and \
-               task_info['schedule']['minute'] != minute:
-                schedule['minute'] = minute
+            if minute is not None and task_info["schedule"]["minute"] != minute:
+                schedule["minute"] = minute
 
-            if hour is not None and task_info['schedule']['hour'] != hour:
-                schedule['hour'] = hour
+            if hour is not None and task_info["schedule"]["hour"] != hour:
+                schedule["hour"] = hour
 
-            if day is not None and task_info['schedule']['dom'] != day:
-                schedule['dom'] = day
+            if day is not None and task_info["schedule"]["dom"] != day:
+                schedule["dom"] = day
 
-            if month is not None and task_info['schedule']['month'] != month:
-                schedule['month'] = month
+            if month is not None and task_info["schedule"]["month"] != month:
+                schedule["month"] = month
 
-            if weekday is not None and \
-               task_info['schedule']['dow'] != weekday:
-                schedule['dow'] = weekday
+            if weekday is not None and task_info["schedule"]["dow"] != weekday:
+                schedule["dow"] = weekday
 
-            if begin_time is not None and \
-               task_info['schedule']['begin'] != begin_time:
-                schedule['begin'] = begin_time
+            if begin_time is not None and task_info["schedule"]["begin"] != begin_time:
+                schedule["begin"] = begin_time
 
-            if end_time is not None and \
-               task_info['schedule']['end'] != end_time:
-                schedule['end'] = end_time
+            if end_time is not None and task_info["schedule"]["end"] != end_time:
+                schedule["end"] = end_time
 
-            if allow_empty is not None and \
-               task_info['allow_empty'] != allow_empty:
-                arg['allow_empty'] = allow_empty
+            if allow_empty is not None and task_info["allow_empty"] != allow_empty:
+                arg["allow_empty"] = allow_empty
 
             # For exclude, perform a set comparison because order
             # doesn't matter.
-            if exclude is not None and \
-               set(task_info['exclude']) != set(exclude):
-                arg['exclude'] = exclude
+            if exclude is not None and set(task_info["exclude"]) != set(exclude):
+                arg["exclude"] = exclude
 
             # If the task is non-recursive, the exclusion list must
             # be empty.
             # Why would the task wind up non-recursive? Either:
             # a) it was already non-recursive, and we're not changing it.
             # b) we're explicitly setting it to non-recursive.
-            if ((recursive is False) or
-                (task_info['recursive'] is False)):
+            if (recursive is False) or (task_info["recursive"] is False):
                 # If the exclusion list was already empty, and
                 # module.params doesn't change that, this assignment
                 # is unnecessary. But I don't think this can lead to
                 # an unnecessary midclt call, so I don't care a lot.
-                arg['exclude'] = []
+                arg["exclude"] = []
 
-            if allow_empty is not None and \
-               task_info['allow_empty'] != allow_empty:
-                arg['allow_empty'] = allow_empty
+            if allow_empty is not None and task_info["allow_empty"] != allow_empty:
+                arg["allow_empty"] = allow_empty
 
-            if enabled is not None and task_info['enabled'] != enabled:
-                arg['enabled'] = enabled
+            if enabled is not None and task_info["enabled"] != enabled:
+                arg["enabled"] = enabled
 
             if len(schedule) > 0:
-                arg['schedule'] = schedule
+                arg["schedule"] = schedule
 
             # If there are any changes, pool.snapshottask.update()
             if len(arg) == 0:
                 # No changes
-                result['changed'] = False
+                result["changed"] = False
             else:
                 #
                 # Update task.
                 #
                 if module.check_mode:
-                    result['changes'] = arg
-                    result['msg'] = "Would have updated snapshot task. " \
-                        "See 'changes'."
+                    result["changes"] = arg
+                    result["msg"] = "Would have updated snapshot task. See 'changes'."
                 else:
                     try:
-                        err = mw.call("pool.snapshottask.update",
-                                      task_info['id'],
-                                      arg)
+                        err = mw.call("pool.snapshottask.update", task_info["id"], arg)
                     except Exception as e:
-                        module.fail_json(msg=("Error updating snapshot task "
-                                              f"with {arg}: {e}"))
+                        module.fail_json(msg=(f"Error updating snapshot task with {arg}: {e}"))
                     # 'err' is the current state of the task. Return that.
-                    result['task'] = err
-                result['changed'] = True
+                    result["task"] = err
+                result["changed"] = True
         else:
             # Task is not supposed to exist
 
             # Delete all matching tasks.
             if module.check_mode:
-                result['msg'] = "Would have deleted snapshot tasks."
-                result['deleted_tasks'] = matching_tasks
+                result["msg"] = "Would have deleted snapshot tasks."
+                result["deleted_tasks"] = matching_tasks
             else:
                 try:
                     #
@@ -554,15 +566,14 @@ def main():
                     #
 
                     # Return a list of all deleted tasks.
-                    result['deleted_tasks'] = []
+                    result["deleted_tasks"] = []
 
                     for task in matching_tasks:
-                        err = mw.call("pool.snapshottask.delete",
-                                      task['id'])
-                        result['deleted_tasks'].append(task)
+                        err = mw.call("pool.snapshottask.delete", task["id"])
+                        result["deleted_tasks"].append(task)
                 except Exception as e:
                     module.fail_json(msg=f"Error deleting snapshot task: {e}")
-            result['changed'] = True
+            result["changed"] = True
 
     module.exit_json(**result)
 
