@@ -1,0 +1,6 @@
+bugfixes:
+  - filesystem - compare ``recordsize`` as a byte size, so ``128K`` no longer
+    reports a change against middleware's ``131072`` on every run
+    (arensb/ansible-truenas#51).
+  - user - don't send ``password`` on update when the account has, or will
+    have, password login disabled (arensb/ansible-truenas#57).

@@ -51,7 +51,13 @@ options:
       - Configuration values for the app.
       - These are app-specific and vary per catalog app.
       - On create, these are the initial configuration.
-      - On update, these are merged with the existing configuration.
+      - On update, the app is only updated if some key given here differs
+        from the stored config (nested dicts are compared key by key;
+        keys you don't give are ignored).
+      - Middleware merges C(values) into the stored config at the top
+        level only, so a nested dict given here replaces that whole
+        section, and its omitted keys revert to the app's defaults.
+      - Only valid for catalog apps.
     type: dict
   custom_app:
     description:
@@ -85,7 +91,11 @@ options:
     type: bool
     default: false
 notes:
-  - Supports C(check_mode).
+  - Supports C(check_mode) and C(diff_mode).
+  - Every C(app.update) recreates the app's containers, so the module
+    compares before updating. For custom apps the requested compose is
+    parsed and compared as data with the stored compose, so formatting
+    and key order don't cause spurious updates.
   - App creation and deletion are jobs and may take some time.
 seealso:
   - module: griffdawg.truenas.app_service
@@ -137,9 +147,45 @@ app:
 """
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.yaml import HAS_YAML, yaml_load
 
 from ..module_utils import setup
 from ..module_utils.middleware import MiddleWare as MW
+
+
+def subset_matches(desired, current):
+    """
+    Return True if every key in 'desired' has the same value in
+    'current', recursing into dicts. Catalog app configs are full of
+    defaults the caller never set; those are ignored.
+    """
+    if isinstance(desired, dict):
+        if not isinstance(current, dict):
+            return False
+        return all(k in current and subset_matches(v, current[k]) for k, v in desired.items())
+    return desired == current
+
+
+def desired_compose(module):
+    """
+    Return the requested compose config as a dict, or None if neither
+    compose option was given. Middleware stores the parsed YAML, so
+    comparing dicts ignores formatting and key order.
+    """
+    if module.params["custom_compose_config"] is not None:
+        return module.params["custom_compose_config"]
+    compose_string = module.params["custom_compose_config_string"]
+    if compose_string is None:
+        return None
+    if not HAS_YAML:
+        setup.fail(module, "PyYAML is required to parse custom_compose_config_string")
+    try:
+        compose = yaml_load(compose_string)
+    except Exception as e:
+        setup.fail(module, f"custom_compose_config_string is not valid YAML: {e}")
+    if not isinstance(compose, dict):
+        setup.fail(module, "custom_compose_config_string must be a YAML mapping")
+    return compose
 
 
 def main():
@@ -181,7 +227,7 @@ def main():
         else:
             app_info = apps[0]
     except Exception as e:
-        module.fail_json(msg=f"Error looking up app '{name}': {e}")
+        setup.fail(module, f"Error looking up app '{name}': {e}")
 
     if state == "absent":
         if app_info is None:
@@ -198,7 +244,7 @@ def main():
                     }
                     mw.job("app.delete", name, options)
                 except Exception as e:
-                    module.fail_json(msg=f"Error deleting app '{name}': {e}")
+                    setup.fail(module, f"Error deleting app '{name}': {e}")
             result["changed"] = True
 
     elif state == "present":
@@ -208,7 +254,7 @@ def main():
             catalog_app = module.params["catalog_app"]
 
             if not custom_app and catalog_app is None:
-                module.fail_json(msg="'catalog_app' is required when creating a non-custom app")
+                setup.fail(module, "'catalog_app' is required when creating a non-custom app")
 
             arg = {
                 "app_name": name,
@@ -216,12 +262,10 @@ def main():
             }
 
             if custom_app:
-                compose_config = module.params["custom_compose_config"]
-                compose_string = module.params["custom_compose_config_string"]
-                if compose_config is not None:
-                    arg["custom_compose_config"] = compose_config
-                elif compose_string is not None:
-                    arg["custom_compose_config_string"] = compose_string
+                compose = desired_compose(module)
+                if compose is None:
+                    setup.fail(module, "A compose config is required when creating a custom app")
+                arg["custom_compose_config"] = compose
             else:
                 arg["catalog_app"] = catalog_app
                 arg["train"] = module.params["train"]
@@ -238,55 +282,51 @@ def main():
                     err = mw.job("app.create", arg)
                     result["app"] = err
                 except Exception as e:
-                    module.fail_json(msg=f"Error creating app '{name}': {e}")
+                    setup.fail(module, f"Error creating app '{name}': {e}")
             result["changed"] = True
 
         else:
-            # App exists — update if values are provided
+            # App exists. Compare what was asked for with the stored
+            # config and only update if they differ: every app.update
+            # re-runs 'compose up --force-recreate', restarting the app.
             values = module.params["values"]
-            compose_config = module.params["custom_compose_config"]
-            compose_string = module.params["custom_compose_config_string"]
+            compose = desired_compose(module)
 
-            if values is None and compose_config is None and compose_string is None:
-                # Nothing to update
+            if values is None and compose is None:
                 result["changed"] = False
             else:
-                # Check if values actually differ
-                needs_update = False
-                if values is not None:
-                    try:
-                        current_config = mw.call("app.config", name)
-                    except Exception as e:
-                        module.fail_json(msg=f"Error getting config for '{name}': {e}")
-                    # Check if any requested values differ from current
-                    for key, val in values.items():
-                        if current_config.get(key) != val:
-                            needs_update = True
-                            break
+                if compose is not None and not app_info["custom_app"]:
+                    setup.fail(module, f"App '{name}' is a catalog app; it has no compose config")
+                if values is not None and app_info["custom_app"]:
+                    setup.fail(module, f"App '{name}' is a custom app; use custom_compose_config")
+
+                try:
+                    current_config = mw.call("app.config", name)
+                except Exception as e:
+                    setup.fail(module, f"Error getting config for '{name}': {e}")
+
+                if compose is not None:
+                    needs_update = compose != current_config
+                    arg = {"custom_compose_config": compose}
+                    after = compose
                 else:
-                    # Compose config changes — always update since we
-                    # can't easily diff compose configs
-                    needs_update = True
+                    needs_update = not subset_matches(values, current_config)
+                    arg = {"values": values}
+                    after = {**current_config, **values}
+
+                if module._diff:
+                    result["diff"] = dict(before=current_config, after=after)
 
                 if not needs_update:
                     result["changed"] = False
                 else:
-                    arg = {}
-                    if values is not None:
-                        arg["values"] = values
-                    if compose_config is not None:
-                        arg["custom_compose_config"] = compose_config
-                    if compose_string is not None:
-                        arg["custom_compose_config_string"] = compose_string
-
                     if module.check_mode:
-                        result["msg"] = f"Would have updated app {name} with {arg}"
+                        result["msg"] = f"Would have updated app {name}"
                     else:
                         try:
-                            err = mw.job("app.update", name, arg)
-                            result["app"] = err
+                            result["app"] = mw.job("app.update", name, arg)
                         except Exception as e:
-                            module.fail_json(msg=f"Error updating app '{name}': {e}")
+                            setup.fail(module, f"Error updating app '{name}': {e}")
                     result["changed"] = True
 
     module.exit_json(**result)

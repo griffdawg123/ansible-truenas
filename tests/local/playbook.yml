@@ -1,0 +1,91 @@
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    log: "{{ (lookup('file', state_file) | from_json)._log | default([]) | map('first') | list }}"
+  environment:
+    PYTHONPATH: "{{ fake }}"
+    FAKE_MW_STATE: "{{ state_file }}"
+  tasks:
+    - name: custom app, same compose reformatted -> no change
+      griffdawg.truenas.app:
+        name: jellyfin
+        custom_app: true
+        custom_compose_config_string: |
+          services:
+            web:
+              restart: unless-stopped
+              ports: ["8096:8096"]
+              image: "jellyfin/jellyfin:10.10"
+      register: r
+    - assert: { that: [not r.changed, "'app.update' not in log"] }
+
+    - name: custom app, new image (check mode, diff) -> would change, no update
+      griffdawg.truenas.app:
+        name: jellyfin
+        custom_compose_config: {services: {web: {image: "jellyfin/jellyfin:10.11", ports: ["8096:8096"], restart: unless-stopped}}}
+      check_mode: true
+      diff: true
+      register: r
+    - assert: { that: [r.changed, "'app.update' not in log", "r.diff.after.services.web.image == 'jellyfin/jellyfin:10.11'"] }
+
+    - name: custom app, new image -> updates
+      griffdawg.truenas.app:
+        name: jellyfin
+        custom_compose_config: {services: {web: {image: "jellyfin/jellyfin:10.11", ports: ["8096:8096"], restart: unless-stopped}}}
+      register: r
+    - assert: { that: [r.changed, "'app.update' in log"] }
+
+    - name: catalog app, nested subset of existing values -> no change
+      griffdawg.truenas.app:
+        name: immich
+        values: {network: {web_port: 30041}}
+      register: r
+    - assert: { that: [not r.changed] }
+
+    - name: catalog app given compose -> clear failure
+      griffdawg.truenas.app:
+        name: immich
+        custom_compose_config: {services: {}}
+      register: r
+      ignore_errors: true
+    - assert: { that: [r.failed, "'catalog app' in r.msg"] }
+
+    - name: ntp add + purge
+      griffdawg.truenas.ntp: &ntp
+        servers:
+          - {address: 0.au.pool.ntp.org, prefer: true}
+          - {address: 1.au.pool.ntp.org}
+        purge: true
+      register: r
+    - assert: { that: [r.changed, "r.created == ['1.au.pool.ntp.org']", "r.deleted == ['old.example.org']", "r.updated == []"] }
+    - name: ntp rerun -> idempotent
+      griffdawg.truenas.ntp: *ntp
+      register: r
+    - assert: { that: [not r.changed] }
+
+    - name: initscript unchanged command (stored script is null) -> no change
+      griffdawg.truenas.initscript: {name: ARC cap, cmd: "echo 1 > /x", when: postinit}
+      register: r
+    - assert: { that: [not r.changed] }
+    - name: initscript changed command -> sends 'command'
+      griffdawg.truenas.initscript: {name: ARC cap, cmd: "echo 2 > /x"}
+      register: r
+    - assert: { that: [r.changed, "r.script.command == 'echo 2 > /x'"] }
+    - name: initscript create without when -> clear failure
+      griffdawg.truenas.initscript: {name: New, path: /mnt/x.sh}
+      register: r
+      ignore_errors: true
+    - assert: { that: [r.failed, "'when' in r.msg"] }
+
+    - name: middleware read_only works in check mode
+      griffdawg.truenas.middleware: {method: system.ntpserver.query, read_only: true}
+      check_mode: true
+      register: r
+    - assert: { that: [not r.changed, "r.result | length == 2"] }
+    - name: middleware write skipped in check mode
+      griffdawg.truenas.middleware: {method: system.ntpserver.delete, args: [1]}
+      check_mode: true
+      register: r
+    - assert: { that: [r.changed, "r.result is not defined"] }
