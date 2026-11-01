@@ -1,6 +1,12 @@
-# Ansible Collection - arensb.truenas
+# Ansible Collection - griffdawg.truenas
 
 Manage a [TrueNAS](https://www.truenas.com/) machine.
+
+This is a maintained fork of
+[arensb/ansible-truenas](https://github.com/arensb/ansible-truenas)
+(`arensb.truenas`), renamed to `griffdawg.truenas`. It targets current
+TrueNAS SCALE releases (25.10+) and talks to the middleware directly
+rather than through the deprecated `/api/v2.0` REST API.
 
 ## Included content
 
@@ -11,21 +17,25 @@ to control the Middleware Daemon.
 
 It aims to be intuitive to use, and to avoid unpleasant surprises.
 
-See [the online documentation](https://arensb.github.io/truenas/index.html)
-for the list of included modules, and how to use them.
+Each module documents its options and examples in its `DOCUMENTATION`
+and `EXAMPLES` blocks; run `ansible-doc griffdawg.truenas.<module>`.
 
 ## Installing this collection
 
-The easiest way to install this collection is
-[through Ansible Galaxy](https://galaxy.ansible.com/arensb/truenas):
+Install from git, pinned to a tag, via `requirements.yml`:
 
-    ansible-galaxy collection install arensb.truenas
+    collections:
+      - name: https://github.com/griffdawg123/ansible-truenas.git
+        type: git
+        version: v3.0.0
+
+then `ansible-galaxy collection install -r requirements.yml`.
 
 ## Examples
 
     - name: Example tasks
       collections:
-        - arensb.truenas
+        - griffdawg.truenas
       hosts: truenas-box
       become: yes
       tasks:
@@ -42,7 +52,7 @@ ones, you may want to use the full name to avoid confusion:
     - hosts: truenas-box
       become: yes
       tasks:
-        - arensb.truenas.hostname:
+        - griffdawg.truenas.hostname:
             name: new-hostname
 
 ## Environment Variables
@@ -60,7 +70,7 @@ select how this module communicates with the middleware daemon.
 
 Example:
 
-    - collections: arensb.truenas
+    - collections: griffdawg.truenas
       hosts: my-nas
       become: yes
       environment:
@@ -82,15 +92,16 @@ The [HACKING](HACKING.md) file has some tips on how to get around.
 
 ## Documentation
 
-See [the online documentation](https://arensb.github.io/truenas/index.html).
+Run `ansible-doc -l griffdawg.truenas` to list modules, and
+`ansible-doc griffdawg.truenas.<module>` for details.
 
 ## Supported versions of Ansible
 - Tested with 2.10.8
 
 ## Changelog
 
-See [the user-friendly docs](https://arensb.github.io/truenas/CHANGELOG.html),
-or the latest [changelog.yaml](changelogs/changelog.yaml).
+See [changelog.yaml](changelogs/changelog.yaml). Releases up to 2.0.3
+are from upstream `arensb.truenas`.
 
 ## Authors and Contributors
 

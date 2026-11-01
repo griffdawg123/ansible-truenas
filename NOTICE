@@ -1,0 +1,7 @@
+griffdawg.truenas
+Copyright the arensb.truenas contributors (see README.md).
+
+This product is a fork of arensb.truenas
+(https://github.com/arensb/ansible-truenas), licensed under the
+Apache License, Version 2.0. Modifications from version 3.0.0 onward
+are made by griffdawg123 and are also licensed under Apache-2.0.

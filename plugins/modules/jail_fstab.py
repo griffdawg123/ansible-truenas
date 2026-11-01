@@ -98,7 +98,7 @@ version_added: 1.9.0
 
 EXAMPLES = '''
 - name: Mount some directories inside a jail
-  arensb.truenas.jail_fstab:
+  griffdawg.truenas.jail_fstab:
     jail: the-jail-name
     fstab:
       - src: /mnt/data/my-data
@@ -114,7 +114,7 @@ EXAMPLES = '''
 # This shows how to not affect running services unless the 'bounce_jails'
 # variable is set to 'yes'.
 - name: Don't halt production services
-  arensb.truenas.jail_fstab:
+  griffdawg.truenas.jail_fstab:
     jail: the-jail-name
     fstab:
       - src: /mnt/data/my-data
@@ -122,7 +122,7 @@ EXAMPLES = '''
   check_mode: "{{ ansible_check_mode or bounce_jails != 'yes' }}"
 
 - name: Ensure that a filesystem is *not* mounted:
-  arensb.truenas.jail_fstab:
+  griffdawg.truenas.jail_fstab:
     jail: the-jail-name
     fstab:
         - mount: /old-data

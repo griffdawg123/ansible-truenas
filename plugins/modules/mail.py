@@ -70,7 +70,7 @@ EXAMPLES = '''
   hosts: my-truenas-host
   tasks:
     - name: Forward to SMTP hub
-      arensb.truenas.mail:
+      griffdawg.truenas.mail:
         from_email: root@my-truenas-host.dom.ain
         from_name: "Charlie Root"
         server: smtp.dom.ain

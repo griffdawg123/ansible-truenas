@@ -35,7 +35,7 @@ class MiddleWare:
         # variable, which can be passed in the play, e.g.:
         #
         # - hosts: my-nas
-        #   collections: arensb.truenas
+        #   collections: griffdawg.truenas
         #   environment:
         #     middleware_method: client
         #   tasks:

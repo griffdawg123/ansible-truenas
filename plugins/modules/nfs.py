@@ -107,28 +107,28 @@ EXAMPLES = '''
   hosts: nfs_server
   become: yes
   tasks:
-    - arensb.truenas.nfs:
+    - griffdawg.truenas.nfs:
         udp: yes
 
 - name: Forbid mount requests from non-root accounts
   hosts: nfs_server
   become: yes
   tasks:
-    - arensb.truenas.nfs:
+    - griffdawg.truenas.nfs:
         allow_nonroot: false
 
 - name: Run 32 servers
   hosts: nfs_server
   become: yes
   tasks:
-    - arensb.truenas.nfs:
+    - griffdawg.truenas.nfs:
         servers: 32
 
 - name: Enable NFS v3 and v4
   hosts: nfs_server
   become: yes
   tasks:
-    - arensb.truenas.nfs:
+    - griffdawg.truenas.nfs:
         protocols:
           - NFSv3
           - NFSv4
@@ -137,7 +137,7 @@ EXAMPLES = '''
   hosts: nfs_server
   become: yes
   tasks:
-    - arensb.truenas.nfs:
+    - griffdawg.truenas.nfs:
         protocols: NFSv4
 
 # `nfsv4` is deprecated.
@@ -145,21 +145,21 @@ EXAMPLES = '''
   hosts: nfs_server
   become: yes
   tasks:
-    - arensb.truenas.nfs:
+    - griffdawg.truenas.nfs:
         nfsv4: yes
 
 - name: Enable NFS v3 ownership model under v4
   hosts: nfs_server
   become: yes
   tasks:
-    - arensb.truenas.nfs:
+    - griffdawg.truenas.nfs:
         v3owner: true
 
 - name: Turn on Kerberos
   hosts: nfs_server
   become: yes
   tasks:
-    - arensb.truenas.nfs:
+    - griffdawg.truenas.nfs:
         krb: true
 
 - name: Listen on a specific interface

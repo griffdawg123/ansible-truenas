@@ -25,7 +25,7 @@ antsibull-docs \
     --use-current \
     --squash-hierarchy \
     --dest-dir temp-rst \
-    arensb.truenas
+    griffdawg.truenas
 
 # Copy collection documentation into source directory
 rsync -cprv --delete-after temp-rst/ rst/

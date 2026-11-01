@@ -85,19 +85,19 @@ version_added: 1.12.0
 
 EXAMPLES = '''
 - name: Install a CA cert from a file
-  arensb.truenas.certificate_authority:
+  griffdawg.truenas.certificate_authority:
     name: my_ca_cert
     src: /etc/pki/my-ca.cert
 
 - name: Install a CA cert and its key
-  arensb.truenas.certificate_authority:
+  griffdawg.truenas.certificate_authority:
     name: my_ca_cert
     src: /etc/pki/my-ca.cert
     private_keyfile: /etc/pki/my-ca.key
     passphrase: "Open, sesame!"
 
 - name: Install a CA cert from a string
-  arensb.truenas.certificate_authority:
+  griffdawg.truenas.certificate_authority:
     name: my_ca_cert
     certificate: |-
       -----BEGIN CERTIFICATE-----
@@ -107,18 +107,18 @@ EXAMPLES = '''
       -----END CERTIFICATE-----
 
 - name: Remove and revoke a CA cert
-  arensb.truenas.certificate_authority:
+  griffdawg.truenas.certificate_authority:
     name: my_ca_cert
     state: absent
 
 - name: Remove a CA cert, even if it can't be revoked
-  arensb.truenas.certificate_authority:
+  griffdawg.truenas.certificate_authority:
     name: my_ca_cert
     state: absent
     force: yes
 
 - name: Revoke a CA cert, but keep it in the list.
-  arensb.truenas.certificate_authority:
+  griffdawg.truenas.certificate_authority:
     name: my_ca_cert
     state: present
     revoked: yes

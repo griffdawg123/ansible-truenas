@@ -30,13 +30,13 @@ description:
   - See U(https://docs.ansible.com/ansible/latest/reference_appendices/config.html#facts-modules)
     for how to use this module, as well as the Examples section.
   - You can set the environment variable C(ANSIBLE_FACTS_MODULES) to
-    C(arensb.truenas.truenas_facts) to use only this module to gather facts,
-    or to C(setup, arensb.truenas.truenas_facts) to use both the standard
+    C(griffdawg.truenas.truenas_facts) to use only this module to gather facts,
+    or to C(setup, griffdawg.truenas.truenas_facts) to use both the standard
     C(setup) module and this one.
   - Likewise, you can set the C(ansible_facts_modules) inventory
     variable to the list of modules to use, either just
-    C(arensb.truenas.truenas_facts), or C([setup,
-    arensb.truenas.truenas_facts]).
+    C(griffdawg.truenas.truenas_facts), or C([setup,
+    griffdawg.truenas.truenas_facts]).
   - |
     This module may be used on non-TrueNAS hosts: it should simply fail
     gracefully and do nothing.
@@ -52,11 +52,11 @@ seealso:
 
 EXAMPLES = '''
 - name: Manually gather information
-  collections: arensb.truenas
+  collections: griffdawg.truenas
   hosts: myhost
   tasks:
     - name: Gather TrueNAS-specific facts
-      arensb.truenas.truenas_facts:
+      griffdawg.truenas.truenas_facts:
     # ansible_facts should have TrueNAS facts mixed in with the usual ones.
     - debug: var=ansible_facts
 '''
