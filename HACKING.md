@@ -69,7 +69,7 @@ web site.
 
 `antsibull-docs` is used to create and populate the `docs` directory:
 
-    antsibull-docs sphinx-init --use-current --dest-dir new-docs arensb.truenas
+    antsibull-docs sphinx-init --use-current --dest-dir new-docs griffdawg.truenas
 
 This creates the `docs/build.sh` script, which is used to generate
 documentation: it uses `antsibull-docs collection` to convert Python

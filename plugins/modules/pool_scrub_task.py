@@ -74,14 +74,14 @@ EXAMPLES = '''
   hosts: zfs_host
   become: yes
   tasks:
-    - arensb.truenas.pool_scrub_task:
+    - griffdawg.truenas.pool_scrub_task:
       pool: tank
 
 - name: Create a weekly task with a 35-day threshold
   hosts: zfs_host
   become: yes
   tasks:
-    - arensb.truenas.pool_scrub_task:
+    - griffdawg.truenas.pool_scrub_task:
       pool: tank
       description: Test weekly, scrub monthly.
       threshold: 35
@@ -94,7 +94,7 @@ EXAMPLES = '''
   hosts: zfs_host
   become: yes
   tasks:
-    - arensb.truenas.pool_scrub_task:
+    - griffdawg.truenas.pool_scrub_task:
       pool: tank
       state: absent
 '''

@@ -1,4 +1,4 @@
-COLLECTION = arensb.truenas
+COLLECTION = griffdawg.truenas
 # Directory where generated HTML docs will go
 DOCS_DIR = docs
 
@@ -30,14 +30,14 @@ clean::
 tarball:	docs
 	ansible-galaxy collection build --force
 
-# Delete any stray arensb-truenas-*.tar.gz tarballs.
+# Delete any stray griffdawg-truenas-*.tar.gz tarballs.
 clean::
 	${RM} $(subst .,-,${COLLECTION})-*.tar.gz
 
 # Generate list of modules from plugins/modules/*.py:
 # List the files, strip the directory name and .py suffix, then
 # add the collection name in front, so
-# plugins/modules/foo.py -> arensb.truenas.foo
+# plugins/modules/foo.py -> griffdawg.truenas.foo
 MODULES = $(addprefix ${COLLECTION}., \
 	$(basename \
 	$(notdir \

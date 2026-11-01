@@ -189,33 +189,33 @@ version_added: 0.1.0
 
 EXAMPLES = '''
 - name: Create an ordinary user and their group
-  arensb.truenas.user:
+  griffdawg.truenas.user:
     name: bob
     comment: "Bob the User"
     create_group: yes
     password: "<encrypted password string>"
 
 - name: Create an ordinary user and put them into an existing group
-  arensb.truenas.user:
+  griffdawg.truenas.user:
     name: bob
     comment: "Bob the User"
     group: users
     password: "<encrypted string>"
 
 - name: Create a user without a working password
-  arensb.truenas.user:
+  griffdawg.truenas.user:
     name: bob
     comment: "Bob the User"
     group: bobsgroup
     password_disabled: yes
 
 - name: Delete a user
-  arensb.truenas.user:
+  griffdawg.truenas.user:
     name: bob
     state: absent
 
 - name: Delete a user, but keep their primary group, even if it's now empty.
-  arensb.truenas.user:
+  griffdawg.truenas.user:
     name: bob
     state: absent
     delete_group: no

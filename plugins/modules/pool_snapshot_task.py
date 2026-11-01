@@ -141,7 +141,7 @@ version_added: 1.5.0
 EXAMPLES = '''
 - name: Hourly snapshots of data/vol1
   hosts: myhost
-  collections: arensb.truenas
+  collections: griffdawg.truenas
   become: yes
   tasks:
     - pool_snapshot_task:

@@ -1,0 +1,5 @@
+breaking_changes:
+  - Collection renamed from ``arensb.truenas`` to ``griffdawg.truenas``. Update
+    FQCNs (e.g. ``arensb.truenas.user`` -> ``griffdawg.truenas.user``) and
+    ``collections:`` lists in playbooks.
+release_summary: First release of the ``griffdawg.truenas`` fork of ``arensb.truenas``.

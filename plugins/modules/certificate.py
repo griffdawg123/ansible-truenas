@@ -93,12 +93,12 @@ version_added: 1.12.0
 
 EXAMPLES = '''
 - name: Install an existing cert from a file.
-  arensb.truenas.certificate:
+  griffdawg.truenas.certificate:
     name: my_cert
     src: /etc/pki/truenas-host.cert
 
 - name: Same, but include a private key and passphrase.
-  arensb.truenas.certificate:
+  griffdawg.truenas.certificate:
     name: my_cert
     src: /etc/pki/truenas-host.cert
     private_key: |-
@@ -108,12 +108,12 @@ EXAMPLES = '''
     passphrase: "squeamish ossifrage"
 
 - name: Revoke a cert
-  arensb.truenas.certificate:
+  griffdawg.truenas.certificate:
     name: my_cert
     revoked: true
 
 - name: Remove a cert
-  arensb.truenas.certificate:
+  griffdawg.truenas.certificate:
     name: my_cert
     state: absent
 '''

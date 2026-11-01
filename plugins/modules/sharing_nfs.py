@@ -113,19 +113,19 @@ version_added: 0.1.0
 
 EXAMPLES = '''
 - name: Export a filesystem
-  arensb.truenas.sharing_nfs:
+  griffdawg.truenas.sharing_nfs:
     - name: Home export
       path: /mnt/pool0/home
 
 - name: Export to only one network
-  arensb.truenas.sharing_nfs:
+  griffdawg.truenas.sharing_nfs:
     - name: Home export
       path: /mnt/pool0/home
       networks:
         - 192.168.0.0/16
 
 - name: Explicitly export to all hosts and networks
-  arensb.truenas.sharing_nfs:
+  griffdawg.truenas.sharing_nfs:
     - name: Home export
       path: /mnt/pool0/home
       hosts: []

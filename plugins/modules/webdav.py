@@ -62,17 +62,17 @@ EXAMPLES = '''
   become: yes
   tasks:
     - name: Create SMS backup directory
-      arensb.truenas.sharing_webdav:
+      griffdawg.truenas.sharing_webdav:
         name: myshare
         path: "/mnt/tank/myfilesystem/myshare"
     - name: Configure WebDAV service
-      arensb.truenas.webdav:
+      griffdawg.truenas.webdav:
         protocol: HTTP
         port: 9100
         password: "{{ webdav_password }}"
         auth_type: BASIC
     - name: Enable WebDAV service
-      arensb.truenas.service:
+      griffdawg.truenas.service:
         name: webdav
         state: started
         enabled: yes

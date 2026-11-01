@@ -61,7 +61,7 @@ EXAMPLES = '''
   hosts: myhost
   become: yes
   tasks:
-    - arensb.truenas.smart:
+    - griffdawg.truenas.smart:
         power_mode: never
         # Generate report if a disk is 2 degrees hotter or cooler than
         # last time.

@@ -27,7 +27,7 @@ options:
 
 EXAMPLES = '''
 - name: Set hostname
-  arensb.truenas.hostname:
+  griffdawg.truenas.hostname:
     name: my-little-host
 '''
 

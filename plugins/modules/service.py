@@ -37,14 +37,14 @@ EXAMPLES = '''
 - name: Enable ssh
   hosts: my-truenas-server
   tasks:
-    - arensb.truenas.service:
+    - griffdawg.truenas.service:
         name: ssh
         enabled: yes
 
 - name: Make sure unwanted services are turned off
   hosts: my-truenas-server
   tasks:
-    - arensb.truenas.service:
+    - griffdawg.truenas.service:
         name: nfs
         enabled: no
 '''

@@ -99,42 +99,42 @@ version_added: 1.1.0
 # XXX
 EXAMPLES = '''
 - name: Install a plugin by name from any collection
-  arensb.truenas.plugin:
+  griffdawg.truenas.plugin:
     name: Plex
     # The value of the "plugin" parameter can be copied from
     # the Plugins page on the TrueNAS web interface.
     plugin: Plex Media Server
 
 - name: Install a plugin by name from a specific collection
-  arensb.truenas.plugin:
+  griffdawg.truenas.plugin:
     name: Plex 2
     plugin: Plex Media Server
     repository: iXsystems
 
 - name: "Fully specified: use both plugin ID and repository URL"
-  arensb.truenas.plugin:
+  griffdawg.truenas.plugin:
     name: Plex 3
     plugin_id: plexmediaserver
     repository_url: https://github.com/ix-plugin-hub/iocage-plugin-index.git
 
 # Install two instances of a plugin in different jails.
-- arensb.truenas.plugin:
+- griffdawg.truenas.plugin:
     name: Brad's Library
     plugin: Calibre-Web
     repository: Community
-- arensb.truenas.plugin:
+- griffdawg.truenas.plugin:
     name: Janet's Library
     plugin: Calibre-Web
     repository: Community
 
 # Install a plugin and configure its jail
 - name: Install a plugin by name
-  arensb.truenas.plugin:
+  griffdawg.truenas.plugin:
     name: Plex
     plugin: Plex Media Server
   register: plugin_status
 - name: Mount filesystems
-  arensb.truenas.jail_fstab:
+  griffdawg.truenas.jail_fstab:
     # The default value here is so that this play doesn't fail
     # in check mode when the plugin hasn't been installed yet.
     jail: "{{ plugin_status.plugin.id | default('nonexistent') }}"
