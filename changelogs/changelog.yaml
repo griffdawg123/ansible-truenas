@@ -420,8 +420,6 @@ releases:
     release_date: '2026-05-16'
   3.0.0:
     changes:
-      release_summary: Drop the midclt middleware transport in favor of the native
-        truenas_api_client, and add the tunable module.
       breaking_changes:
       - "Removed the ``midclt`` middleware transport and the ``middleware_method``
         environment variable. The collection now always talks to middlewared natively
@@ -431,6 +429,8 @@ releases:
       minor_changes:
       - Added ``tunable`` module to manage TrueNAS tunables (SYSCTL, UDEV, and ZFS
         kernel module parameters), identified by the (type, var) pair.
+      release_summary: Drop the midclt middleware transport in favor of the native
+        truenas_api_client, and add the tunable module.
     fragments:
     - remove-midclt-transport.yml
     - tunable.yml
@@ -439,3 +439,73 @@ releases:
       name: tunable
       namespace: ''
     release_date: '2026-05-31'
+  4.0.0:
+    changes:
+      breaking_changes:
+      - Collection renamed from ``jdevera.truenas`` to ``griffdawg.truenas``. Update
+        FQCNs (e.g. ``jdevera.truenas.user`` -> ``griffdawg.truenas.user``) and ``collections:``
+        lists in playbooks.
+      - initscript - removed the ``script`` (inline text) option. SCALE 25.10 has
+        no ``script_text`` field and only runs scripts by path; install the script
+        with ``ansible.builtin.copy`` and pass ``path`` (arensb/ansible-truenas#62).
+      bugfixes:
+      - app - catalog ``values`` are compared recursively against the stored config,
+        so nested values no longer force an update every run.
+      - app - fail clearly when giving ``values`` to a custom app or a compose config
+        to a catalog app.
+      - app - updating a custom app no longer always reports a change and recreates
+        its containers. The requested compose is parsed and compared with the stored
+        compose as data.
+      - filesystem - compare ``recordsize`` as a byte size, so ``128K`` no longer
+        reports a change against middleware's ``131072`` on every run (arensb/ansible-truenas#51).
+      - 'initscript - work on SCALE 25.10 (no more ``KeyError: ''script_text''``),
+        and send ``command`` rather than ``cmd`` on update so changing a command takes
+        effect (arensb/ansible-truenas#62).'
+      - user - don't send ``password`` on update when the account has, or will have,
+        password login disabled (arensb/ansible-truenas#57).
+      minor_changes:
+      - app - supports diff mode.
+      - cronjob, app_images, filesystem_acl - new modules, ported from normalerweise/ansible-truenas.
+      - filesystem_acl - compares ACL entries order-independently and only on the
+        keys given, so re-running with the same ACL no longer reports a change; ``stripacl``
+        is a no-op on an already-trivial ACL; ``nfs41_flags`` is sent at the top level
+        of ``filesystem.setacl`` as the 25.10 API expects.
+      - initscript - new ``enabled`` option.
+      - middleware - new module to call any middleware method or job directly, as
+        an escape hatch for things without a dedicated module.
+      - ntp - new module to manage NTP servers declaratively, with optional ``purge``
+        of unlisted servers.
+      release_summary: First release of ``griffdawg.truenas``, a fork of ``jdevera.truenas``
+        (itself a fork of ``arensb.truenas``).
+    fragments:
+    - normalerweise-ports.yml
+    - own-modules.yml
+    - rename-namespace.yml
+    - upstream-pr-fixes.yml
+    modules:
+    - description: Pull a TrueNAS app's images and redeploy only when they changed.
+      name: app_images
+      namespace: ''
+    - description: Manage TrueNAS cron jobs.
+      name: cronjob
+      namespace: ''
+    - description: Manage filesystem ACLs via TrueNAS middleware
+      name: filesystem_acl
+      namespace: ''
+    - description: Call a TrueNAS middleware method directly
+      name: middleware
+      namespace: ''
+    - description: Manage TrueNAS NTP servers
+      name: ntp
+      namespace: ''
+    release_date: '2026-11-01'
+  4.1.0:
+    changes:
+      bugfixes:
+      - app - catalog ``values`` are deep-merged into the stored config on update.
+        Middleware only merges at the top level, so a nested section given in part
+        used to reset its other keys to the app's defaults, and the diff showed them
+        as removed.
+    fragments:
+    - app-deep-merge.yml
+    release_date: '2026-11-03'

@@ -1,5 +1,0 @@
-bugfixes:
-  - app - catalog ``values`` are deep-merged into the stored config on update.
-    Middleware only merges at the top level, so a nested section given in
-    part used to reset its other keys to the app's defaults, and the diff
-    showed them as removed.
