@@ -44,6 +44,22 @@
       register: r
     - assert: { that: [not r.changed] }
 
+    - name: catalog app, nested change (check mode, diff) -> unlisted nested keys kept in diff
+      griffdawg.truenas.app:
+        name: immich
+        values: {network: {web_port: 30042}}
+      check_mode: true
+      diff: true
+      register: r
+    - assert: { that: [r.changed, "r.diff.after.network == {'web_port': 30042, 'host_network': false}", "(lookup('file', state_file) | from_json).app_config.immich.network.web_port == 30041"] }
+
+    - name: catalog app, nested change -> sends the whole section, unlisted keys kept
+      griffdawg.truenas.app:
+        name: immich
+        values: {network: {web_port: 30042}}
+      register: r
+    - assert: { that: [r.changed, "(lookup('file', state_file) | from_json).app_config.immich.network == {'web_port': 30042, 'host_network': false}"] }
+
     - name: catalog app given compose -> clear failure
       griffdawg.truenas.app:
         name: immich

@@ -54,9 +54,10 @@ options:
       - On update, the app is only updated if some key given here differs
         from the stored config (nested dicts are compared key by key;
         keys you don't give are ignored).
-      - Middleware merges C(values) into the stored config at the top
-        level only, so a nested dict given here replaces that whole
-        section, and its omitted keys revert to the app's defaults.
+      - On update, C(values) is deep-merged into the stored config before
+        it is sent, so nested keys you don't give keep their current
+        values instead of reverting to the app's defaults. Lists and
+        scalars replace the stored value.
       - Only valid for catalog apps.
     type: dict
   custom_app:
@@ -164,6 +165,19 @@ def subset_matches(desired, current):
             return False
         return all(k in current and subset_matches(v, current[k]) for k, v in desired.items())
     return desired == current
+
+
+def deep_merge(current, desired):
+    """
+    Return 'current' with 'desired' merged in, recursing into dicts.
+    Anything else in 'desired' (lists, scalars) replaces the current value.
+    """
+    if not isinstance(desired, dict) or not isinstance(current, dict):
+        return desired
+    merged = dict(current)
+    for k, v in desired.items():
+        merged[k] = deep_merge(current.get(k), v)
+    return merged
 
 
 def desired_compose(module):
@@ -311,8 +325,11 @@ def main():
                     after = compose
                 else:
                     needs_update = not subset_matches(values, current_config)
-                    arg = {"values": values}
-                    after = {**current_config, **values}
+                    # Middleware merges values at the top level only, so
+                    # send whole sections with the stored keys filled in.
+                    merged = {k: deep_merge(current_config.get(k), v) for k, v in values.items()}
+                    arg = {"values": merged}
+                    after = {**current_config, **merged}
 
                 if module._diff:
                     result["diff"] = dict(before=current_config, after=after)
