@@ -13,5 +13,9 @@
   ],
   "initshutdownscript": [
     {"id": 1, "comment": "ARC cap", "type": "COMMAND", "command": "echo 1 > /x", "script": null, "when": "POSTINIT", "enabled": true, "timeout": 10}
+  ],
+  "alertservice": [
+    {"id": 1, "name": "SNMP Trap", "attributes": {"type": "SNMPTrap", "host": "localhost", "port": 162}, "level": "WARNING", "enabled": true},
+    {"id": 2, "name": "E-Mail", "attributes": {"type": "Mail", "email": ""}, "level": "WARNING", "enabled": true}
   ]
 }

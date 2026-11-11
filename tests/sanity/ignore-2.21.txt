@@ -1,4 +1,6 @@
 extras/module-template shebang
+plugins/modules/alert_service.py validate-modules:invalid-documentation
+plugins/modules/alert_service.py validate-modules:missing-gplv3-license
 plugins/modules/app_images.py validate-modules:invalid-documentation
 plugins/modules/app_images.py validate-modules:missing-gplv3-license
 plugins/modules/app_info.py validate-modules:invalid-documentation

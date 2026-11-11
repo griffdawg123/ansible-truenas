@@ -105,3 +105,34 @@
       check_mode: true
       register: r
     - assert: { that: [r.changed, "r.result is not defined"] }
+
+    - name: alert_service set email (check mode) -> would change, no update
+      griffdawg.truenas.alert_service: &mail {name: E-Mail, type: Mail, attributes: {email: truenas@ntfy.example.org}, level: WARNING}
+      check_mode: true
+      register: r
+    - assert: { that: [r.changed, "r.changed_keys == ['attributes.email']", "'alertservice.update' not in log"] }
+    - name: alert_service set email -> sends full entry, type kept
+      griffdawg.truenas.alert_service: *mail
+      register: r
+    - assert: { that: [r.changed, "'alertservice.update' in log", "(lookup('file', state_file) | from_json).alertservice[1].attributes == {'type': 'Mail', 'email': 'truenas@ntfy.example.org'}"] }
+    - name: alert_service rerun -> idempotent
+      griffdawg.truenas.alert_service: *mail
+      register: r
+    - assert: { that: [not r.changed] }
+    - name: alert_service level only -> attributes untouched
+      griffdawg.truenas.alert_service: {name: SNMP Trap, level: ERROR}
+      register: r
+    - assert: { that: [r.changed, "r.changed_keys == ['level']", "(lookup('file', state_file) | from_json).alertservice[0].attributes.host == 'localhost'"] }
+    - name: alert_service create without type -> clear failure
+      griffdawg.truenas.alert_service: {name: Telegram, attributes: {bot_token: x}}
+      register: r
+      ignore_errors: true
+    - assert: { that: [r.failed, "'type' in r.msg"] }
+    - name: alert_service create
+      griffdawg.truenas.alert_service: {name: Telegram, type: Telegram, attributes: {bot_token: secret, chat_ids: [1]}}
+      register: r
+    - assert: { that: [r.changed, "'alertservice.create' in log", "(lookup('file', state_file) | from_json).alertservice[2].level == 'WARNING'"] }
+    - name: alert_service delete
+      griffdawg.truenas.alert_service: {name: SNMP Trap, state: absent}
+      register: r
+    - assert: { that: [r.changed, "'alertservice.delete' in log", "(lookup('file', state_file) | from_json).alertservice | length == 2"] }
