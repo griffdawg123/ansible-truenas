@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - alert_service - new module to manage alert services (email, Telegram, and
+    so on) by name, comparing only the attribute keys given.
