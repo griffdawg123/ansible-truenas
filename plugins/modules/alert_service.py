@@ -203,7 +203,9 @@ def main():
             try:
                 result["service"] = mw.call("alertservice.update", current["id"], full)
             except Exception as e:
-                setup.fail(module, f"Error updating alert service {name} ({', '.join(changed_keys)}): {e}")
+                setup.fail(
+                    module, f"Error updating alert service {name} ({', '.join(changed_keys)}): {e}"
+                )
         result["changed"] = True
 
     module.exit_json(**result)
