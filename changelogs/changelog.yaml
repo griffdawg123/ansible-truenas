@@ -509,3 +509,15 @@ releases:
     fragments:
     - app-deep-merge.yml
     release_date: '2026-11-03'
+  4.2.0:
+    changes:
+      minor_changes:
+      - alert_service - new module to manage alert services (email, Telegram, and
+        so on) by name, comparing only the attribute keys given.
+    fragments:
+    - alert-service.yml
+    modules:
+    - description: Manage TrueNAS alert services
+      name: alert_service
+      namespace: ''
+    release_date: '2026-11-11'
